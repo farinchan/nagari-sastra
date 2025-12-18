@@ -75,13 +75,13 @@ class Submission extends Model
         return $citations;
     }
 
-    // public function reviewers()
-    // {
-    //     return $this->belongsToMany(Reviewer::class, 'submission_reviewer');
-    // }
+    public function reviewers()
+    {
+        return $this->belongsToMany(Reviewer::class, 'submission_reviewer');
+    }
 
-    // public function editors()
-    // {
-    //     return $this->belongsToMany(Editor::class, 'submission_editor');
-    // }
+    public function editors()
+    {
+        return $this->belongsToMany(Editor::class, 'submission_editor');
+    }
 }

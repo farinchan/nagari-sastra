@@ -206,7 +206,7 @@ class journalController extends Controller
             return abort(404);
         }
 
-        $issue = Issue::with(['submissions.paymentInvoices'])->find($issue_id);
+        $issue = Issue::with(['submissions'])->find($issue_id);
         if (!$issue) {
             return abort(404);
         }
@@ -230,9 +230,9 @@ class journalController extends Controller
             'journal_path' => $journal_path,
             'journal' => $journal,
             'issue' => $issue,
-            // 'editors' => Editor::where('issue_id', $issue_id)->get(),
-            // 'reviewers' => Reviewer::where('issue_id', $issue_id)->get(),
-            // 'submissions' => $issue->submissions->pluck('submission_id'),
+            'editors' => Editor::where('issue_id', $issue_id)->get(),
+            'reviewers' => Reviewer::where('issue_id', $issue_id)->get(),
+            'submissions' => $issue->submissions->pluck('submission_id'),
         ];
         // return response()->json($data);
         return view('back.pages.journal.detail-article', $data);

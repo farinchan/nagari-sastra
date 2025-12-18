@@ -52,7 +52,7 @@
                             @forelse ($issue->submissions as $submission)
                                 <tr>
                                     <td>
-                                        {{ $submission->submission_id }}
+                                        {{ $submission->ojs_    submission_id }}
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
@@ -223,7 +223,7 @@
             <div class="modal-dialog modal-lg ">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3 class="modal-title">Submission ID {{ $submission->submission_id }}</h3>
+                        <h3 class="modal-title">Submission ID {{ $submission->ojs_submission_id }}</h3>
                         <div>
                             <!--begin::synchronize-->
                             <div class="btn btn-icon btn-sm btn-active-light-warning ms-2" data-bs-toggle="tooltip"
@@ -271,7 +271,7 @@
                                         <td>Judul</td>
                                         <td>:</td>
                                         <td>
-                                            {{ $submission->fullTitle }}
+                                            {{ $submission->fullTitle}}
                                         </td>
                                     </tr>
                                     <tr>
@@ -622,25 +622,19 @@
                             <label class="d-flex align-items-center fs-5 fw-semibold">
                                 <span class="required">Letter of Acceptence (LOA)</span>
                             </label>
-                            @php
-                                $check_lunas =
-                                    $submission->paymentInvoices->where('is_paid', true)->sum('payment_percent') >= 100
-                                        ? true
-                                        : false;
-                            @endphp
                             <div class="fs-7 fw-semibold text-muted">
-                                @if ($submission->free_charge)
+                                @if ($submission->charge == 0)
                                     LOA dapat dikirim/download tanpa tagihan
-                                @elseif ($check_lunas)
+                                {{-- @elseif ($check_lunas)
                                     <span class="text-success">Tagihan sudah lunas, LOA dapat dikirim/download</span>
                                 @else
-                                    <span class="text-danger">Tagihan belum lunas, LOA tidak dapat dikirim/download</span>
+                                    <span class="text-danger">Tagihan belum lunas, LOA tidak dapat dikirim/download</span> --}}
                                 @endif
                             </div>
                         </div>
                         <div class="fv-row fv-plugins-icon-container">
 
-                            @if ($submission->free_charge)
+                            @if ($submission->charge == 0)
                                 <div class="d-flex">
 
 
@@ -662,7 +656,7 @@
                                     </a>
                                 </div>
                             @else
-                                @if ($check_lunas)
+                                {{-- @if ($check_lunas)
                                     <div class="d-flex">
 
 
@@ -683,7 +677,7 @@
                                             Download
                                         </a>
                                     </div>
-                                @endif
+                                @endif --}}
                             @endif
 
                         </div>
@@ -735,7 +729,7 @@
                                                 </a>
                                             </div>
                                             <span class="text-muted fw-semibold mb-3">
-                                                ${submission.publications[0].fullTitle.en_US}
+                                                ${submission.publications[0].fullTitle[("{{ $journal->ojs_version }}" == '3.3') ? "en_US" : "en"]}
                                             </span>
                                         </div>
                                     </div>

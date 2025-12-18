@@ -262,17 +262,17 @@ class JournalController extends Controller
                     // Format jadi 4 digit
                     $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
-                    $submission = Submission::where('submission_id', $submission_id)
+                    $submission = Submission::where('ojs_submission_id', $submission_id)
                         ->where('issue_id', $issue->id)
                         ->first();
 
                     Submission::updateOrCreate(
                         [
-                            'submission_id' => $submission_id,
+                            'ojs_submission_id' => $submission_id,
                             'issue_id' => $issue->id,
                         ],
                         [
-                            'publication_id' => $publication_response->json()["id"],
+                            'ojs_publication_id' => $publication_response->json()["id"],
                             'number' => $submission ? $submission->number : $formattedNumber,
                             'locale' => $publication_response->json()["locale"],
                             'authors' => $publication_response->json()["authors"],

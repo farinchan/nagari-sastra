@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('status_label')->nullable();
             $table->string('lastModified');
 
+
             $table->foreignId('issue_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
 
             $table->enum('payment_status', ['pending', 'paid', 'refunded', 'cancelled'])->default('pending');
