@@ -52,7 +52,7 @@
                             @forelse ($issue->submissions as $submission)
                                 <tr>
                                     <td>
-                                        {{ $submission->ojs_    submission_id }}
+                                        {{ $submission->ojs_submission_id }}
                                     </td>
                                     <td>
                                         <div class="d-flex flex-column">
@@ -140,7 +140,7 @@
                                     @endif
                                     <td class="text-end">
                                         <a href="#" class="btn btn-sm btn-light-info my-1" data-bs-toggle="modal"
-                                            data-bs-target="#modal_view_article_{{ $submission->submission_id }}">
+                                            data-bs-target="#modal_view_article_{{ $submission->ojs_submission_id }}">
                                             <i class="ki-duotone ki-eye fs-2">
                                                 <span class="path1"></span>
                                                 <span class="path2"></span>
@@ -148,7 +148,7 @@
                                             </i>
                                         </a>
                                         <a href="#" class="btn btn-sm btn-light-primary my-1" data-bs-toggle="modal"
-                                            data-bs-target="#modal_action_article_{{ $submission->submission_id }}">
+                                            data-bs-target="#modal_action_article_{{ $submission->ojs_submission_id }}">
                                             <i class="ki-duotone ki-menu fs-2">
                                                 <span class="path1"></span>
                                                 <span class="path2"></span>
@@ -157,7 +157,7 @@
                                             </i>
                                         </a>
                                         <a href="#" class="btn btn-sm btn-light-danger my-1" data-bs-toggle="modal"
-                                            data-bs-target="#modal_delete_article_{{ $submission->submission_id }}">
+                                            data-bs-target="#modal_delete_article_{{ $submission->ojs_submission_id }}">
                                             <i class="ki-duotone ki-trash fs-2">
                                                 <span class="path1"></span>
                                                 <span class="path2"></span>
@@ -219,7 +219,7 @@
         </div>
     </div>
     @foreach ($issue->submissions as $submission)
-        <div class="modal fade" tabindex="-1" id="modal_view_article_{{ $submission->submission_id }}">
+        <div class="modal fade" tabindex="-1" id="modal_view_article_{{ $submission->ojs_submission_id }}">
             <div class="modal-dialog modal-lg ">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -228,7 +228,7 @@
                             <!--begin::synchronize-->
                             <div class="btn btn-icon btn-sm btn-active-light-warning ms-2" data-bs-toggle="tooltip"
                                 data-bs-placement="top" title="Sinkronisasi Data"
-                                onclick="selectArticle({{ $submission->submission_id }})">
+                                onclick="selectArticle({{ $submission->ojs_submission_id }})">
                                 <i class="ki-duotone ki-arrows-circle fs-1">
                                     <span class="path1"></span>
                                     <span class="path2"></span>
@@ -250,413 +250,419 @@
                         @method('PUT')
                         @csrf
                         <div class="modal-body">
-                            @if ($journal->author_fee != 0)
-                                <ul class="nav nav-tabs nav-line-tabs mb-5 fs-6">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" data-bs-toggle="tab"
-                                            href="#kt_tab_pane_1_submission_{{ $submission->id }}">Informasi</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab"
-                                            href="#kt_tab_pane_2_submission_{{ $submission->id }}">History Pembayaran</a>
-                                    </li>
-                                </ul>
-                                <div class="tab-content" id="myTabContent">
-                                    <div class="tab-pane fade show active"
-                                        id="kt_tab_pane_1_submission_{{ $submission->id }}" role="tabpanel">
-                            @endif
-                            <div class="mh-550px scroll-y me-n7 pe-7" id="list_article">
-                                <table class="table table-row-dashed table-row-gray-300 align-top gs-0 gy-4 my-0 fs-6">
-                                    <tr>
-                                        <td>Judul</td>
-                                        <td>:</td>
-                                        <td>
-                                            {{ $submission->fullTitle}}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Penulis</td>
-                                        <td>:</td>
-                                        <td>
-                                            <ul>
-                                                @foreach ($submission->getAuthorsAttribute() as $author)
-                                                    <li>
-                                                        <span class="text-gray-800 fw-bold">
-                                                            {{ $author['name'] }}
-                                                        </span>
-                                                        <br>
-                                                        {{ $author['affiliation'] }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Abstrak</td>
-                                        <td>:</td>
-                                        <td>
-                                            {!! $submission->abstract !!}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Keywords</td>
-                                        <td>:</td>
-                                        <td>
-                                            {{ $submission->keywords }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Published</td>
-                                        <td>:</td>
-                                        <td>
-                                            {{ $submission->datePublished }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Terakhir Diubah</td>
-                                        <td>:</td>
-                                        <td>
-                                            {{ $submission->lastModified }}
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Editor</td>
-                                        <td>:</td>
-                                        <td>
-                                            <select class="form-select" data-control="select2"
-                                                data-placeholder="Select an option"
-                                                data-dropdown-parent="#modal_view_article_{{ $submission->submission_id }}"
-                                                name="editor[]" data-allow-clear="true" multiple="multiple">
-                                                <option></option>
-                                                @foreach ($editors as $editor)
-                                                    <option value="{{ $editor->id }}"
-                                                        {{ $submission->editors->contains($editor->id) ? 'selected' : '' }}>
-                                                        {{ $editor->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Reviewer</td>
-                                        <td>:</td>
-                                        <td>
-                                            <select class="form-select" data-control="select2"
-                                                data-placeholder="Select an option"
-                                                data-dropdown-parent="#modal_view_article_{{ $submission->submission_id }}"
-                                                name="reviewer[]" data-allow-clear="true" multiple="multiple">
-                                                <option></option>
-                                                @foreach ($reviewers as $reviewer)
-                                                    <option value="{{ $reviewer->id }}"
-                                                        {{ $submission->reviewers->contains($reviewer->id) ? 'selected' : '' }}>
-                                                        {{ $reviewer->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Gratis Biaya</td>
-                                        <td>:</td>
-                                        <td>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="1"
-                                                    @if ($submission->free_charge) checked @endif id="free_charge"
-                                                    name="free_charge" />
-                                                <label class="form-check-label" for="free_charge">
-                                                    Ya, (Gratis Biaya publikasi)
-                                                </label>
-                                            </div>
-
-                                        </td>
-                                    </tr>
-                                </table>
-                            </div>
-                            @if ($journal->author_fee != 0)
-                        </div>
-                        <div class="tab-pane fade" id="kt_tab_pane_2_submission_{{ $submission->id }}" role="tabpanel">
-                            @foreach ($submission->paymentInvoices as $invoice)
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-rounded table-striped border gy-7 gs-7">
-                                        <thead>
-                                            <tr
-                                                class="fw-bold text-center fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                                <th colspan="4">INVOICE
-                                                    {{ $invoice->invoice_number }}/JRNL/UINSMDD/{{ $invoice->created_at->format('Y') }}
-                                                    <br>
-                                                    <span class="text-muted fs-7">
-                                                        ({{ $invoice->payment_percent }}%)
-                                                        - @money($invoice->payment_amount)
-
-                                                    </span>
-                                                </th>
+                            <ul class="nav nav-tabs nav-line-tabs mb-5 fs-6">
+                                <li class="nav-item">
+                                    <a class="nav-link active" data-bs-toggle="tab"
+                                        href="#kt_tab_pane_1_submission_{{ $submission->id }}">Informasi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="tab"
+                                        href="#kt_tab_pane_2_submission_{{ $submission->id }}">History Pembayaran</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content" id="myTabContent">
+                                <div class="tab-pane fade show active"
+                                    id="kt_tab_pane_1_submission_{{ $submission->id }}" role="tabpanel">
+                                    <div class="mh-550px scroll-y me-n7 pe-7" id="list_article">
+                                        <table
+                                            class="table table-row-dashed table-row-gray-300 align-top gs-0 gy-4 my-0 fs-6">
+                                            <tr>
+                                                <td>Judul</td>
+                                                <td>:</td>
+                                                <td>
+                                                    {{ $submission->fullTitle }}
+                                                </td>
                                             </tr>
-                                            <tr class="fw-semibold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                                <th>Waktu</th>
-                                                <th>Pembayar</th>
-                                                <th>Metode Pembayaran</th>
-                                                <th>Status</th>
+                                            <tr>
+                                                <td>Penulis</td>
+                                                <td>:</td>
+                                                <td>
+                                                    <ul>
+                                                        @foreach ($submission->getAuthorsAttribute() as $author)
+                                                            <li>
+                                                                <span class="text-gray-800 fw-bold">
+                                                                    {{ $author['name'] }}
+                                                                </span>
+                                                                <br>
+                                                                {{ $author['affiliation'] }}
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            @forelse ($invoice->payments as $payment)
-                                                <tr>
-                                                    <td>
-                                                        {{ Carbon\Carbon::parse($payment->created_at)->translatedFormat('l, d F Y H:i:s') }}
-                                                    </td>
-                                                    <td>
-                                                        {{ $payment->payment_account_name }}
-                                                    </td>
-                                                    <td>
-                                                        {{ $payment->payment_method }}
-                                                    </td>
-                                                    <td>
-                                                        @if ($payment->payment_status == 'pending')
-                                                            <span
-                                                                class="badge badge-light-warning fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                        @elseif ($payment->payment_status == 'accepted')
-                                                            <span
-                                                                class="badge badge-light-success fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                        @elseif ($payment->payment_status == 'rejected')
-                                                            <span
-                                                                class="badge badge-light-danger fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                        @else
-                                                            <span
-                                                                class="badge badge-light-secondary fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="4" class="text-center text-muted fw-semibold fs-6">
-                                                        Belum ada history pembayaran
-                                                    </td>
-                                                </tr>
-                                            @endforelse
+                                            <tr>
+                                                <td>Abstrak</td>
+                                                <td>:</td>
+                                                <td>
+                                                    {!! $submission->abstract !!}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Keywords</td>
+                                                <td>:</td>
+                                                <td>
+                                                    {{ $submission->keywords }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Published</td>
+                                                <td>:</td>
+                                                <td>
+                                                    {{ $submission->datePublished }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Terakhir Diubah</td>
+                                                <td>:</td>
+                                                <td>
+                                                    {{ $submission->lastModified }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Editor</td>
+                                                <td>:</td>
+                                                <td>
+                                                    <select class="form-select" data-control="select2"
+                                                        data-placeholder="Select an option"
+                                                        data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
+                                                        name="editor[]" data-allow-clear="true" multiple="multiple">
+                                                        <option></option>
+                                                        @foreach ($editors as $editor)
+                                                            <option value="{{ $editor->id }}"
+                                                                {{ $submission->editors->contains($editor->id) ? 'selected' : '' }}>
+                                                                {{ $editor->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Reviewer</td>
+                                                <td>:</td>
+                                                <td>
+                                                    <select class="form-select" data-control="select2"
+                                                        data-placeholder="Select an option"
+                                                        data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
+                                                        name="reviewer[]" data-allow-clear="true" multiple="multiple">
+                                                        <option></option>
+                                                        @foreach ($reviewers as $reviewer)
+                                                            <option value="{{ $reviewer->id }}"
+                                                                {{ $submission->reviewers->contains($reviewer->id) ? 'selected' : '' }}>
+                                                                {{ $reviewer->name }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Gratis Biaya</td>
+                                                <td>:</td>
+                                                <td>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="1"
+                                                            @if ($submission->free_charge) checked @endif
+                                                            id="free_charge" name="free_charge" />
+                                                        <label class="form-check-label" for="free_charge">
+                                                            Ya, (Gratis Biaya publikasi)
+                                                        </label>
+                                                    </div>
 
-                                        </tbody>
-                                    </table>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
                                 </div>
-                            @endforeach
-                        </div>
-                </div>
-    @endif
+                                <div class="tab-pane fade" id="kt_tab_pane_2_submission_{{ $submission->id }}"
+                                    role="tabpanel">
+                                    {{-- @foreach ($submission->paymentInvoices as $invoice)
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-rounded table-striped border gy-7 gs-7">
+                                                <thead>
+                                                    <tr
+                                                        class="fw-bold text-center fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                                        <th colspan="4">INVOICE
+                                                            {{ $invoice->invoice_number }}/JRNL/UINSMDD/{{ $invoice->created_at->format('Y') }}
+                                                            <br>
+                                                            <span class="text-muted fs-7">
+                                                                ({{ $invoice->payment_percent }}%)
+                                                                - @money($invoice->payment_amount)
 
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-warning">Update</button>
-    </div>
-    </form>
-    </div>
-    </div>
-    </div>
-    <div class="modal fade" tabindex="-1" id="modal_delete_article_{{ $submission->submission_id }}">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Hapus Submission</h3>
-                    <!--begin::Close-->
-                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"
-                        aria-label="Close">
-                        <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
-                    </div>
-                    <!--end::Close-->
+                                                            </span>
+                                                        </th>
+                                                    </tr>
+                                                    <tr
+                                                        class="fw-semibold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                                        <th>Waktu</th>
+                                                        <th>Pembayar</th>
+                                                        <th>Metode Pembayaran</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @forelse ($invoice->payments as $payment)
+                                                        <tr>
+                                                            <td>
+                                                                {{ Carbon\Carbon::parse($payment->created_at)->translatedFormat('l, d F Y H:i:s') }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $payment->payment_account_name }}
+                                                            </td>
+                                                            <td>
+                                                                {{ $payment->payment_method }}
+                                                            </td>
+                                                            <td>
+                                                                @if ($payment->payment_status == 'pending')
+                                                                    <span
+                                                                        class="badge badge-light-warning fs-7 fw-bold">{{ $payment->payment_status }}</span>
+                                                                @elseif ($payment->payment_status == 'accepted')
+                                                                    <span
+                                                                        class="badge badge-light-success fs-7 fw-bold">{{ $payment->payment_status }}</span>
+                                                                @elseif ($payment->payment_status == 'rejected')
+                                                                    <span
+                                                                        class="badge badge-light-danger fs-7 fw-bold">{{ $payment->payment_status }}</span>
+                                                                @else
+                                                                    <span
+                                                                        class="badge badge-light-secondary fs-7 fw-bold">{{ $payment->payment_status }}</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr>
+                                                            <td colspan="4"
+                                                                class="text-center text-muted fw-semibold fs-6">
+                                                                Belum ada history pembayaran
+                                                            </td>
+                                                        </tr>
+                                                    @endforelse
+
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @endforeach --}}
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-warning">Update</button>
+                        </div>
+                    </form>
                 </div>
-                <form
-                    action="{{ route('back.journal.article.destroy', [$journal->url_path, $issue->id, $submission->id]) }}"
-                    method="POST">
-                    @method('DELETE')
-                    @csrf
-                    <div class="modal-body">
-                        <p>
-                            Apakah anda yakin ingin menghapus artikel ini dari edisi ini? <br>
-                            <span class="text-danger">
-                                <strong>Warning! </strong>
-                                Data yang sudah dihapus tidak dapat dikembalikan lagi.
-                            </span>
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-danger">Hapus</button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
-    <div class="modal fade" tabindex="-1" id="modal_action_article_{{ $submission->submission_id }}">
-        <div class="modal-dialog modal-md">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Menu</h3>
-                    <!--begin::Close-->
-                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"
-                        aria-label="Close">
-                        <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i>
+        <div class="modal fade" tabindex="-1" id="modal_delete_article_{{ $submission->ojs_submission_id }}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Hapus Submission</h3>
+                        <!--begin::Close-->
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"
+                            aria-label="Close">
+                            <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span
+                                    class="path2"></span></i>
+                        </div>
+                        <!--end::Close-->
                     </div>
-                    <!--end::Close-->
+                    <form
+                        action="{{ route('back.journal.article.destroy', [$journal->url_path, $issue->id, $submission->id]) }}"
+                        method="POST">
+                        @method('DELETE')
+                        @csrf
+                        <div class="modal-body">
+                            <p>
+                                Apakah anda yakin ingin menghapus artikel ini dari edisi ini? <br>
+                                <span class="text-danger">
+                                    <strong>Warning! </strong>
+                                    Data yang sudah dihapus tidak dapat dikembalikan lagi.
+                                </span>
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-danger">Hapus</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-body">
-                    @if ($journal->author_fee != 0)
+            </div>
+        </div>
+        <div class="modal fade" tabindex="-1" id="modal_action_article_{{ $submission->ojs_submission_id }}">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Menu</h3>
+                        <!--begin::Close-->
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"
+                            aria-label="Close">
+                            <i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span
+                                    class="path2"></span></i>
+                        </div>
+                        <!--end::Close-->
+                    </div>
+                    <div class="modal-body">
+                        @if ($journal->author_fee != 0)
+                            <div class="mb-10">
+                                <div class="mb-3">
+                                    <label class="d-flex align-items-center fs-5 fw-semibold">
+                                        <span class="required">Invoice</span>
+                                    </label>
+                                    <div class="fs-7 fw-semibold text-muted">
+                                        Tagihan 1 - 60% (@money($journal->author_fee * 0.6)) -
+                                        @php
+                                            $tagihan1 = $submission->paymentInvoices
+                                                ->where('payment_percent', 60)
+                                                ->first();
+                                        @endphp
+                                        @if ($tagihan1)
+                                            @if ($tagihan1->is_paid)
+                                                <span class="text-success fs-7 fw-bold">Lunas</span>
+                                            @else
+                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
+                                            @endif
+                                        @else
+                                            <span class="text-danger fw-bold">Belum Terbit</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="fv-row fv-plugins-icon-container mb-3">
+                                    <div class="d-flex">
+                                        <a href="{{ route('back.journal.invoice.mail-send1', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3 btn-loading">
+                                            <i class="ki-duotone ki-send fs-2 ">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Kirim ke Author
+                                        </a>
+                                        <a href="{{ route('back.journal.invoice.generate1', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3">
+                                            <i class="ki-duotone ki-file-down fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="fs-7 fw-semibold text-muted">
+                                        Tagihan 2 - 40% (@money($journal->author_fee * 0.4)) -
+                                        @php
+                                            $tagihan2 = $submission->paymentInvoices
+                                                ->where('payment_percent', 40)
+                                                ->first();
+                                        @endphp
+                                        @if ($tagihan2)
+                                            @if ($tagihan2->is_paid)
+                                                <span class="text-success fs-7 fw-bold">Lunas</span>
+                                            @else
+                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
+                                            @endif
+                                        @else
+                                            <span class="text-danger fw-bold">Belum Terbit</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="fv-row fv-plugins-icon-container mb-3">
+                                    <div class="d-flex">
+                                        <a href="{{ route('back.journal.invoice.mail-send2', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3 btn-loading">
+                                            <i class="ki-duotone ki-send fs-2 ">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Kirim ke Author
+                                        </a>
+                                        <a href="{{ route('back.journal.invoice.generate2', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3">
+                                            <i class="ki-duotone ki-file-down fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="fs-7 fw-semibold text-muted">
+                                        Tagihan 100% (@money($journal->author_fee)) -
+                                        @php
+                                            $tagihan3 = $submission->paymentInvoices
+                                                ->where('payment_percent', 100)
+                                                ->first();
+                                        @endphp
+                                        @if ($tagihan3)
+                                            @if ($tagihan3->is_paid)
+                                                <span class="text-success fs-7 fw-bold">Lunas</span>
+                                            @else
+                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
+                                            @endif
+                                        @else
+                                            <span class="text-danger fw-bold">Belum Terbit</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="fv-row fv-plugins-icon-container">
+                                    <div class="d-flex">
+                                        <a href="{{ route('back.journal.invoice.mail-send3', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3 btn-loading">
+                                            <i class="ki-duotone ki-send fs-2 ">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Kirim ke Author
+                                        </a>
+                                        <a href="{{ route('back.journal.invoice.generate3', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3">
+                                            <i class="ki-duotone ki-file-down fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                         <div class="mb-10">
                             <div class="mb-3">
+
                                 <label class="d-flex align-items-center fs-5 fw-semibold">
-                                    <span class="required">Invoice</span>
+                                    <span class="required">Letter of Acceptence (LOA)</span>
                                 </label>
                                 <div class="fs-7 fw-semibold text-muted">
-                                    Tagihan 1 - 60% (@money($journal->author_fee * 0.6)) -
-                                    @php
-                                        $tagihan1 = $submission->paymentInvoices->where('payment_percent', 60)->first();
-                                    @endphp
-                                    @if ($tagihan1)
-                                        @if ($tagihan1->is_paid)
-                                            <span class="text-success fs-7 fw-bold">Lunas</span>
-                                        @else
-                                            <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
-                                        @endif
-                                    @else
-                                        <span class="text-danger fw-bold">Belum Terbit</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="fv-row fv-plugins-icon-container mb-3">
-                                <div class="d-flex">
-                                    <a href="{{ route('back.journal.invoice.mail-send1', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3 btn-loading">
-                                        <i class="ki-duotone ki-send fs-2 ">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Kirim ke Author
-                                    </a>
-                                    <a href="{{ route('back.journal.invoice.generate1', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3">
-                                        <i class="ki-duotone ki-file-down fs-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Download
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="fs-7 fw-semibold text-muted">
-                                    Tagihan 2 - 40% (@money($journal->author_fee * 0.4)) -
-                                    @php
-                                        $tagihan2 = $submission->paymentInvoices->where('payment_percent', 40)->first();
-                                    @endphp
-                                    @if ($tagihan2)
-                                        @if ($tagihan2->is_paid)
-                                            <span class="text-success fs-7 fw-bold">Lunas</span>
-                                        @else
-                                            <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
-                                        @endif
-                                    @else
-                                        <span class="text-danger fw-bold">Belum Terbit</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="fv-row fv-plugins-icon-container mb-3">
-                                <div class="d-flex">
-                                    <a href="{{ route('back.journal.invoice.mail-send2', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3 btn-loading">
-                                        <i class="ki-duotone ki-send fs-2 ">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Kirim ke Author
-                                    </a>
-                                    <a href="{{ route('back.journal.invoice.generate2', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3">
-                                        <i class="ki-duotone ki-file-down fs-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Download
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="fs-7 fw-semibold text-muted">
-                                    Tagihan 100% (@money($journal->author_fee)) -
-                                    @php
-                                        $tagihan3 = $submission->paymentInvoices
-                                            ->where('payment_percent', 100)
-                                            ->first();
-                                    @endphp
-                                    @if ($tagihan3)
-                                        @if ($tagihan3->is_paid)
-                                            <span class="text-success fs-7 fw-bold">Lunas</span>
-                                        @else
-                                            <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
-                                        @endif
-                                    @else
-                                        <span class="text-danger fw-bold">Belum Terbit</span>
+                                    @if ($submission->charge == 0)
+                                        LOA dapat dikirim/download tanpa tagihan
+                                        {{-- @elseif ($check_lunas)
+                                    <span class="text-success">Tagihan sudah lunas, LOA dapat dikirim/download</span>
+                                @else
+                                    <span class="text-danger">Tagihan belum lunas, LOA tidak dapat dikirim/download</span> --}}
                                     @endif
                                 </div>
                             </div>
                             <div class="fv-row fv-plugins-icon-container">
-                                <div class="d-flex">
-                                    <a href="{{ route('back.journal.invoice.mail-send3', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3 btn-loading">
-                                        <i class="ki-duotone ki-send fs-2 ">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Kirim ke Author
-                                    </a>
-                                    <a href="{{ route('back.journal.invoice.generate3', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3">
-                                        <i class="ki-duotone ki-file-down fs-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Download
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                    <div class="mb-10">
-                        <div class="mb-3">
 
-                            <label class="d-flex align-items-center fs-5 fw-semibold">
-                                <span class="required">Letter of Acceptence (LOA)</span>
-                            </label>
-                            <div class="fs-7 fw-semibold text-muted">
                                 @if ($submission->charge == 0)
-                                    LOA dapat dikirim/download tanpa tagihan
-                                {{-- @elseif ($check_lunas)
-                                    <span class="text-success">Tagihan sudah lunas, LOA dapat dikirim/download</span>
+                                    <div class="d-flex">
+
+
+                                        <a href="{{ route('back.journal.loa.mail-send', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3 btn-loading">
+                                            <i class="ki-duotone ki-send fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Kirim ke Author
+                                        </a>
+                                        <a href="{{ route('back.journal.loa.generate', $submission->id) }}"
+                                            class="btn btn-light w-100 mx-3 ">
+                                            <i class="ki-duotone ki-file-down fs-2">
+                                                <span class="path1"></span>
+                                                <span class="path2"></span>
+                                            </i>
+                                            Download
+                                        </a>
+                                    </div>
                                 @else
-                                    <span class="text-danger">Tagihan belum lunas, LOA tidak dapat dikirim/download</span> --}}
-                                @endif
-                            </div>
-                        </div>
-                        <div class="fv-row fv-plugins-icon-container">
-
-                            @if ($submission->charge == 0)
-                                <div class="d-flex">
-
-
-                                    <a href="{{ route('back.journal.loa.mail-send', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3 btn-loading">
-                                        <i class="ki-duotone ki-send fs-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Kirim ke Author
-                                    </a>
-                                    <a href="{{ route('back.journal.loa.generate', $submission->id) }}"
-                                        class="btn btn-light w-100 mx-3 ">
-                                        <i class="ki-duotone ki-file-down fs-2">
-                                            <span class="path1"></span>
-                                            <span class="path2"></span>
-                                        </i>
-                                        Download
-                                    </a>
-                                </div>
-                            @else
-                                {{-- @if ($check_lunas)
+                                    {{-- @if ($check_lunas)
                                     <div class="d-flex">
 
 
@@ -678,14 +684,14 @@
                                         </a>
                                     </div>
                                 @endif --}}
-                            @endif
+                                @endif
 
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     @endforeach
 @endsection
 @section('scripts')
@@ -749,12 +755,12 @@
                                             <div class="d-flex flex-column mw-200px">
                                                 <div class="d-flex align-items-center mb-2">
                                                     ${submission.status == 1 ? `
-                                                                                        <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
-                                                                                        ` : submission.status == 3 ? `
-                                                                                        <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
-                                                                                        ` : submission.status == 4 ? `
-                                                                                        <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
-                                                                                        ` :
+                                                                                                    <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                    ` : submission.status == 3 ? `
+                                                                                                    <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                    ` : submission.status == 4 ? `
+                                                                                                    <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                    ` :
                                                     `<span class="badge badge-light-secondary fs-5 p-2">${submission.statusLabel}</span>`
                                                     }
                                                 </div>
