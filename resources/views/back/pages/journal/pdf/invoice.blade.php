@@ -8,7 +8,7 @@
 
         body {
             font-family: 'Roboto', Arial, sans-serif;
-            line-height: 1.5;
+            line-height: 1.45;
             padding: 30px;
         }
 
@@ -16,88 +16,145 @@
             text-align: center;
         }
 
+        .header {
+            margin-top: 105px;
+            text-align: center;
+        }
+
+        .invoice-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            text-decoration: underline;
+        }
+
+        .invoice-meta {
+            margin: 18px auto 0;
+            width: 100%;
+            max-width: 520px;
+            font-size: 14px;
+        }
+
+        .invoice-meta td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+
+        .content {
+            margin-top: 28px;
+            font-size: 15px;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 18px;
+        }
+
+        .detail-table td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+
+        .detail-label {
+            width: 180px;
+        }
+
+        .notice {
+            margin-top: 18px;
+        }
+
         .signature {
-            margin-top: 50px;
+            margin-top: 30px;
+            margin-left: auto;
+            width: 290px;
+            text-align: left;
+        }
+
+        .signature p {
+            margin: 0;
+            text-align: left;
+        }
+
+        .signature img {
+            display: block;
+            margin: 8px 0;
         }
     </style>
 </head>
 
 <body style="line-height: 1.3;">
     <div style="position: absolute; top: -33; left: -34; width: 113%; height: 109%; z-index: -1;">
-        <img src="{{ public_path('ext_images/bg_invoice.png') }}" style="width: 100%; height: 100%; object-fit: cover;"
+        <img src="{{ public_path('ext_images/template.png') }}" style="width: 100%; height: 100%; object-fit: cover;"
             alt="">
     </div>
-    <p style="top: 180px; left: 250px; position: absolute; font-size: 14px;">
-        Number: {{ $number }}/JRNL/UINSMDD/{{ $year }}
+    <h2 style="margin-top: 125px; font-weight: bold; text-decoration: underline;">INVOICE</h2>
+    <p style="top: 175px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
+        Number: {{ $number }}
     </p>
 
-    <div style="top: 200px;  position: absolute; font-size: 16px; padding: 0 28px;">
-        <p >
-            <table>
-                <tr style="line-height: 1;">
-                    <td style="width: 180px;">Name</td>
-                    <td style="width: 0px;">:</td>
-                    <td>FIRDAUS ANNAS, M.Kom</td>
-                </tr>
-                <tr style="line-height: 1;">
-                    <td>Position</td>
-                    <td>:</td>
-                    <td>Head office of Rumah Jurnal</td>
-                </tr>
-                <tr style="line-height: 1;">
-                    <td>Institution</td>
-                    <td>:</td>
-                    <td>UIN Sjech M. Djamil Djambek Bukittinggi</td>
-                </tr>
-            </table>
-            </p>
 
+    <div class="content">
         <p>
-            With this latter I inform that the article with a title of “<strong>{{ $title }}</strong>”
+            To:<br>
+            <b>{{ $name }}</b><br>
+            {{ $affiliation }}
         </p>
 
-        <p style="margin-top: -10px;">
-        <table>
-            <tr style="line-height: 1;">
-                <td style="width: 180px;">Author</td>
-                <td style="width: 0px;">:</td>
-                <td>{{ $name }}</td>
+        <p style="margin-bottom: 0">Dear Sir/Mam,</p>
+
+        <p style="margin-top: 2">
+            We hope this letter finds you well. Please find below the invoice details for the manuscript submission and
+            publication administration fee associated with your article.
+        </p>
+
+        <p>To the author of the following manuscript,</p>
+
+        <table class="detail-table">
+            <tr>
+                <td class="detail-label">Author Name</td>
+                <td style="width: 12px;">:</td>
+                <td>{{ $authorship }}</td>
             </tr>
-            <tr style="line-height: 1;">
-                <td>Affiliation</td>
+            <tr>
+                <td class="detail-label">Article Title</td>
                 <td>:</td>
-                <td>{{ $affiliation }}</td>
+                <td><strong>{{ $title }}</strong></td>
+            </tr>
+            <tr>
+                <td class="detail-label">Invoice Amount</td>
+                <td>:</td>
+                <td><strong>{{ $payment_percent . '%' }} - @money($payment_amount)</strong></td>
+            </tr>
+            <tr>
+                <td class="detail-label">Payment Deadline</td>
+                <td>:</td>
+                <td><strong>{{ $payment_due_date }}</strong></td>
             </tr>
         </table>
+
+        <p>
+            This invoice is issued for the article submission and publication administration fee related to
+            <strong>{{ $journal }}</strong>. Please complete the payment before the deadline stated above.
         </p>
 
-        <p style="margin-top: 20px;">
-            Has made an administration payment to {{ $journal }}
-            with an amount of <strong> {{ $payment_percent }}% - @money($payment_amount)</strong> Please transfer your payment via <strong>Bank
-                {{ $payment_account->bank }} - Nomor Rekening : {{ $payment_account->account_number }} - An.
-                {{ $payment_account->account_name }}.</strong> Payment Deadline is
-            <strong>{{ $payment_due_date }}.</strong>
+        <p class="notice">
+            Please complete the payment directly through the payment link below:
+            <a href="https://adm.makwafoundation.org/payment">https://adm.makwafoundation.org/payment</a>.
+            If you need assistance, please contact Mr. Fajri Rinaldi Chan via WhatsApp at +62 822-8835-8026.
         </p>
 
-        <p style="margin-top: -5px;">
-            If you have made a payment, please confirm the payment via the following url : <a
-                href="https://rumahjurnal.uinbukittinggi.ac.id/payment">https://rumahjurnal.uinbukittinggi.ac.id/payment</a>
-        </p>
-        <p style="margin-top: -5px;">
-            If you have anything to ask, please get in touch Mrs. Herlinda via WhatsApp
-            +62 813-9675-3128.
-        </p>
-        <p style="margin-top: -5px;">
-            With this, the latter is made for its purpose.
-        </p>
-
-    <div class="signature" style="position: absolute; bottom: 380; left: 278; ">
-        <p style="margin-bottom: -5px" >Bukittinggi, {{ $date }}</p>
-    </div>
+        <div class="signature">
+            <p>Padang, {{ $date }}</p>
+            <img style="height: 110px;" src="{{ public_path('ext_images/ttd.png') }}" alt="">
+            <p><strong>Fajri Rinaldi Chan, S.Pd., M.Kom</strong><br>
+                {{-- <small>Scopus ID. 57216153330</small> --}}
+            </p>
+        </div>
     </div>
 
-    <img style="position: absolute; bottom: -20; right: 10;  width: 100px;" src="{{ $journal_thumbnail }}"
-        alt="">
+    {{-- <img style="position: absolute; bottom: -20; right: 10;  width: 100px;" src="{{ $journal_thumbnail }}"
+        alt=""> --}}
 
 </body>
 

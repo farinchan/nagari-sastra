@@ -32,6 +32,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
     Route::get('/data/issue/{journal_id}', [App\Http\Controllers\Api\DataController::class, 'dataIssue'])->name('data.issue');
 
+    // Midtrans webhook for server-to-server callbacks
+    Route::post('/payment/midtrans/callback', [App\Http\Controllers\Api\MidtransWebhookController::class, 'handle'])->name('payment.midtrans.callback');
+
 });
 
 

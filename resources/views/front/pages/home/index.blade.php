@@ -14,7 +14,7 @@
 @endsection
 @section('content')
     <!-- HERO-4
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="hero-4" class="hero-section division">
         <div class="container">
 
@@ -83,7 +83,7 @@
 
 
     <!-- FEATURES-2
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="features-2" class="wide-60 features-section division">
         <div class="container">
 
@@ -176,7 +176,7 @@
 
 
     <!-- BLOG-1
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="blog-1" class="bg-lightgrey wide-60 reviews-section division">
         <div class="container">
 
@@ -265,7 +265,7 @@
 
 
     <!-- STATISTIC-4
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="statistic-4" class="bg-07 statistic-section division">
         <div class="container white-color">
             <div class="row">
@@ -336,7 +336,7 @@
 
 
     <!-- FEATURES-10
-                               ============================================= -->
+                                   ============================================= -->
     <section id="features-10" class="wide-40 features-section division">
         <div class="container">
 
@@ -391,7 +391,7 @@
 
 
     <!-- CONTENT-6
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="content-6" class="wide-60 content-section division">
         <div class="container">
             <div class="row d-flex align-items-center m-row">
@@ -448,7 +448,7 @@
 
 
     <!-- TESTIMONIALS-3
-                           ============================================= -->
+                               ============================================= -->
     <section id="reviews-3" class="wide-100 reviews-section division">
         <div class="container">
 

@@ -107,9 +107,7 @@ Route::prefix('journal')->name('journal.')->group(function () {
 
 Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/', [PaymentController::class, 'index'])->name('index');
-    Route::get('/{journal_path}/submission/{submission_id}', [PaymentController::class, 'submission'])->name('submission');
-    Route::get('/{journal_path}/submission/{submission_id}/pay', [PaymentController::class, 'pay'])->name('pay');
-    Route::post('/{journal_path}/submission/{submission_id}/pay', [PaymentController::class, 'payStore'])->name('pay.store');
+    Route::get('/{invoice_number}', [PaymentController::class, 'show'])->name('show');
 });
 
 Route::prefix('contact')->name('contact.')->group(function () {
@@ -229,29 +227,6 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/invoice/submission/{id}/custom', [BackJournalController::class, 'invoiceCustomStore'])->name('invoice.custom.store');
         Route::get('/invoice/custom/{invoice_id}/generate-custom', [BackJournalController::class, 'invoiceGenerateCustom'])->name('invoice.custom.generate');
         Route::get('/invoice/custom/{invoice_id}/mail-send-custom', [BackJournalController::class, 'invoiceMailSendCustom'])->name('invoice.custom.mail-send');
-
-
-
-        Route::get('/{journal_path}/issue/{issue_id}/editor', [BackJournalController::class, 'editorIndex'])->name('editor.index');
-        Route::get('/{journal_path}/issue/{issue_id}/editor/certificate-download/{id?}', [BackJournalController::class, 'editorCertificateDownload'])->name('editor.certificate.download');
-        Route::get('/{journal_path}/issue/{issue_id}/editor/certificate-send-mail/{id?}', [BackJournalController::class, 'editorCertificateSendMail'])->name('editor.certificate.send-mail');
-        Route::post('/{journal_path}/issue/{issue_id}/editor/file-sk', [BackJournalController::class, 'editorFileSkStore'])->name('editor.file-sk.store');
-        Route::get('/{journal_path}/issue/{issue_id}/editor/file-sk-send-mail/{email?}', [BackJournalController::class, 'editorFileSkSendMail'])->name('editor.file-sk.send-mail');
-        Route::post('/{journal_path}/issue/{issue_id}/editor/file-fee', [BackJournalController::class, 'editorFileFeeStore'])->name('editor.file-fee.store');
-        Route::get('/{journal_path}/issue/{issue_id}/editor/file-fee-send-mail/{email?}', [BackJournalController::class, 'editorFileFeeSendMail'])->name('editor.file-fee.send-mail');
-        Route::put('/{journal_path}/issue/{issue_id}/editor/{id}/update', [BackJournalController::class, 'editorUpdate'])->name('editor.update');
-        Route::delete('/{journal_path}/issue/{issue_id}/editor/{id}/delete', [BackJournalController::class, 'editorDestroy'])->name('editor.destroy');
-
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer', [BackJournalController::class, 'reviewerIndex'])->name('reviewer.index');
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer/export', [BackJournalController::class, 'reviewerExport'])->name('reviewer.export');
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer/certificate-download/{id?}', [BackJournalController::class, 'reviewerCertificateDownload'])->name('reviewer.certificate.download');
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer/certificate-send-mail/{id?}', [BackJournalController::class, 'reviewerCertificateSendMail'])->name('reviewer.certificate.send-mail');
-        Route::post('/{journal_path}/issue/{issue_id}/reviewer/file-sk', [BackJournalController::class, 'reviewerFileSkStore'])->name('reviewer.file-sk.store');
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer/file-sk-send-mail/{email?}', [BackJournalController::class, 'reviewerFileSkSendMail'])->name('reviewer.file-sk.send-mail');
-        Route::post('/{journal_path}/issue/{issue_id}/reviewer/file-fee', [BackJournalController::class, 'reviewerFileFeeStore'])->name('reviewer.file-fee.store');
-        Route::get('/{journal_path}/issue/{issue_id}/reviewer/file-fee-send-mail/{email?}', [BackJournalController::class, 'reviewerFileFeeSendMail'])->name('reviewer.file-fee.send-mail');
-        Route::put('/{journal_path}/issue/{issue_id}/reviewer/{id}/update', [BackJournalController::class, 'reviewerUpdate'])->name('reviewer.update');
-        Route::delete('/{journal_path}/issue/{issue_id}/reviewer/{id}/delete', [BackJournalController::class, 'reviewerDestroy'])->name('reviewer.destroy');
 
         Route::get('/{journal_path}/issue/{issue_id}/setting', [BackJournalController::class, 'settingIndex'])->name('setting.index');
     });

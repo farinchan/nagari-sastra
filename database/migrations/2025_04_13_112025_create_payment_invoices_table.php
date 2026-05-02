@@ -20,6 +20,11 @@ return new class extends Migration
             $table->boolean('is_custom')->default(false);
             $table->boolean('is_paid')->default(false);
             $table->foreignId('submission_id')->constrained()->onDelete('cascade');
+            $table->string('midtrans_transaction_id')->nullable();
+            $table->decimal('midtrans_gross_amount_paid', 15, 2)->nullable();
+            $table->string('midtrans_payment_method')->nullable();
+            $table->timestamp('midtrans_paid_at')->nullable();
+            $table->json('midtrans_response')->nullable();
             $table->timestamps();
         });
     }

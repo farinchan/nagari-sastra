@@ -55,9 +55,9 @@ class Submission extends Model
         $filtered = collect($authorsRaw)->map(function ($author) {
             return [
                 'id' => $author['id'] ?? '',
-                'name' => ($author['givenName'][$this->locale] ?? '') . ' ' . ($author['familyName'][$this->locale] ?? ''),
+                'name' => $author['fullName'] ?? ( ($author['givenName'][$this->locale] ?? '') . ' ' . ($author['familyName'][$this->locale] ?? '')) ?? '',
                 'email' => $author['email'] ?? null,
-                'affiliation' => $author['affiliation'][$this->locale] ?? '-',
+                'affiliation' => $author['affiliations'][0]['name'][$this->locale] ?? null,
             ];
         });
         return $filtered->values()->all();

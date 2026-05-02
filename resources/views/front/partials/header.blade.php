@@ -183,6 +183,7 @@
 
 
                         <!-- SIMPLE NAVIGATION LINK -->
+                        <li class="nl-simple" aria-haspopup="true"><a href="{{ route('payment.index') }}">Pembayaran Artikel</a></li>
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('contact.index') }}">Kontak</a></li>
 
                         @guest

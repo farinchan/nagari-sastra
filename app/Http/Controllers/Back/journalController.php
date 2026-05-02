@@ -3,25 +3,15 @@
 namespace App\Http\Controllers\Back;
 
 use App\Exports\articleIssueExport;
-use App\Exports\ReviewerExport;
 use App\Http\Controllers\Controller;
-use App\Mail\CertificateEditorMail;
-use App\Mail\CertificateReviewerMail;
-use App\Mail\FeeEditorMail;
-use App\Mail\FeeReviewerMail;
 use App\Mail\InvoiceMail;
 use App\Mail\LoaMail;
-use App\Mail\SkEditorMail;
-use App\Mail\SkReviewerMail;
 use App\Models\Editor;
-use App\Models\EditorFileIssue;
 use App\Models\Issue;
 use App\Models\Journal;
 use App\Models\PaymentAccount;
 use App\Models\PaymentInvoice;
 use App\Models\Reviewer;
-use App\Models\ReviewerData;
-use App\Models\ReviewerFileIssue;
 use App\Models\SettingWebsite;
 use App\Models\Submission;
 use App\Models\SubmissionEditor;
@@ -34,18 +24,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use RealRashid\SweetAlert\Facades\Alert;
 use ZipArchive;
 
 class journalController extends Controller
 {
-
     public function index($journal_path)
     {
         $journal = Journal::where('url_path', $journal_path)->with('issues.submissions')->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
         $data = [
@@ -53,16 +42,17 @@ class journalController extends Controller
             'breadcrumbs' => [
                 [
                     'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
+                    'link' => route('back.dashboard'),
                 ],
                 [
                     'name' => 'Journal',
-                    'link' => route('back.journal.index', $journal_path)
-                ]
+                    'link' => route('back.journal.index', $journal_path),
+                ],
             ],
             'journal_path' => $journal_path,
-            'journal' => $journal
+            'journal' => $journal,
         ];
+
         // return response()->json($data);
         return view('back.pages.journal.index', $data);
     }
@@ -84,16 +74,18 @@ class journalController extends Controller
 
         if ($validator->fails()) {
             Alert::error('Error', $validator->errors()->all());
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $journal->issues()->create($request->all());
         Alert::success('Success', 'Issue has been created');
+
         return redirect()->back();
     }
 
@@ -117,16 +109,17 @@ class journalController extends Controller
 
         if ($validator->fails()) {
             Alert::error('Error', $validator->errors()->all());
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = $journal->issues()->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
@@ -135,97 +128,100 @@ class journalController extends Controller
         );
         if ($request->hasFile('loa_template')) {
             $file = $request->file('loa_template');
-            $filename = Str::random(10) . '.' . $file->getClientOriginalExtension();
+            $filename = Str::random(10).'.'.$file->getClientOriginalExtension();
             $issue->loa_template = $file->storeAs('loa_template', $filename, 'public');
             $issue->save();
         }
         Alert::success('Success', 'Issue has been updated');
+
         return redirect()->back();
     }
 
     public function issueDestroy($journal_path, $issue_id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = $journal->issues()->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $issue->delete();
         Alert::success('Success', 'Issue has been deleted');
+
         return redirect()->route('back.journal.index', $journal_path);
     }
 
     public function dashboardIndex($journal_path, $issue_id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $data = [
-            'title' => "Vol. " . $issue->volume . " No. " . $issue->number . " (" . $issue->year . "): " . $issue->title,
+            'title' => 'Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.'): '.$issue->title,
             'breadcrumbs' => [
                 [
                     'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
+                    'link' => route('back.dashboard'),
                 ],
                 [
                     'name' => $journal->title,
-                    'link' => route('back.journal.index', $journal_path)
+                    'link' => route('back.journal.index', $journal_path),
                 ],
                 [
                     'name' => $issue->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ]
+                    'link' => route('back.journal.index', $journal_path),
+                ],
             ],
             'journal_path' => $journal_path,
             'journal' => $journal,
             'issue' => $issue,
             // 'submissions' => $issue->submissions->pluck('submission_id'),
         ];
+
         // return response()->json($data);
         return view('back.pages.journal.detail-dashboard', $data);
     }
 
-    //TODO: ARTCILE SECTION
+    // TODO: ARTCILE SECTION
 
     public function articleIndex($journal_path, $issue_id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with(['submissions'])->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $data = [
-            'title' => "Vol. " . $issue->volume . " No. " . $issue->number . " (" . $issue->year . "): " . $issue->title,
+            'title' => 'Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.'): '.$issue->title,
             'breadcrumbs' => [
                 [
                     'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
+                    'link' => route('back.dashboard'),
                 ],
                 [
                     'name' => $journal->title,
-                    'link' => route('back.journal.index', $journal_path)
+                    'link' => route('back.journal.index', $journal_path),
                 ],
                 [
                     'name' => $issue->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ]
+                    'link' => route('back.journal.index', $journal_path),
+                ],
             ],
             'journal_path' => $journal_path,
             'journal' => $journal,
@@ -234,6 +230,7 @@ class journalController extends Controller
             'reviewers' => Reviewer::where('issue_id', $issue_id)->get(),
             'submissions' => $issue->submissions,
         ];
+
         // return response()->json($data);
         return view('back.pages.journal.detail-article', $data);
     }
@@ -241,17 +238,17 @@ class journalController extends Controller
     public function articleUpdate(Request $request, $journal_path, $issue_id, $id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $submission = $issue->submissions()->find($id);
-        if (!$submission) {
+        if (! $submission) {
             return abort(404);
         }
 
@@ -265,13 +262,13 @@ class journalController extends Controller
 
         if ($validator->fails()) {
             Alert::error('Error', $validator->errors()->all());
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $submission->update([
             'free_charge' => $request->free_charge ? 1 : 0,
         ]);
-
 
         SubmissionReviewer::where('submission_id', $submission->id)->delete();
 
@@ -297,83 +294,62 @@ class journalController extends Controller
         }
 
         Alert::success('Success', 'Artcle has been updated');
+
         return redirect()->back();
     }
 
     public function articleDestroy($journal_path, $issue_id, $id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $submission = $issue->submissions()->find($id);
-        if (!$submission) {
+        if (! $submission) {
             return abort(404);
         }
 
         $submission->delete();
         Alert::success('Success', 'Article has been deleted');
+
         return redirect()->back();
     }
 
     public function articleExport($journal_path, $issue_id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
-        return Excel::download(new articleIssueExport($issue_id), 'Article-' . $issue->volume . '-' . $issue->number . '-' . $issue->year . '.xlsx');
-        // $issue = Issue::with(['submissions'])
-        //     ->where('id', $issue_id)
-        //     ->first()->submissions
-        //     ->map(function ($submissions) {
-        //         return [
-        //             'submission_id' => $submissions->id,
-        //             'authors' => $submissions->authorsString,
-        //             'title' => $submissions->FullTitle,
-        //             'status' => $submissions->status_label,
-        //             'url_published' => $submissions->urlPublished,
-        //             'editors' => $submissions->editors->map(function ($editor) {
-        //                 return [
-        //                     'name' => $editor->name,
-        //                     'email' => $editor->email,
-        //                 ];
-        //             }),
-        //             'reviewers' => $submissions->reviewers->map(function ($reviewer) {
-        //                 return [
-        //                     'name' => $reviewer->name,
-        //                     'email' => $reviewer->email,
-        //                 ];
-        //             }),
-        //         ];
-        //     });
+        return Excel::download(new articleIssueExport($issue_id), 'Article-'.$issue->volume.'-'.$issue->number.'-'.$issue->year.'.xlsx');
 
-        // return response()->json($issue);
     }
 
     public function loaGenerate($submission)
     {
         $submission = Submission::find($submission);
-        if (!$submission) {
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
@@ -381,54 +357,54 @@ class journalController extends Controller
 
         foreach ($submission->authors as $author) {
             $data = [
-                'number' => $submission->number ?? "0000",
+                'number' => $submission->number ?? '0000',
                 'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
                 'name' => $author['name'],
                 'affiliation' => $author['affiliation'],
                 'title' => $submission->fullTitle,
                 'journal' => $issue->journal->title,
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
+                'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
                 'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
+                'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
                 'chief_editor' => $issue->journal->editor_chief_name,
-                'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $issue->journal->editor_chief_signature))) : null,
+                'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
             ];
             $datas[] = $data;
 
-            // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
-            //     $files[] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
+            // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
+            //     $files[] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
             // } else {
             //     $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-            //     $path = 'arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
+            //     $path = 'arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
 
             //     Storage::disk('public')->put($path, $pdf->output());
             //     $files[] = $data['attachments'] = storage_path('app/public/' . $path);
             // }
 
             $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-            $path = 'arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
+            $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf';
 
             // Cek apakah file sudah ada di storage
-            if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
+            if (Storage::exists('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf')) {
                 // Jika maka hapus dari storage
-                Storage::disk('public')->delete('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
+                Storage::disk('public')->delete('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf');
             }
             Storage::disk('public')->put($path, $pdf->output());
-            $files[] = $data['attachments'] = storage_path('app/public/' . $path);
+            $files[] = $data['attachments'] = storage_path('app/public/'.$path);
         }
 
-        $zipFileName = 'LoA-' . $submission->submission_id . '.zip';
+        $zipFileName = 'LoA-'.$submission->ojs_submission_id.'.zip';
         $zip = new ZipArchive;
 
         // Temporary path buat zip-nya
-        $zipPath = storage_path('app/temp/' . $zipFileName);
+        $zipPath = storage_path('app/temp/'.$zipFileName);
 
         // Pastikan folder temp ada
-        if (!file_exists(storage_path('app/temp'))) {
+        if (! file_exists(storage_path('app/temp'))) {
             mkdir(storage_path('app/temp'), 0777, true);
         }
 
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach ($files as $file) {
                 $filePath = $file;
                 if (file_exists($filePath)) {
@@ -439,6 +415,7 @@ class journalController extends Controller
             $zip->close();
         } else {
             Alert::error('Error', 'Failed to create zip file');
+
             return redirect()->back()->with('error', 'Failed to create zip file');
         }
 
@@ -448,56 +425,58 @@ class journalController extends Controller
     public function loaMailSend($submission)
     {
         $submission = Submission::find($submission);
-        if (!$submission) {
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
         foreach ($submission->authors as $author) {
             if ($author['email']) {
                 $data = [
-                    'subject' => 'Letter of Acceptance (LoA) for ' . $author['name'],
-                    'number' => $submission->number ?? "0000",
+                    'subject' => 'Letter of Acceptance (LoA) for '.$author['name'],
+                    'number' => $submission->number ?? '0000',
                     'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
                     'name' => $author['name'],
                     'email' => $author['email'],
                     'affiliation' => $author['affiliation'],
                     'title' => $submission->fullTitle,
                     'journal' => $issue->journal->title,
-                    'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
+                    'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
                     'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                    'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
+                    'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
                     'chief_editor' => $issue->journal->editor_chief_name,
-                    'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $issue->journal->editor_chief_signature))) : null,
+                    'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
                     'setting_web' => SettingWebsite::first(),
                 ];
 
-                // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
-                //     $data['attachments'] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
+                // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
+                //     $data['attachments'] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
                 // } else {
                 //     $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-                //     $path = 'arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
+                //     $path = 'arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
 
                 //     Storage::disk('public')->put($path, $pdf->output());
                 //     $data['attachments'] = $data['attachments'] = storage_path('app/public/' . $path);
                 // }
 
                 $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-                $path = 'arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
+                $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf';
 
                 // Cek apakah file sudah ada di storage
-                if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
+                if (Storage::exists('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf')) {
                     // Jika maka hapus dari storage
-                    Storage::disk('public')->delete('arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
+                    Storage::disk('public')->delete('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf');
                 }
                 Storage::disk('public')->put($path, $pdf->output());
-                $files[] = $data['attachments'] = storage_path('app/public/' . $path);
+                $files[] = $data['attachments'] = storage_path('app/public/'.$path);
 
                 $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
                 if ($mailEnvirontment == 'production') {
@@ -512,27 +491,28 @@ class journalController extends Controller
         $this->sendLoaWhatsappNotification($submission->id);
 
         Alert::success('Success', 'Email has been sent');
+
         return redirect()->back();
     }
-
-
 
     public function invoiceGenerate($submission)
     {
         $submission = Submission::find($submission);
-        if (!$submission) {
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $invoice = $submission->paymentInvoices()->where('payment_percent', '100')->first();
-        if (!$invoice) {
+        $invoice = $submission->paymentInvoices()->first();
+        if (! $invoice) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
                 ->orderBy('invoice_number', 'desc')
@@ -551,80 +531,70 @@ class journalController extends Controller
             ]);
         }
 
-        $files = [];
-        foreach ($submission->authors as $author) {
-            $data = [
-                'number' => $invoice->invoice_number ?? "0000",
-                'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                'name' => $author['name'],
-                'affiliation' => $author['affiliation'],
-                'title' => $submission->fullTitle,
-                'journal' => $issue->journal->title,
-                'payment_percent' => $invoice->payment_percent,
-                'payment_amount' => $invoice->payment_amount,
-                'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                'id' => $submission->submission_id,
-                'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-            ];
+        // Get first author only
+        $author = $submission->authors[0] ?? null;
+        if (! $author) {
+            Alert::error('Error', 'No authors found');
 
-            if (Storage::exists('arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf')) {
-                $files[] = storage_path('app/public/arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf');
-            } else {
-                $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-                $path = 'arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf';
-
-                Storage::disk('public')->put($path, $pdf->output());
-                $files[] = $data['attachments'] = storage_path('app/public/' . $path);
-            }
+            return redirect()->back()->with('error', 'No authors found');
         }
 
-        $zipFileName = 'INVOICE-' . $submission->submission_id . '.zip';
-        $zip = new ZipArchive;
+        $data = [
+            'number' => format_nomor($invoice->invoice_number, 'INV', 'TR', $invoice->created_at->month, $invoice->created_at->year),
+            'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
+            'name' => $author['name'],
+            'affiliation' => $author['affiliation'],
+            'authorship' => collect($submission->authors)->map(function ($author) {
+                return $author['name'];
+            })->implode(', '),
+            'title' => $submission->fullTitle,
+            'authorString' => $submission->authorsString,
+            'journal' => $issue->journal->title,
+            'payment_percent' => $invoice->payment_percent,
+            'payment_amount' => $invoice->payment_amount,
+            'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
+            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            'id' => $submission->ojs_submission_id,
+        ];
 
-        // Temporary path buat zip-nya
-        $zipPath = storage_path('app/temp/' . $zipFileName);
+        // Check if file exists
+        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+        $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
-        // Pastikan folder temp ada
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0777, true);
-        }
-
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($files as $file) {
-                $filePath = $file;
-                if (file_exists($filePath)) {
-                    // Add file ke zip (hanya nama file saja di dalam zip)
-                    $zip->addFile($filePath, basename($file));
-                }
-            }
-            $zip->close();
+        if (Storage::exists($storagePath.$fileName)) {
+            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
         } else {
-            Alert::error('Error', 'Failed to create zip file');
-            return redirect()->back()->with('error', 'Failed to create zip file');
-        }
+            // Create directory if not exists
+            if (! Storage::exists($storagePath)) {
+                Storage::makeDirectory($storagePath, 0777, true, true);
+            }
 
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+            $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
+            Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+
+            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
+        }
     }
 
     public function invoiceMailSend($submission)
     {
         $submission = Submission::find($submission);
-        if (!$submission) {
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
-        // Load PPTX template
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $invoice = $submission->paymentInvoices()->where('payment_percent', '100')->first();
-        if (!$invoice) {
+        $invoice = $submission->paymentInvoices()->first();
+        if (! $invoice) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
                 ->orderBy('invoice_number', 'desc')
@@ -643,40 +613,49 @@ class journalController extends Controller
             ]);
         }
 
-        foreach ($submission->authors as $author) {
-            try {
-                if ($author['email']) {
-                    $data = [
-                        'subject' => 'Invoice for ' . $author['name'],
-                        'number' => $invoice->invoice_number ?? "0000",
-                        'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                        'authorString' => $submission->authorsString,
-                        'name' => $author['name'],
-                        'email' => $author['email'],
-                        'affiliation' => $author['affiliation'],
-                        'title' => $submission->fullTitle,
-                        'journal' => $issue->journal->title,
-                        'journal_path' => $issue->journal->url_path,
-                        'payment_percent' => $invoice->payment_percent,
-                        'payment_amount' => $invoice->payment_amount,
-                        'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
-                        'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                        'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                        'id' => $submission->submission_id,
-                        'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                        'payment_account' => PaymentAccount::first(),
-                        'setting_web' => SettingWebsite::first(),
-                    ];
-                    if (Storage::exists('arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf')) {
-                        $data['attachments'] = storage_path('app/public/arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf');
-                    } else {
-                        $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-                        $path = 'arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf';
+        // Get first author only
+        $author = $submission->authors[0] ?? null;
+        if (! $author) {
+            Alert::error('Error', 'No authors found');
 
-                        Storage::disk('public')->put($path, $pdf->output());
-                        $data['attachments'] = storage_path('app/public/' . $path);
+            return redirect()->back()->with('error', 'No authors found');
+        }
+
+        try {
+            if ($author['email']) {
+                $data = [
+                    'number' => $invoice->invoice_number ?? '0000',
+                    'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
+                    'name' => $author['name'],
+                    'affiliation' => $author['affiliation'],
+                    'title' => $submission->fullTitle,
+                    'authorString' => $submission->authorsString,
+                    'journal' => $issue->journal->title,
+                    'payment_percent' => $invoice->payment_percent,
+                    'payment_amount' => $invoice->payment_amount,
+                    'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
+                    'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+                    'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+                    'id' => $submission->ojs_submission_id,
+                ];
+
+                // Check if file exists
+                $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+                $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
+
+                if (Storage::exists($storagePath.$fileName)) {
+                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
+                } else {
+                    // Create directory if not exists
+                    if (! Storage::exists($storagePath)) {
+                        Storage::makeDirectory($storagePath, 0777, true, true);
                     }
+
+                    $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
+                    Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
                 }
+
                 $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
                 if ($mailEnvirontment == 'production') {
                     Mail::to($author['email'])->send(new InvoiceMail($data));
@@ -684,13 +663,15 @@ class journalController extends Controller
                     // For testing purpose
                     Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new InvoiceMail($data));
                 }
-            } catch (\Throwable $th) {
-                //throw $th;
             }
+        } catch (\Throwable $th) {
+            // throw $th;
         }
+
         $this->sendInvoiceWhatsappNotification($invoice->id);
 
         Alert::success('Success', 'Email has been sent');
+
         return redirect()->back();
     }
 
@@ -706,18 +687,21 @@ class journalController extends Controller
 
         if ($validator->fails()) {
             Alert::error('Error', $validator->errors()->all());
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
         $submission = Submission::find($submission);
-        if (!$submission) {
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
@@ -726,10 +710,11 @@ class journalController extends Controller
             ->first();
         if ($invoice && $invoice->is_paid) {
             Alert::error('Error', 'Tagihan custom sudah lunas');
+
             return redirect()->back();
         }
 
-        if (!$invoice) {
+        if (! $invoice) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
                 ->orderBy('invoice_number', 'desc')
@@ -757,148 +742,144 @@ class journalController extends Controller
         }
 
         Alert::success('Success', 'Tagihan custom berhasil disimpan');
+
         return redirect()->back();
     }
 
     public function invoiceGenerateCustom($invoiceId)
     {
         $invoice = PaymentInvoice::find($invoiceId);
-        if (!$invoice || !$invoice->is_custom) {
+        if (! $invoice || ! $invoice->is_custom) {
             Alert::error('Error', 'Custom invoice not found');
+
             return redirect()->back()->with('error', 'Custom invoice not found');
         }
 
-        $submission = Submission::find($invoice->submission_id);
-        if (!$submission) {
+        $submission = Submission::find($invoice->ojs_submission_id);
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $files = [];
-        foreach ($submission->authors as $author) {
-            $data = [
-                'number' => $invoice->invoice_number ?? "0000",
-                'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                'month' => Carbon::now()->format('m'),
-                'submission_id' => $submission->submission_id,
-                'name' => $author['name'],
-                'affiliation' => $author['affiliation'],
-                'title' => $submission->fullTitle,
-                'journal' => $issue->journal->title,
-                'payment_percent' => $invoice->payment_percent,
-                'payment_amount' => $invoice->payment_amount,
-                'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                'id' => $submission->submission_id,
-                'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                'payment_account' => PaymentAccount::first(),
-                'is_custom' => true,
-            ];
+        // Get first author only
+        $author = $submission->authors[0] ?? null;
+        if (! $author) {
+            Alert::error('Error', 'No authors found');
 
-            if (Storage::exists('arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf')) {
-                $files[] = storage_path('app/public/arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf');
-            } else {
-                $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-                $path = 'arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf';
-
-                Storage::disk('public')->put($path, $pdf->output());
-                $files[] = $data['attachments'] = storage_path('app/public/' . $path);
-            }
+            return redirect()->back()->with('error', 'No authors found');
         }
 
-        $zipFileName = 'INVOICE-' . $submission->submission_id . '.zip';
-        $zip = new ZipArchive;
+        $data = [
+            'number' => $invoice->invoice_number ?? '0000',
+            'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
+            'name' => $author['name'],
+            'authorship' => $submission->authors->pluck('name')->implode(', '),
+            'affiliation' => $author['affiliation'],
+            'title' => $submission->fullTitle,
+            'authorString' => $submission->authorsString,
+            'journal' => $issue->journal->title,
+            'payment_percent' => $invoice->payment_percent,
+            'payment_amount' => $invoice->payment_amount,
+            'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
+            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            'id' => $submission->ojs_submission_id,
+        ];
 
-        // Temporary path buat zip-nya
-        $zipPath = storage_path('app/temp/' . $zipFileName);
+        // Check if file exists
+        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+        $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
-        // Pastikan folder temp ada
-        if (!file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0777, true);
-        }
-
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            foreach ($files as $file) {
-                $filePath = $file;
-                if (file_exists($filePath)) {
-                    // Add file ke zip (hanya nama file saja di dalam zip)
-                    $zip->addFile($filePath, basename($file));
-                }
-            }
-            $zip->close();
+        if (Storage::exists($storagePath.$fileName)) {
+            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
         } else {
-            Alert::error('Error', 'Failed to create zip file');
-            return redirect()->back()->with('error', 'Failed to create zip file');
-        }
+            // Create directory if not exists
+            if (! Storage::exists($storagePath)) {
+                Storage::makeDirectory($storagePath, 0777, true, true);
+            }
 
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+            $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
+            Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+
+            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
+        }
     }
 
     public function invoiceMailSendCustom($invoiceId)
     {
         $invoice = PaymentInvoice::find($invoiceId);
-        if (!$invoice || !$invoice->is_custom) {
+        if (! $invoice || ! $invoice->is_custom) {
             Alert::error('Error', 'Custom invoice not found');
+
             return redirect()->back()->with('error', 'Custom invoice not found');
         }
 
-        $submission = Submission::find($invoice->submission_id);
-        if (!$submission) {
+        $submission = Submission::find($invoice->ojs_submission_id);
+        if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
-        if (!$issue) {
+        if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        foreach ($submission->authors as $author) {
-            try {
-                if ($author['email']) {
-                    $data = [
-                        'subject' => 'Invoice for ' . $author['name'],
-                        'number' => $invoice->invoice_number ?? "0000",
-                        'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                        'month' => Carbon::now()->format('m'),
-                        'submission_id' => $submission->submission_id,
-                        'authorString' => $submission->authorsString,
-                        'name' => $author['name'],
-                        'email' => $author['email'],
-                        'affiliation' => $author['affiliation'],
-                        'title' => $submission->fullTitle,
-                        'journal' => $issue->journal->title,
-                        'journal_path' => $issue->journal->url_path,
-                        'payment_percent' => $invoice->payment_percent,
-                        'payment_amount' => $invoice->payment_amount,
-                        'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
-                        'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                        'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                        'id' => $submission->submission_id,
-                        'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                        'payment_account' => PaymentAccount::first(),
-                        'setting_web' => SettingWebsite::first(),
-                        'is_custom' => true,
-                    ];
+        // Get first author only
+        $author = $submission->authors[0] ?? null;
+        if (! $author) {
+            Alert::error('Error', 'No authors found');
 
-                    if (Storage::exists('arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf')) {
-                        $data['attachments'] = storage_path('app/public/arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf');
-                    } else {
-                        $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-                        $path = 'arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id . '-' . $author['id'] . '.pdf';
+            return redirect()->back()->with('error', 'No authors found');
+        }
 
-                        Storage::disk('public')->put($path, $pdf->output());
-                        $data['attachments'] = storage_path('app/public/' . $path);
+        try {
+            if ($author['email']) {
+                $data = [
+                    'number' => $invoice->invoice_number ?? '0000',
+                    'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
+                    'name' => $author['name'],
+                    'affiliation' => $author['affiliation'],
+                    'title' => $submission->fullTitle,
+                    'authorString' => $submission->authorsString,
+                    'journal' => $issue->journal->title,
+                    'payment_percent' => $invoice->payment_percent,
+                    'payment_amount' => $invoice->payment_amount,
+                    'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
+                    'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+                    'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+                    'id' => $submission->ojs_submission_id,
+                    'is_custom' => true,
+                ];
+
+                // Check if file exists
+                $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+                $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
+
+                if (Storage::exists($storagePath.$fileName)) {
+                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
+                } else {
+                    // Create directory if not exists
+                    if (! Storage::exists($storagePath)) {
+                        Storage::makeDirectory($storagePath, 0777, true, true);
                     }
+
+                    $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
+                    Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
                 }
+
                 $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
                 if ($mailEnvirontment == 'production') {
                     Mail::to($author['email'])->send(new InvoiceMail($data));
@@ -906,1434 +887,205 @@ class journalController extends Controller
                     // For testing purpose
                     Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new InvoiceMail($data));
                 }
-            } catch (\Throwable $th) {
-                //throw $th;
             }
+        } catch (\Throwable $th) {
+            // throw $th;
         }
+
         $this->sendInvoiceWhatsappNotification($invoice->id);
 
         Alert::success('Success', 'Email has been sent');
+
         return redirect()->back();
     }
 
-    //TODO: EDITOR SECTION
-
-    public function editorIndex($journal_path, $issue_id)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with(['submissions', 'editors', 'reviewers'])->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $data = [
-            'title' => "Vol. " . $issue->volume . " No. " . $issue->number . " (" . $issue->year . "): " . $issue->title,
-            'breadcrumbs' => [
-                [
-                    'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
-                ],
-                [
-                    'name' => $journal->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ],
-                [
-                    'name' => $issue->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ]
-            ],
-            'journal_path' => $journal_path,
-            'journal' => $journal,
-            'issue' => $issue,
-            'file_sk' => EditorFileIssue::where('issue_id', $issue_id)->where('file_type', 'sk')->first(),
-            'file_certificate' => EditorFileIssue::where('issue_id', $issue_id)->where('file_type', 'certificate')->first(),
-            'file_fee' => EditorFileIssue::where('issue_id', $issue_id)->where('file_type', 'fee')->first(),
-            'setting_web' => SettingWebsite::first(),
-            // 'submissions' => $issue->submissions->pluck('submission_id'),
-        ];
-        // return response()->json($data);
-        return view('back.pages.journal.detail-editor', $data);
-    }
-
-    public function editorCertificateDownload(Request $request, $journal_path, $issue_id, ?int $id = null)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        if ($id) {
-            $editor = Editor::where('issue_id', $issue_id)->find($id);
-            if (!$editor) {
-                Alert::error('Error', 'Editor not found');
-                return redirect()->back();
-            }
-
-            if (!$editor->number) {
-                // Generate number if not exists
-                $year = Carbon::now()->year;
-                $last = Editor::whereYear('created_at', $year)
-                    ->orderBy('number', 'desc')
-                    ->first();
-                $newNumber = $last ? $last->number + 1 : 1;
-
-                // Format jadi 4 digit
-                $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                $editor->number = $formattedNumber;
-                $editor->save();
-            }
-
-            $data = [
-                'number' =>  $editor->number ?? "0000",
-                'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                    1 => 'I',
-                    2 => 'II',
-                    3 => 'III',
-                    4 => 'IV',
-                    5 => 'V',
-                    6 => 'VI',
-                    7 => 'VII',
-                    8 => 'VIII',
-                    9 => 'IX',
-                    10 => 'X',
-                    11 => 'XI',
-                    12 => 'XII'
-                ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                'year' => \Carbon\Carbon::now()->format('Y'),
-                'name' => $editor->name,
-                'affiliation' => $editor->affiliation,
-                'journal' => $issue->journal->title,
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-            ];
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-editor', $data)->setPaper('A4', 'landscape');
-            $path = 'arsip/certificate/editor/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-editor-' . $editor->editor_id . '-' . $editor->id . '.pdf';
-
-            return $pdf->stream();
-            // // Cek apakah file sudah ada di storage
-            if (Storage::exists('public/' . $path)) {
-                // Jika ada, kembalikan file tersebut
-                return response()->download(storage_path('app/public/' . $path));
-            } else {
-                // Jika tidak ada, simpan file baru
-                Storage::disk('public')->put($path, $pdf->output());
-                return response()->download(storage_path('app/public/' . $path));
-            }
-        } else {
-            $editors = Editor::where('issue_id', $issue_id)->get();
-            if (!$editors) {
-                Alert::error('Error', 'Editor not found');
-                return redirect()->back();
-            }
-            $files = [];
-            foreach ($editors as $editor) {
-                if (!$editor->number) {
-                    // Generate number if not exists
-                    $year = Carbon::now()->year;
-                    $last = Editor::whereYear('created_at', $year)
-                        ->orderBy('number', 'desc')
-                        ->first();
-                    $newNumber = $last ? $last->number + 1 : 1;
-
-                    // Format jadi 4 digit
-                    $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                    $editor->number = $formattedNumber;
-                    $editor->save();
-                }
-                $data = [
-                    'number' =>  $editor->number ?? "0000",
-                    'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                    'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                        1 => 'I',
-                        2 => 'II',
-                        3 => 'III',
-                        4 => 'IV',
-                        5 => 'V',
-                        6 => 'VI',
-                        7 => 'VII',
-                        8 => 'VIII',
-                        9 => 'IX',
-                        10 => 'X',
-                        11 => 'XI',
-                        12 => 'XII'
-                    ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                    'year' => \Carbon\Carbon::now()->format('Y'),
-                    'name' => $editor->name,
-                    'affiliation' => $editor->affiliation,
-                    'journal' => $issue->journal->title,
-                    'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                ];
-
-                $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-editor', $data)->setPaper('A4', 'landscape');
-                $path = 'arsip/certificate/editor/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-editor-' . $editor->editor_id . '-' . $editor->id . '.pdf';
-
-                // Cek apakah file sudah ada di storage
-                if (Storage::exists('public/' . $path)) {
-                    // Jika ada, kembalikan file tersebut
-                    $files[] = storage_path('app/public/' . $path);
-                } else {
-                    // Jika tidak ada, simpan file baru
-                    Storage::disk('public')->put($path, $pdf->output());
-                    $files[] = storage_path('app/public/' . $path);
-                }
-            }
-
-            $zipFileName = 'CERTIFICATE-EDITOR-' . $issue->journal->url_path . '-' . $issue->year . '-' . $issue->volume . '-' . $issue->number . '.zip';
-            $zip = new ZipArchive;
-
-            // Temporary path buat zip-nya
-            $zipPath = storage_path('app/temp/' . $zipFileName);
-
-            // Pastikan folder temp ada
-            if (!file_exists(storage_path('app/temp'))) {
-                mkdir(storage_path('app/temp'), 0777, true);
-            }
-
-            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-                foreach ($files as $file) {
-                    $filePath = $file;
-                    if (file_exists($filePath)) {
-                        // Add file ke zip (hanya nama file saja di dalam zip)
-                        $zip->addFile($filePath, basename($file));
-                    }
-                }
-                $zip->close();
-            } else {
-                Alert::error('Error', 'Failed to create zip file');
-                return redirect()->back()->with('error', 'Failed to create zip file');
-            }
-
-            return response()->download($zipPath)->deleteFileAfterSend(true);
-        }
-    }
-
-    public function editorCertificateSendmail(Request $request, $journal_path, $issue_id, ?int $id = null)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        if ($id) {
-            $editor = Editor::where('issue_id', $issue_id)->find($id);
-            if (!$editor) {
-                Alert::error('Error', 'Editor not found');
-                return redirect()->back();
-            }
-
-            if (!$editor->number) {
-                // Generate number if not exists
-                $year = Carbon::now()->year;
-                $last = Editor::whereYear('created_at', $year)
-                    ->orderBy('number', 'desc')
-                    ->first();
-                $newNumber = $last ? $last->number + 1 : 1;
-
-                // Format jadi 4 digit
-                $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                $editor->number = $formattedNumber;
-                $editor->save();
-            }
-
-            $data = [
-                'subject' => 'Certificate Editor - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-                'number' =>  $editor->number ?? "0000",
-                'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                    1 => 'I',
-                    2 => 'II',
-                    3 => 'III',
-                    4 => 'IV',
-                    5 => 'V',
-                    6 => 'VI',
-                    7 => 'VII',
-                    8 => 'VIII',
-                    9 => 'IX',
-                    10 => 'X',
-                    11 => 'XI',
-                    12 => 'XII'
-                ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                'year' => \Carbon\Carbon::now()->format('Y'),
-                'name' => $editor->name,
-                'affiliation' => $editor->affiliation,
-                'journal' => $issue->journal->title,
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                'setting_web' => SettingWebsite::first(),
-                'email' => $editor->email,
-            ];
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-editor', $data)->setPaper('A4', 'landscape');
-
-            // Cek apakah file sudah ada di storage
-            $path = 'arsip/certificate/editor/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-editor-' . $editor->editor_id . '-' . $editor->id . '.pdf';
-            if (Storage::exists('public/' . $path)) {
-                // Jika ada, kembalikan file tersebut
-                $data['attachments'] = storage_path('app/public/' . $path);
-            } else {
-                // Jika tidak ada, simpan file baru
-                Storage::disk('public')->put($path, $pdf->output());
-                $data['attachments'] = storage_path('app/public/' . $path);
-            }
-
-            $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-            if ($mailEnvirontment == 'production') {
-                Mail::to($data['email'])->send(new CertificateEditorMail($data));
-            } else {
-                // For testing purpose
-                Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new CertificateEditorMail($data));
-            }
-
-            Alert::success('Success', 'email has been sent');
-            return redirect()->back();
-        } else {
-            $editors = Editor::where('issue_id', $issue_id)->get();
-            if (!$editors) {
-                Alert::error('Error', 'Editor not found');
-                return redirect()->back();
-            }
-
-            foreach ($editors as $editor) {
-                if (!$editor->number) {
-                    // Generate number if not exists
-                    $year = Carbon::now()->year;
-                    $last = Editor::whereYear('created_at', $year)
-                        ->orderBy('number', 'desc')
-                        ->first();
-                    $newNumber = $last ? $last->number + 1 : 1;
-
-                    // Format jadi 4 digit
-                    $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                    $editor->number = $formattedNumber;
-                    $editor->save();
-                }
-                $data = [
-                    'subject' => 'Certificate Editor - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-                    'number' =>  $editor->number ?? "0000",
-                    'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                    'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                        1 => 'I',
-                        2 => 'II',
-                        3 => 'III',
-                        4 => 'IV',
-                        5 => 'V',
-                        6 => 'VI',
-                        7 => 'VII',
-                        8 => 'VIII',
-                        9 => 'IX',
-                        10 => 'X',
-                        11 => 'XI',
-                        12 => 'XII'
-                    ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                    'year' => \Carbon\Carbon::now()->format('Y'),
-                    'name' => $editor->name,
-                    'affiliation' => $editor->affiliation,
-                    'journal' => $issue->journal->title,
-                    'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                    'setting_web' => SettingWebsite::first(),
-                    'email' => $editor->email,
-                ];
-
-                $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-editor', $data)->setPaper('A4', 'landscape');
-
-                // Cek apakah file sudah ada di storage
-                $path = 'arsip/certificate/editor/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-editor-' . $editor->editor_id . '-' . $editor->id . '.pdf';
-                if (Storage::exists('public/' . $path)) {
-                    // Jika ada, kembalikan file tersebut
-                    $data['attachments'] = storage_path('app/public/' . $path);
-                } else {
-                    // Jika tidak ada, simpan file baru
-                    Storage::disk('public')->put($path, $pdf->output());
-                    $data['attachments'] = storage_path('app/public/' . $path);
-                }
-
-                $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-                if ($mailEnvirontment == 'production') {
-                    Mail::to($data['email'])->send(new CertificateEditorMail($data));
-                } else {
-                    // For testing purpose
-                    Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new CertificateEditorMail($data));
-                }
-            }
-
-            Alert::success('Success', 'email has been sent');
-            return redirect()->back();
-        }
-    }
-
-
-    public function editorFileSkStore(Request $request, $journal_path, $issue_id)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:pdf|max:10240',
-        ], [
-            'file.required' => 'File harus diisi',
-            'file.mimes' => 'File harus berupa pdf',
-            'file.max' => 'File tidak boleh lebih dari 10 MB',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $file = $request->file('file');
-        $filename = Str::random(10) . '.' . $file->getClientOriginalExtension();
-        EditorFileIssue::updateOrCreate(
-            ['issue_id' => $issue_id, 'file_type' => 'sk'],
-            ['file' => $file->storeAs('editor_file/sk', $filename, 'public')]
-        );
-
-        Alert::success('Success', 'File has been uploaded');
-        return redirect()->back();
-    }
-
-    public function editorFileSkSendMail(Request $request, $journal_path, $issue_id, ?string $email = null)
-    {
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $editor = Editor::where('issue_id', $issue_id)->get();
-        if (!$editor) {
-            Alert::error('Error', 'Editor not found');
-            return redirect()->back();
-        }
-
-        $file = EditorFileIssue::where('issue_id', $issue_id)->where('file_type', 'sk')->first();
-        if (!$file) {
-            Alert::error('Error', 'File not found');
-            return redirect()->back();
-        }
-
-        $data = [
-            'subject' => 'SK Editor - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-            'journal' => $issue->journal->title,
-            'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-            'attachments' => storage_path('app/public/' . $file->file),
-            'setting_web' => SettingWebsite::first(),
-        ];
-
-        $emailAddress = [];
-        if ($request->email) {
-            $emailAddress = $email;
-        } else {
-            foreach ($editor as $editors) {
-                if ($editors->email) {
-                    $emailAddress[] = $editors->email;
-                }
-            }
-        }
-
-        $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-        if ($mailEnvirontment == 'production') {
-            Mail::to($emailAddress)->send(new SkEditorMail($data));
-        } else {
-            // For testing purpose
-            Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new SkEditorMail($data));
-        }
-
-        Alert::success('Success', 'email has been sent');
-        return redirect()->back();
-    }
-
-
-    public function editorFileFeeStore(Request $request, $journal_path, $issue_id)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:pdf|max:10240',
-        ], [
-            'file.required' => 'File harus diisi',
-            'file.mimes' => 'File harus berupa pdf',
-            'file.max' => 'File tidak boleh lebih dari 10 MB',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $file = $request->file('file');
-        $filename = Str::random(10) . '.' . $file->getClientOriginalExtension();
-        EditorFileIssue::updateOrCreate(
-            ['issue_id' => $issue_id, 'file_type' => 'fee'],
-            ['file' => $file->storeAs('editor_file/fee', $filename, 'public')]
-        );
-
-        Alert::success('Success', 'File has been uploaded');
-        return redirect()->back();
-    }
-
-    public function editorFileFeeSendMail(Request $request, $journal_path, $issue_id, ?string $email = null)
-    {
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $editor = Editor::where('issue_id', $issue_id)->get();
-        if (!$editor) {
-            Alert::error('Error', 'Editor not found');
-            return redirect()->back();
-        }
-
-        $file = EditorFileIssue::where('issue_id', $issue_id)->where('file_type', 'fee')->first();
-        if (!$file) {
-            Alert::error('Error', 'File not found');
-            return redirect()->back();
-        }
-
-        $data = [
-            'subject' => 'Fee Editor - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-            'journal' => $issue->journal->title,
-            'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-            'attachments' => storage_path('app/public/' . $file->file),
-            'setting_web' => SettingWebsite::first(),
-        ];
-
-        $emailAddress = [];
-        if ($request->email) {
-            $emailAddress = $email;
-        } else {
-            foreach ($editor as $editors) {
-                if ($editors->email) {
-                    $emailAddress[] = $editors->email;
-                }
-            }
-        }
-
-        $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-        if ($mailEnvirontment == 'production') {
-            Mail::to($emailAddress)->send(new FeeEditorMail($data));
-        } else {
-            // For testing purpose
-            Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new FeeEditorMail($data));
-        }
-
-        Alert::success('Success', 'email has been sent');
-        return redirect()->back();
-    }
-
-    public function editorUpdate($journal_path, $issue_id, $id)
-    {
-        $validator = Validator::make(request()->all(), [
-            'account_bank' => 'required|string',
-            'account_number' => 'required|string',
-        ], [
-            'account_bank.required' => 'Bank harus diisi',
-            'account_number.required' => 'Nomor Rekening harus diisi',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $editor = Editor::where('issue_id', $issue_id)->find($id);
-        if (!$editor) {
-            Alert::error('Error', 'Editor not found');
-            return redirect()->back();
-        }
-
-        $editor->update([
-            'account_bank' => request()->account_bank,
-            'account_number' => request()->account_number,
-        ]);
-        Alert::success('Success', 'Editor has been updated');
-        return redirect()->back();
-    }
-
-    public function editorDestroy($journal_path, $issue_id, $id)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            Alert::error('Error', 'Journal not found');
-            return back()->with('error', 'Journal not found');
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            Alert::error('Error', 'Issue not found');
-            return back()->with('error', 'Issue not found');
-        }
-
-        $editor = Editor::where('issue_id', $issue_id)->find($id);
-        if (!$editor) {
-            Alert::error('Error', 'Editor not found');
-            return back()->with('error', 'Editor not found');
-        }
-
-        $editor->delete();
-        Alert::success('Success', 'Editor has been deleted');
-        return redirect()->back();
-    }
-
-    //TODO: REVIEWER SECTION
-
-    public function reviewerIndex($journal_path, $issue_id)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $data = [
-            'title' => "Vol. " . $issue->volume . " No. " . $issue->number . " (" . $issue->year . "): " . $issue->title,
-            'breadcrumbs' => [
-                [
-                    'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
-                ],
-                [
-                    'name' => $journal->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ],
-                [
-                    'name' => $issue->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ]
-            ],
-            'journal_path' => $journal_path,
-            'journal' => $journal,
-            'issue' => $issue,
-            'reviewers' => Reviewer::where('issue_id', $issue_id)->with('data')->get(),
-            'file_sk' => ReviewerFileIssue::where('issue_id', $issue_id)->where('file_type', 'sk')->first(),
-            'file_certificate' => ReviewerFileIssue::where('issue_id', $issue_id)->where('file_type', 'certificate')->first(),
-            'file_fee' => ReviewerFileIssue::where('issue_id', $issue_id)->where('file_type', 'fee')->first(),
-            'setting_web' => SettingWebsite::first(),
-            // 'submissions' => $issue->submissions->pluck('submission_id'),
-        ];
-        // return response()->json($data['reviewers']);
-        return view('back.pages.journal.detail-reviewer', $data);
-    }
-
-    public function reviewerExport($journal_path, $issue_id)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $reviewers = Reviewer::where('issue_id', $issue_id)->get();
-        if ($reviewers->isEmpty()) {
-            Alert::error('Error', 'No reviewers found');
-            return redirect()->back();
-        }
-
-        return Excel::download(new ReviewerExport($issue_id), 'reviewers-' . $issue->year . '-' . $issue->volume . '-' . $issue->number . '.xlsx');
-    }
-
-    public function reviewerCertificateDownload(Request $request, $journal_path, $issue_id, ?int $id = null)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        if ($id) {
-            $reviewer = Reviewer::where('issue_id', $issue_id)->find($id);
-            if (!$reviewer) {
-                Alert::error('Error', 'Reviewer not found');
-                return redirect()->back();
-            }
-
-            if (!$reviewer->number) {
-                // Generate number if not exists
-                $year = Carbon::now()->year;
-                $last = Reviewer::whereYear('created_at', $year)
-                    ->orderBy('number', 'desc')
-                    ->first();
-                $newNumber = $last ? $last->number + 1 : 1;
-
-                // Format jadi 4 digit
-                $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                $reviewer->number = $formattedNumber;
-                $reviewer->save();
-            }
-
-            $data = [
-                'number' =>  $reviewer->number ?? "0000",
-                'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                    1 => 'I',
-                    2 => 'II',
-                    3 => 'III',
-                    4 => 'IV',
-                    5 => 'V',
-                    6 => 'VI',
-                    7 => 'VII',
-                    8 => 'VIII',
-                    9 => 'IX',
-                    10 => 'X',
-                    11 => 'XI',
-                    12 => 'XII'
-                ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                'year' => \Carbon\Carbon::now()->format('Y'),
-                'name' => $reviewer->name,
-                'affiliation' => $reviewer->affiliation,
-                'journal' => $issue->journal->title,
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                'manuscript_count' => $reviewer->submissionsReviewed->count(),
-                'chief_editor' => $issue->journal->editor_chief_name ?? 'Editor in Chief',
-                'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $issue->journal->editor_chief_signature))) : null,
-            ];
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-reviewer', $data)->setPaper('A4', 'landscape');
-            $path = 'arsip/certificate/reviewer/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-reviewer-' . $reviewer->reviewer_id . '-' . $reviewer->id . '.pdf';
-
-            return $pdf->stream();
-            // // Cek apakah file sudah ada di storage
-            if (Storage::exists('public/' . $path)) {
-                // Jika ada, kembalikan file tersebut
-                return response()->download(storage_path('app/public/' . $path));
-            } else {
-                // Jika tidak ada, simpan file baru
-                Storage::disk('public')->put($path, $pdf->output());
-                return response()->download(storage_path('app/public/' . $path));
-            }
-        } else {
-            $reviewers = Reviewer::where('issue_id', $issue_id)->get();
-            if (!$reviewers) {
-                Alert::error('Error', 'Reviewer not found');
-                return redirect()->back();
-            }
-            $files = [];
-            foreach ($reviewers as $reviewer) {
-                if (!$reviewer->number) {
-                    // Generate number if not exists
-                    $year = Carbon::now()->year;
-                    $last = Reviewer::whereYear('created_at', $year)
-                        ->orderBy('number', 'desc')
-                        ->first();
-                    $newNumber = $last ? $last->number + 1 : 1;
-
-                    // Format jadi 4 digit
-                    $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                    $reviewer->number = $formattedNumber;
-                    $reviewer->save();
-                }
-                $data = [
-                    'number' =>  $reviewer->number ?? "0000",
-                    'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                    'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                        1 => 'I',
-                        2 => 'II',
-                        3 => 'III',
-                        4 => 'IV',
-                        5 => 'V',
-                        6 => 'VI',
-                        7 => 'VII',
-                        8 => 'VIII',
-                        9 => 'IX',
-                        10 => 'X',
-                        11 => 'XI',
-                        12 => 'XII'
-                    ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                    'year' => \Carbon\Carbon::now()->format('Y'),
-                    'name' => $reviewer->name,
-                    'affiliation' => $reviewer->affiliation,
-                    'journal' => $issue->journal->title,
-                    'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                ];
-
-                $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-reviewer', $data)->setPaper('A4', 'landscape');
-                $path = 'arsip/certificate/reviewer/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-reviewer-' . $reviewer->reviewer_id . '-' . $reviewer->id . '.pdf';
-
-
-                if (Storage::exists('public/' . $path)) {
-                    // Jika maka hapus dari storage
-                    Storage::disk('public')->delete($path);
-                }
-                Storage::disk('public')->put($path, $pdf->output());
-                $files[] = storage_path('app/public/' . $path);
-            }
-
-            $zipFileName = 'CERTIFICATE-REVIEWER-' . $issue->journal->url_path . '-' . $issue->year . '-' . $issue->volume . '-' . $issue->number . '.zip';
-            $zip = new ZipArchive;
-
-            // Temporary path buat zip-nya
-            $zipPath = storage_path('app/temp/' . $zipFileName);
-
-            // Pastikan folder temp ada
-            if (!file_exists(storage_path('app/temp'))) {
-                mkdir(storage_path('app/temp'), 0777, true);
-            }
-
-            if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-                foreach ($files as $file) {
-                    $filePath = $file;
-                    if (file_exists($filePath)) {
-                        // Add file ke zip (hanya nama file saja di dalam zip)
-                        $zip->addFile($filePath, basename($file));
-                    }
-                }
-                $zip->close();
-            } else {
-                Alert::error('Error', 'Failed to create zip file');
-                return redirect()->back()->with('error', 'Failed to create zip file');
-            }
-
-            return response()->download($zipPath)->deleteFileAfterSend(true);
-        }
-    }
-
-    public function reviewerCertificateSendmail(Request $request, $journal_path, $issue_id, ?int $id = null)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        if ($id) {
-            $reviewer = Reviewer::where('issue_id', $issue_id)->find($id);
-            if (!$reviewer) {
-                Alert::error('Error', 'Reviewer not found');
-                return redirect()->back();
-            }
-
-            if (!$reviewer->number) {
-                // Generate number if not exists
-                $year = Carbon::now()->year;
-                $last = Reviewer::whereYear('created_at', $year)
-                    ->orderBy('number', 'desc')
-                    ->first();
-                $newNumber = $last ? $last->number + 1 : 1;
-
-                // Format jadi 4 digit
-                $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                $reviewer->number = $formattedNumber;
-                $reviewer->save();
-            }
-
-            $data = [
-                'subject' => 'Certificate Reviewer - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-                'number' =>  $reviewer->number ?? "0000",
-                'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                    1 => 'I',
-                    2 => 'II',
-                    3 => 'III',
-                    4 => 'IV',
-                    5 => 'V',
-                    6 => 'VI',
-                    7 => 'VII',
-                    8 => 'VIII',
-                    9 => 'IX',
-                    10 => 'X',
-                    11 => 'XI',
-                    12 => 'XII'
-                ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                'year'  => \Carbon\Carbon::now()->format('Y'),
-                'name' => $reviewer->name,
-                'affiliation' => $reviewer->affiliation,
-                'journal' => $issue->journal->title,
-                'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                'manuscript_count' => $reviewer->submissionsReviewed->count(),
-                'chief_editor' => $issue->journal->editor_chief_name ?? 'Editor in Chief',
-                'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $issue->journal->editor_chief_signature))) : null,
-                'email' => $reviewer->email,
-                'setting_web' => SettingWebsite::first(),
-            ];
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-reviewer', $data)->setPaper('A4', 'landscape');
-
-            // Cek apakah file sudah ada di storage
-            $path = 'arsip/certificate/reviewer/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-reviewer-' . $reviewer->reviewer_id . '-' . $reviewer->id . '.pdf';
-            if (Storage::exists('public/' . $path)) {
-                // Jika maka hapus dari storage
-                Storage::disk('public')->delete($path);
-            }
-            Storage::disk('public')->put($path, $pdf->output());
-            $data['attachments'] = storage_path('app/public/' . $path);
-
-            $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-            if ($mailEnvirontment == 'production') {
-                Mail::to($data['email'])->send(new CertificateReviewerMail($data));
-            } else {
-                // For testing purpose
-                Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new CertificateReviewerMail($data));
-            }
-
-            Alert::success('Success', 'email has been sent');
-            return redirect()->back();
-        } else {
-            $reviewers = Reviewer::where('issue_id', $issue_id)->get();
-            if (!$reviewers) {
-                Alert::error('Error', 'Reviewer not found');
-                return redirect()->back();
-            }
-            foreach ($reviewers as $reviewer) {
-                if (!$reviewer->number) {
-                    // Generate number if not exists
-                    $year = Carbon::now()->year;
-                    $last = Reviewer::whereYear('created_at', $year)
-                        ->orderBy('number', 'desc')
-                        ->first();
-                    $newNumber = $last ? $last->number + 1 : 1;
-
-                    // Format jadi 4 digit
-                    $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-                    $reviewer->number = $formattedNumber;
-                    $reviewer->save();
-                }
-                $data = [
-                    'subject' => 'Certificate Reviewer - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-                    'number' =>  $reviewer->number ?? "0000",
-                    'month' => strtoupper(\Carbon\Carbon::now()->locale('id')->isoFormat('MMMM')),
-                    'month_roman' => strtoupper(\Carbon\Carbon::now()->format('n')) ? [
-                        1 => 'I',
-                        2 => 'II',
-                        3 => 'III',
-                        4 => 'IV',
-                        5 => 'V',
-                        6 => 'VI',
-                        7 => 'VII',
-                        8 => 'VIII',
-                        9 => 'IX',
-                        10 => 'X',
-                        11 => 'XI',
-                        12 => 'XII'
-                    ][(int)\Carbon\Carbon::now()->format('n')] : '',
-                    'year' => \Carbon\Carbon::now()->format('Y'),
-                    'name' => $reviewer->name,
-                    'affiliation' => $reviewer->affiliation,
-                    'journal' => $issue->journal->title,
-                    'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-                    'manuscript_count' => $reviewer->submissionsReviewed->count(),
-                    'chief_editor' => $issue->journal->editor_chief_name ?? 'Editor in Chief',
-                    'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,' . base64_encode(file_get_contents(storage_path('app/public/' . $issue->journal->editor_chief_signature))) : null,
-                    'email' => $reviewer->email,
-                    'setting_web' => SettingWebsite::first(),
-                ];
-
-                $pdf = Pdf::loadView('back.pages.journal.pdf.certificate-reviewer', $data)->setPaper('A4', 'landscape');
-
-                // Cek apakah file sudah ada di storage
-                $path = 'arsip/certificate/reviewer/' . $issue->journal->url_path . '/' . $issue->year . '/' . $issue->volume . '-' . $issue->number . '/certificate-reviewer-' . $reviewer->reviewer_id . '-' . $reviewer->id . '.pdf';
-                if (Storage::exists('public/' . $path)) {
-                    // Jika maka hapus dari storage
-                    Storage::disk('public')->delete($path);
-                }
-                Storage::disk('public')->put($path, $pdf->output());
-                $data['attachments'] = storage_path('app/public/' . $path);
-
-                $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-                if ($mailEnvirontment == 'production') {
-                    Mail::to($data['email'])->send(new CertificateReviewerMail($data));
-                } else {
-                    // For testing purpose
-                    Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new CertificateReviewerMail($data));
-                }
-            }
-
-            Alert::success('Success', 'email has been sent');
-            return redirect()->back();
-        }
-    }
-
-    public function reviewerFileSkStore(Request $request, $journal_path, $issue_id)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:pdf|max:10240',
-        ], [
-            'file.required' => 'File harus diisi',
-            'file.mimes' => 'File harus berupa pdf',
-            'file.max' => 'File tidak boleh lebih dari 10 MB',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $file = $request->file('file');
-        $filename = Str::random(10) . '.' . $file->getClientOriginalExtension();
-        ReviewerFileIssue::updateOrCreate(
-            ['issue_id' => $issue_id, 'file_type' => 'sk'],
-            ['file' => $file->storeAs('reviewer_file/sk', $filename, 'public')]
-        );
-
-        Alert::success('Success', 'File has been uploaded');
-        return redirect()->back();
-    }
-
-    public function reviewerFileSkSendMail(Request $request, $journal_path, $issue_id, ?string $email = null)
-    {
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $reviwer = Reviewer::where('issue_id', $issue_id)->get();
-        if (!$reviwer) {
-            Alert::error('Error', 'Reviewer not found');
-            return redirect()->back();
-        }
-
-        $file = ReviewerFileIssue::where('issue_id', $issue_id)->where('file_type', 'sk')->first();
-        if (!$file) {
-            Alert::error('Error', 'File not found');
-            return redirect()->back();
-        }
-
-        $data = [
-            'subject' => 'SK Reviewer - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-            'journal' => $issue->journal->title,
-            'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-            'attachments' => storage_path('app/public/' . $file->file),
-            'setting_web' => SettingWebsite::first(),
-        ];
-
-        $emailAddress = [];
-        if ($request->email) {
-            $emailAddress = $email;
-        } else {
-            foreach ($reviwer as $reviewer) {
-                if ($reviewer->email) {
-                    $emailAddress[] = $reviewer->email;
-                }
-            }
-        }
-
-        $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-        if ($mailEnvirontment == 'production') {
-            Mail::to($emailAddress)->send(new SkReviewerMail($data));
-        } else {
-            // For testing purpose
-            Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new SkReviewerMail($data));
-        }
-
-
-        Alert::success('Success', 'email has been sent');
-        return redirect()->back();
-    }
-
-    public function reviewerFileFeeStore(Request $request, $journal_path, $issue_id)
-    {
-        $validator = Validator::make($request->all(), [
-            'file' => 'required|mimes:pdf|max:10240',
-        ], [
-            'file.required' => 'File harus diisi',
-            'file.mimes' => 'File harus berupa pdf',
-            'file.max' => 'File tidak boleh lebih dari 10 MB',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $file = $request->file('file');
-        $filename = Str::random(10) . '.' . $file->getClientOriginalExtension();
-        ReviewerFileIssue::updateOrCreate(
-            ['issue_id' => $issue_id, 'file_type' => 'fee'],
-            ['file' => $file->storeAs('reviewer_file/fee', $filename, 'public')]
-        );
-
-        Alert::success('Success', 'File has been uploaded');
-        return redirect()->back();
-    }
-
-    public function reviewerFileFeeSendMail(Request $request, $journal_path, $issue_id, ?string $email = null)
-    {
-
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $reviwer = Reviewer::where('issue_id', $issue_id)->get();
-        if (!$reviwer) {
-            Alert::error('Error', 'Reviewer not found');
-            return redirect()->back();
-        }
-
-        $file = ReviewerFileIssue::where('issue_id', $issue_id)->where('file_type', 'fee')->first();
-        if (!$file) {
-            Alert::error('Error', 'File not found');
-            return redirect()->back();
-        }
-
-        $data = [
-            'subject' => 'Fee Reviewer - ' . $issue->journal->title . ' Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ': ' . $issue->title,
-            'journal' => $issue->journal->title,
-            'edition' => 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year,
-            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-            'attachments' => storage_path('app/public/' . $file->file),
-            'setting_web' => SettingWebsite::first(),
-        ];
-
-        $emailAddress = [];
-        if ($request->email) {
-            $emailAddress = $email;
-        } else {
-            foreach ($reviwer as $reviewer) {
-                if ($reviewer->email) {
-                    $emailAddress[] = $reviewer->email;
-                }
-            }
-        }
-
-        $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
-        if ($mailEnvirontment == 'production') {
-            Mail::to($emailAddress)->send(new FeeReviewerMail($data));
-        } else {
-            // For testing purpose
-            Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new FeeReviewerMail($data));
-        }
-
-        Alert::success('Success', 'email has been sent');
-        return redirect()->back();
-    }
-
-    public function reviewerUpdate($journal_path, $issue_id, $id)
-    {
-        $validator = Validator::make(request()->all(), [
-            'nik' => 'required|string|max:100',
-            'account_bank' => 'required|string',
-            'account_number' => 'required|string',
-            'npwp' => 'nullable|string|max:100',
-        ], [
-            'nik.required' => 'NIK harus diisi',
-            'nik.string' => 'NIK harus berupa string',
-            'nik.max' => 'NIK tidak boleh lebih dari 100 karakter',
-            'account_bank.string' => 'Bank harus berupa string',
-            'account_bank.required' => 'Bank harus diisi',
-            'account_number.required' => 'Nomor Rekening harus diisi',
-            'account_number.string' => 'Nomor Rekening harus berupa string',
-            'npwp.string' => 'NPWP harus berupa string',
-            'npwp.max' => 'NPWP tidak boleh lebih dari 100 karakter',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Error', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        $reviewer = Reviewer::where('issue_id', $issue_id)->find($id);
-        if (!$reviewer) {
-            Alert::error('Error', 'Reviewer not found');
-            return redirect()->back();
-        }
-
-        ReviewerData::updateOrCreate(
-            ['reviewer_id' => $reviewer->reviewer_id],
-            [
-                'nik' => request()->nik,
-                'account_bank' => request()->account_bank,
-                'account_number' => request()->account_number,
-                'npwp' => request()->npwp,
-            ]
-        );
-
-        Alert::success('Success', 'Reviewer has been updated');
-        return redirect()->back();
-    }
-
-    public function reviewerDestroy($journal_path, $issue_id, $id)
-    {
-        $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
-            return abort(404);
-        }
-
-        $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
-            return abort(404);
-        }
-
-        $reviewer = Reviewer::find($id);
-        if (!$reviewer) {
-            return abort(404);
-        }
-        $reviewer->delete();
-        Alert::success('Success', 'Reviewer has been deleted');
-        return redirect()->back();
-    }
-
+    // Setting
 
     public function settingIndex($journal_path, $issue_id)
     {
         $journal = Journal::where('url_path', $journal_path)->first();
-        if (!$journal) {
+        if (! $journal) {
             return abort(404);
         }
 
         $issue = Issue::with('submissions')->find($issue_id);
-        if (!$issue) {
+        if (! $issue) {
             return abort(404);
         }
 
         $data = [
-            'title' => "Vol. " . $issue->volume . " No. " . $issue->number . " (" . $issue->year . "): " . $issue->title,
+            'title' => 'Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.'): '.$issue->title,
             'breadcrumbs' => [
                 [
                     'name' => 'Dashboard',
-                    'link' => route('back.dashboard')
+                    'link' => route('back.dashboard'),
                 ],
                 [
                     'name' => $journal->title,
-                    'link' => route('back.journal.index', $journal_path)
+                    'link' => route('back.journal.index', $journal_path),
                 ],
                 [
                     'name' => $issue->title,
-                    'link' => route('back.journal.index', $journal_path)
-                ]
+                    'link' => route('back.journal.index', $journal_path),
+                ],
             ],
             'journal_path' => $journal_path,
             'journal' => $journal,
             'issue' => $issue,
             // 'submissions' => $issue->submissions->pluck('submission_id'),
         ];
+
         // return response()->json($data);
         return view('back.pages.journal.detail-setting', $data);
     }
 
-
     private function sendInvoiceWhatsappNotification($paymentInvoiceId): void
     {
         $paymentInvoice = PaymentInvoice::find($paymentInvoiceId);
-        if (!$paymentInvoice) {
-            Log::error('PaymentInvoice not found with ID: ' . $paymentInvoiceId);
+        if (! $paymentInvoice) {
+            Log::error('PaymentInvoice not found with ID: '.$paymentInvoiceId);
+
             return;
         }
 
         $jurnal = Journal::where('url_path', $paymentInvoice->submission->issue->journal->url_path)->first();
         $paymentAccount = PaymentAccount::first();
 
-        if (!$jurnal) {
-            Log::error('Journal not found for PaymentInvoice ID: ' . $paymentInvoice->id);
+        if (! $jurnal) {
+            Log::error('Journal not found for PaymentInvoice ID: '.$paymentInvoice->id);
+
             return;
         }
 
         try {
             $response1 = Http::withHeaders([
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/submissions/' . $paymentInvoice->submission->submission_id . '/participants', [
-                'apiToken' => $jurnal->api_key
+                'Authorization' => 'Bearer '.$jurnal->api_key,
+            ])->get($jurnal->url.'/api/v1/submissions/'.$paymentInvoice->submission->ojs_submission_id.'/participants', [
+                'apiToken' => $jurnal->api_key,
             ]);
 
             if ($response1->status() === 200) {
                 $data1 = $response1->json();
                 $response2 = Http::withHeaders([
                     'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . $jurnal->api_key
+                    'Authorization' => 'Bearer '.$jurnal->api_key,
                 ])->get($data1[0]['_href'], [
-                    'apiToken' => $jurnal->api_key
+                    'apiToken' => $jurnal->api_key,
                 ]);
                 if ($response2->status() === 200) {
                     $data2 = $response2->json();
 
-                    $response_wa = Http::post(env('WHATSAPP_API_URL')  . "/send-message", [
+                    $response_wa = Http::post(env('WHATSAPP_API_URL').'/send-message', [
                         'session' => env('WHATSAPP_API_SESSION'),
-                        'to' => whatsappNumber($data2["phone"]),
-                        'text' => "Halo Bapak/Ibu " . ($data2["fullName"] ?? '-') . "\n\n" .
-                            "Invoice untuk untuk pembayaran artikel Anda dengan *SUBMISSION ID: " . $paymentInvoice->submission->submission_id . "* telah terbit. Berikut adalah detail invoice Anda:\n\n" .
-                            "INVOICE: " . ($paymentInvoice->invoice_number ?? "0000") . "/JRNL/UINSMDD/" . ($paymentInvoice->created_at->format('Y') ?? Carbon::now()->format('Y')) . "\n" .
-                            "Jumlah: Rp " . number_format($paymentInvoice->payment_amount, 0, ',', '.') . "\n" .
-                            "Persentase Pembayaran: " . ($paymentInvoice->payment_percent ?? '-') . "%\n" .
+                        'to' => whatsappNumber($data2['phone']),
+                        'text' => 'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
+                            'Invoice untuk untuk pembayaran artikel Anda dengan *SUBMISSION ID: '.$paymentInvoice->submission->ojs_submission_id."* telah terbit. Berikut adalah detail invoice Anda:\n\n".
+                            'INVOICE: '.($paymentInvoice->invoice_number ?? '0000').'/JRNL/UINSMDD/'.($paymentInvoice->created_at->format('Y') ?? Carbon::now()->format('Y'))."\n".
+                            'Jumlah: Rp '.number_format($paymentInvoice->payment_amount, 0, ',', '.')."\n".
+                            'Persentase Pembayaran: '.($paymentInvoice->payment_percent ?? '-')."%\n".
 
-                            "Silakan lakukan pembayaran sesuai dengan jumlah yang tertera pada invoice. pembayaran dapat dilakukan melalui transfer ke rekening berikut:\n" .
-                            "Bank: " . ($paymentAccount->bank ?? '-') . "\n" .
-                            "Nomor Rekening: " . ($paymentAccount->account_number ?? '-') . "\n" .
-                            "Atas Nama: " . ($paymentAccount->account_name ?? '-') . "\n\n" .
+                            "Silakan lakukan pembayaran sesuai dengan jumlah yang tertera pada invoice. pembayaran dapat dilakukan melalui transfer ke rekening berikut:\n".
+                            'Bank: '.($paymentAccount->bank ?? '-')."\n".
+                            'Nomor Rekening: '.($paymentAccount->account_number ?? '-')."\n".
+                            'Atas Nama: '.($paymentAccount->account_name ?? '-')."\n\n".
 
-                            "berikut kami lampirkan file invoice kepada anda, jika file tidak terkirim anda dapat mengunduhnya melalui tautan berikut:\n" .
-                            asset('storage/arsip/invoice/' . $paymentInvoice->created_at->format('Y') . '/' . $paymentInvoice->invoice_number . '/invoice-' . $paymentInvoice->submission->submission_id .  '-' . $paymentInvoice->submission->authors[0]['id'] . '.pdf') . "\n\n" .
+                            "berikut kami lampirkan file invoice kepada anda, jika file tidak terkirim anda dapat mengunduhnya melalui tautan berikut:\n".
+                            asset('storage/arsip/invoice/'.$paymentInvoice->created_at->format('Y').'/'.$paymentInvoice->invoice_number.'/invoice-'.$paymentInvoice->submission->ojs_submission_id.'-'.$paymentInvoice->submission->authors[0]['id'].'.pdf')."\n\n".
 
-                            "batas waktu pembayaran anda adalah " . \Carbon\Carbon::parse($paymentInvoice->payment_due_date)->translatedFormat('d F Y') . ". Setelah melakukan pembayaran, silakan unggah bukti pembayaran melalui tautan berikut:\n" .
-                            route('payment.pay', [$paymentInvoice->submission->issue->journal->url_path, $paymentInvoice->submission->submission_id]) . "\n\n" .
-                            "Terima kasih atas perhatian dan kerjasama Anda " .
+                            'batas waktu pembayaran anda adalah '.\Carbon\Carbon::parse($paymentInvoice->payment_due_date)->translatedFormat('d F Y').". Setelah melakukan pembayaran, silakan unggah bukti pembayaran melalui tautan berikut:\n".
+                            route('payment.pay', [$paymentInvoice->submission->issue->journal->url_path, $paymentInvoice->submission->ojs_submission_id])."\n\n".
+                            'Terima kasih atas perhatian dan kerjasama Anda '.
 
-                            "Salam,\n" .
-                            "Editorial Rumah Jurnal\n\n" .
+                            "Salam,\n".
+                            "Editorial Rumah Jurnal\n\n".
 
-                            "_generate by system_\n" .
-                            url('/')
+                            "_generate by system_\n".
+                            url('/'),
 
                     ]);
                     if ($response_wa->status() === 200) {
-                        Log::info('WhatsApp message sent successfully to ' . $data2["phone"]);
+                        Log::info('WhatsApp message sent successfully to '.$data2['phone']);
                     } else {
-                        Log::error('Error sending WhatsApp message: ' . $response_wa->body());
+                        Log::error('Error sending WhatsApp message: '.$response_wa->body());
                     }
                 } else {
-                    Log::error('Error PaymentInvoiceObserver Response 2: ' . $response2->body());
+                    Log::error('Error PaymentInvoiceObserver Response 2: '.$response2->body());
                 }
             } else {
-                Log::error('Error PaymentInvoiceObserver Response 1: ' . $response1->body());
+                Log::error('Error PaymentInvoiceObserver Response 1: '.$response1->body());
             }
         } catch (\Throwable $th) {
-            Log::error('Error PaymentInvoiceObserver TryCatch: ' . $th->getMessage());
+            Log::error('Error PaymentInvoiceObserver TryCatch: '.$th->getMessage());
         }
     }
 
     private function sendLoaWhatsappNotification($submissionId): void
     {
         $submission = Submission::find($submissionId);
-        if (!$submission) {
-            Log::error('Submission not found with ID: ' . $submissionId);
+        if (! $submission) {
+            Log::error('Submission not found with ID: '.$submissionId);
+
             return;
         }
 
         $jurnal = Journal::where('url_path', $submission->issue->journal->url_path)->first();
 
-        if (!$jurnal) {
-            Log::error('Journal not found for Submission ID: ' . $submission->id);
+        if (! $jurnal) {
+            Log::error('Journal not found for Submission ID: '.$submission->id);
+
             return;
         }
 
         try {
             $response1 = Http::withHeaders([
                 'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/submissions/' . $submission->submission_id . '/participants', [
-                'apiToken' => $jurnal->api_key
+                'Authorization' => 'Bearer '.$jurnal->api_key,
+            ])->get($jurnal->url.'/api/v1/submissions/'.$submission->ojs_submission_id.'/participants', [
+                'apiToken' => $jurnal->api_key,
             ]);
 
             if ($response1->status() === 200) {
                 $data1 = $response1->json();
                 $response2 = Http::withHeaders([
                     'Accept' => 'application/json',
-                    'Authorization' => 'Bearer ' . $jurnal->api_key
+                    'Authorization' => 'Bearer '.$jurnal->api_key,
                 ])->get($data1[0]['_href'], [
-                    'apiToken' => $jurnal->api_key
+                    'apiToken' => $jurnal->api_key,
                 ]);
                 if ($response2->status() === 200) {
-                    $path = 'arsip/loa/' . 'LoA-' . $submission->submission_id . '-' . $submission->id . '-' . $submission->authors[0]['id'] . '.pdf';
+                    $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$submission->authors[0]['id'].'.pdf';
                     $data2 = $response2->json();
-                    $response_wa = Http::post(env('WHATSAPP_API_URL')  . "/send-message", [
+                    $response_wa = Http::post(env('WHATSAPP_API_URL').'/send-message', [
                         'session' => env('WHATSAPP_API_SESSION'),
-                        'to' => whatsappNumber($data2["phone"]),
-                        'text' => "Halo Bapak/Ibu " . ($data2["fullName"] ?? '-') . "\n\n" .
-                            "Selamat! Kami dengan senang hati memberitahukan bahwa artikel Anda dengan *SUBMISSION ID: " . $submission->submission_id . "* telah diterima untuk publikasi di jurnal kami. Berikut adalah detailnya:\n\n" .
-                            "Judul Artikel: " . ($submission->fullTitle ?? '-') . "\n" .
-                            "Penulis: " . ($submission->authorsString ?? '-') . "\n" .
-                            "Jurnal: " . ($submission->issue->journal->title ?? '-') . "\n" .
-                            "Edisi: Vol. " . ($submission->issue->volume ?? '-') . " No. " . ($submission->issue->number ?? '-') . " Tahun " . ($submission->issue->year ?? '-') . "\n\n" .
-                            "Kami lampirkan file surat penerimaan (Letter of Acceptance) untuk artikel Anda. Jika file tidak terkirim, Anda dapat mengunduhnya melalui tautan berikut:\n" .
-                            asset('storage/' . $path) . "\n\n" .
-                            "Terimakasih atas kontribusi Anda terhadap kemajuan ilmu pengetahuan melalui publikasi di jurnal kami.\n\n" .
-                            "Salam,\n" .
-                            "Editorial Rumah Jurnal\n\n" .
-                            "_generate by system_\n" .
-                            url('/')
+                        'to' => whatsappNumber($data2['phone']),
+                        'text' => 'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
+                            'Selamat! Kami dengan senang hati memberitahukan bahwa artikel Anda dengan *SUBMISSION ID: '.$submission->ojs_submission_id."* telah diterima untuk publikasi di jurnal kami. Berikut adalah detailnya:\n\n".
+                            'Judul Artikel: '.($submission->fullTitle ?? '-')."\n".
+                            'Penulis: '.($submission->authorsString ?? '-')."\n".
+                            'Jurnal: '.($submission->issue->journal->title ?? '-')."\n".
+                            'Edisi: Vol. '.($submission->issue->volume ?? '-').' No. '.($submission->issue->number ?? '-').' Tahun '.($submission->issue->year ?? '-')."\n\n".
+                            "Kami lampirkan file surat penerimaan (Letter of Acceptance) untuk artikel Anda. Jika file tidak terkirim, Anda dapat mengunduhnya melalui tautan berikut:\n".
+                            asset('storage/'.$path)."\n\n".
+                            "Terimakasih atas kontribusi Anda terhadap kemajuan ilmu pengetahuan melalui publikasi di jurnal kami.\n\n".
+                            "Salam,\n".
+                            "Editorial Rumah Jurnal\n\n".
+                            "_generate by system_\n".
+                            url('/'),
                     ]);
                     if ($response_wa->status() === 200) {
-                        Log::info('WhatsApp message sent successfully to ' . $data2["phone"]);
+                        Log::info('WhatsApp message sent successfully to '.$data2['phone']);
                     } else {
-                        Log::error('Error sending WhatsApp message: ' . $response_wa->body());
+                        Log::error('Error sending WhatsApp message: '.$response_wa->body());
                     }
                 } else {
-                    Log::error('Error LoaObserver Response 2: ' . $response2->body());
+                    Log::error('Error LoaObserver Response 2: '.$response2->body());
                 }
             } else {
-                Log::error('Error LoaObserver Response 1: ' . $response1->body());
+                Log::error('Error LoaObserver Response 1: '.$response1->body());
             }
         } catch (\Throwable $th) {
-            Log::error('Error LoaObserver TryCatch: ' . $th->getMessage());
+            Log::error('Error LoaObserver TryCatch: '.$th->getMessage());
         }
     }
 }
