@@ -31,6 +31,11 @@ class Submission extends Model
         return $this->belongsTo(Issue::class, 'issue_id');
     }
 
+     public function paymentInvoices()
+    {
+        return $this->hasMany(PaymentInvoice::class, 'submission_id');
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class, 'submission_id');

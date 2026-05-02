@@ -224,12 +224,12 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/{journal_path}/issue/{issue_id}/article-export', [BackJournalController::class, 'articleExport'])->name('article.export');
         Route::get('/loa/submission/{id}/generate', [BackJournalController::class, 'loaGenerate'])->name('loa.generate');
         Route::get('/loa/submission/{id}/mail-send', [BackJournalController::class, 'loaMailSend'])->name('loa.mail-send');
-        Route::get('/invoice/submission/{id}/generate-1', [BackJournalController::class, 'invoiceGenerate1'])->name('invoice.generate1');
-        Route::get('/invoice/submission/{id}/generate-2', [BackJournalController::class, 'invoiceGenerate2'])->name('invoice.generate2');
-        Route::get('/invoice/submission/{id}/generate-3', [BackJournalController::class, 'invoiceGenerate3'])->name('invoice.generate3');
-        Route::get('/invoice/submission/{id}/mail-send-1', [BackJournalController::class, 'invoiceMailSend1'])->name('invoice.mail-send1');
-        Route::get('/invoice/submission/{id}/mail-send-2', [BackJournalController::class, 'invoiceMailSend2'])->name('invoice.mail-send2');
-        Route::get('/invoice/submission/{id}/mail-send-3', [BackJournalController::class, 'invoiceMailSend3'])->name('invoice.mail-send3');
+        Route::get('/invoice/submission/{id}/generate', [BackJournalController::class, 'invoiceGenerate'])->name('invoice.generate');
+        Route::get('/invoice/submission/{id}/mail-send', [BackJournalController::class, 'invoiceMailSend'])->name('invoice.mail-send');
+        Route::post('/invoice/submission/{id}/custom', [BackJournalController::class, 'invoiceCustomStore'])->name('invoice.custom.store');
+        Route::get('/invoice/custom/{invoice_id}/generate-custom', [BackJournalController::class, 'invoiceGenerateCustom'])->name('invoice.custom.generate');
+        Route::get('/invoice/custom/{invoice_id}/mail-send-custom', [BackJournalController::class, 'invoiceMailSendCustom'])->name('invoice.custom.mail-send');
+
 
 
         Route::get('/{journal_path}/issue/{issue_id}/editor', [BackJournalController::class, 'editorIndex'])->name('editor.index');

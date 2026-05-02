@@ -372,7 +372,7 @@
                                 </div>
                                 <div class="tab-pane fade" id="kt_tab_pane_2_submission_{{ $submission->id }}"
                                     role="tabpanel">
-                                    {{-- @foreach ($submission->paymentInvoices as $invoice)
+                                    @foreach ($submission->paymentInvoices as $invoice)
                                         <div class="table-responsive">
                                             <table class="table table-hover table-rounded table-striped border gy-7 gs-7">
                                                 <thead>
@@ -381,8 +381,15 @@
                                                         <th colspan="4">INVOICE
                                                             {{ $invoice->invoice_number }}/JRNL/UINSMDD/{{ $invoice->created_at->format('Y') }}
                                                             <br>
+                                                            @php
+                                                                $percentLabel = $invoice->is_custom
+                                                                    ? 'Custom 100%'
+                                                                    : (is_null($invoice->payment_percent)
+                                                                        ? '100%'
+                                                                        : $invoice->payment_percent . '%');
+                                                            @endphp
                                                             <span class="text-muted fs-7">
-                                                                ({{ $invoice->payment_percent }}%)
+                                                                ({{ $percentLabel }})
                                                                 - @money($invoice->payment_amount)
 
                                                             </span>
@@ -436,7 +443,7 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                    @endforeach --}}
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -500,94 +507,20 @@
                     <div class="modal-body">
                         @if ($journal->author_fee != 0)
                             <div class="mb-10">
-                                <div class="mb-3">
-                                    <label class="d-flex align-items-center fs-5 fw-semibold">
-                                        <span class="required">Invoice</span>
-                                    </label>
-                                    <div class="fs-7 fw-semibold text-muted">
-                                        Tagihan 1 - 60% (@money($journal->author_fee * 0.6)) -
-                                        @php
-                                            $tagihan1 = $submission->paymentInvoices
-                                                ->where('payment_percent', 60)
-                                                ->first();
-                                        @endphp
-                                        @if ($tagihan1)
-                                            @if ($tagihan1->is_paid)
-                                                <span class="text-success fs-7 fw-bold">Lunas</span>
-                                            @else
-                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
-                                            @endif
-                                        @else
-                                            <span class="text-danger fw-bold">Belum Terbit</span>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="fv-row fv-plugins-icon-container mb-3">
-                                    <div class="d-flex">
-                                        <a href="{{ route('back.journal.invoice.mail-send1', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3 btn-loading">
-                                            <i class="ki-duotone ki-send fs-2 ">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Kirim ke Author
-                                        </a>
-                                        <a href="{{ route('back.journal.invoice.generate1', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3">
-                                            <i class="ki-duotone ki-file-down fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Download
-                                        </a>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="fs-7 fw-semibold text-muted">
-                                        Tagihan 2 - 40% (@money($journal->author_fee * 0.4)) -
-                                        @php
-                                            $tagihan2 = $submission->paymentInvoices
-                                                ->where('payment_percent', 40)
-                                                ->first();
-                                        @endphp
-                                        @if ($tagihan2)
-                                            @if ($tagihan2->is_paid)
-                                                <span class="text-success fs-7 fw-bold">Lunas</span>
-                                            @else
-                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
-                                            @endif
-                                        @else
-                                            <span class="text-danger fw-bold">Belum Terbit</span>
-                                        @endif
-                                    </div>
-                                </div>
-                                <div class="fv-row fv-plugins-icon-container mb-3">
-                                    <div class="d-flex">
-                                        <a href="{{ route('back.journal.invoice.mail-send2', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3 btn-loading">
-                                            <i class="ki-duotone ki-send fs-2 ">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Kirim ke Author
-                                        </a>
-                                        <a href="{{ route('back.journal.invoice.generate2', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3">
-                                            <i class="ki-duotone ki-file-down fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Download
-                                        </a>
-                                    </div>
-                                </div>
+
                                 <div class="mb-3">
                                     <div class="fs-7 fw-semibold text-muted">
                                         Tagihan 100% (@money($journal->author_fee)) -
                                         @php
-                                            $tagihan3 = $submission->paymentInvoices
-                                                ->where('payment_percent', 100)
-                                                ->first();
+                                            $tagihan3 = $submission->paymentInvoices->first(function ($invoice) {
+                                                return (int) $invoice->payment_percent === 100 && !$invoice->is_custom;
+                                            });
+                                            $tagihan3_amount = $tagihan3
+                                                ? $tagihan3->payment_amount
+                                                : $journal->author_fee;
+                                            $tagihan_custom = $submission->paymentInvoices->first(function ($invoice) {
+                                                return (int) $invoice->payment_percent === 100 && $invoice->is_custom;
+                                            });
                                         @endphp
                                         @if ($tagihan3)
                                             @if ($tagihan3->is_paid)
@@ -600,9 +533,9 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="fv-row fv-plugins-icon-container">
+                                <div class="fv-row fv-plugins-icon-container mb-3">
                                     <div class="d-flex">
-                                        <a href="{{ route('back.journal.invoice.mail-send3', $submission->id) }}"
+                                        <a href="{{ route('back.journal.invoice.mail-send', $submission->id) }}"
                                             class="btn btn-light w-100 mx-3 btn-loading">
                                             <i class="ki-duotone ki-send fs-2 ">
                                                 <span class="path1"></span>
@@ -610,7 +543,7 @@
                                             </i>
                                             Kirim ke Author
                                         </a>
-                                        <a href="{{ route('back.journal.invoice.generate3', $submission->id) }}"
+                                        <a href="{{ route('back.journal.invoice.generate', $submission->id) }}"
                                             class="btn btn-light w-100 mx-3">
                                             <i class="ki-duotone ki-file-down fs-2">
                                                 <span class="path1"></span>
@@ -620,6 +553,7 @@
                                         </a>
                                     </div>
                                 </div>
+
                             </div>
                         @endif
                         <div class="mb-10">
@@ -755,12 +689,12 @@
                                             <div class="d-flex flex-column mw-200px">
                                                 <div class="d-flex align-items-center mb-2">
                                                     ${submission.status == 1 ? `
-                                                                                                    <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                    ` : submission.status == 3 ? `
-                                                                                                    <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                    ` : submission.status == 4 ? `
-                                                                                                    <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                    ` :
+                                                                                                            <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                            ` : submission.status == 3 ? `
+                                                                                                            <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                            ` : submission.status == 4 ? `
+                                                                                                            <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                            ` :
                                                     `<span class="badge badge-light-secondary fs-5 p-2">${submission.statusLabel}</span>`
                                                     }
                                                 </div>

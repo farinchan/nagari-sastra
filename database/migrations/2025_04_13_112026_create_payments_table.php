@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->enum('payment_status', ['pending', 'accepted', 'rejected'])->default('pending');
             $table->text('payment_note')->nullable();
-            $table->foreignId('submission_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('payment_invoice_id')->nullable()->constrained('payment_invoices')->onDelete('cascade');
             $table->timestamps();
         });
     }
