@@ -17,8 +17,4 @@ class PaymentInvoice extends Model
         return $this->belongsTo(Submission::class, 'submission_id');
     }
 
-    public function payments()
-    {
-        return $this->hasMany(Payment::class, 'payment_invoice_id');
-    }
 }

@@ -567,7 +567,6 @@ class journalController extends Controller
                 'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
                 'id' => $submission->submission_id,
                 'journal_thumbnail' => 'data:image/png;base64,' . base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                'payment_account' => PaymentAccount::first(),
             ];
 
             if (Storage::exists('arsip/invoice/' . $invoice->created_at->format('Y') . '/' . $invoice->invoice_number . '/invoice-' . $submission->submission_id .  '-' . $author['id'] . '.pdf')) {

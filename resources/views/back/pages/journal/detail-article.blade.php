@@ -170,7 +170,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted fw-semibold fs-6">
+                                    <td colspan="{{ $journal->author_fee != 0 ? 7 : 6 }}"
+                                        class="text-center text-muted fw-semibold fs-6">
                                         Belum ada artikel yang ditambahkan
                                     </td>
                                 </tr>
@@ -181,6 +182,8 @@
             </div>
         </div>
     </div>
+
+
     <div class="modal fade" id="modal_select_article" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -212,7 +215,7 @@
                                 placeholder="Cari Submission ID/Judul" />
                         </div>
                     </div>
-                    <div class="mh-475px scroll-y me-n7 pe-7" id="list_article">
+                    <div class="mh-475px scroll-y me-n7 pe-7" id="select_article_list">
                     </div>
                 </div>
             </div>
@@ -250,20 +253,9 @@
                         @method('PUT')
                         @csrf
                         <div class="modal-body">
-                            <ul class="nav nav-tabs nav-line-tabs mb-5 fs-6">
-                                <li class="nav-item">
-                                    <a class="nav-link active" data-bs-toggle="tab"
-                                        href="#kt_tab_pane_1_submission_{{ $submission->id }}">Informasi</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="tab"
-                                        href="#kt_tab_pane_2_submission_{{ $submission->id }}">History Pembayaran</a>
-                                </li>
-                            </ul>
-                            <div class="tab-content" id="myTabContent">
-                                <div class="tab-pane fade show active"
-                                    id="kt_tab_pane_1_submission_{{ $submission->id }}" role="tabpanel">
-                                    <div class="mh-550px scroll-y me-n7 pe-7" id="list_article">
+
+                                <div class="">
+                                    <div class="mh-550px scroll-y me-n7 pe-7" id="article_detail_container">
                                         <table
                                             class="table table-row-dashed table-row-gray-300 align-top gs-0 gy-4 my-0 fs-6">
                                             <tr>
@@ -359,8 +351,10 @@
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" value="1"
                                                             @if ($submission->free_charge) checked @endif
-                                                            id="free_charge" name="free_charge" />
-                                                        <label class="form-check-label" for="free_charge">
+                                                            id="free_charge_{{ $submission->ojs_submission_id }}"
+                                                            name="free_charge" />
+                                                        <label class="form-check-label"
+                                                            for="free_charge_{{ $submission->ojs_submission_id }}">
                                                             Ya, (Gratis Biaya publikasi)
                                                         </label>
                                                     </div>
@@ -370,82 +364,8 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div class="tab-pane fade" id="kt_tab_pane_2_submission_{{ $submission->id }}"
-                                    role="tabpanel">
-                                    @foreach ($submission->paymentInvoices as $invoice)
-                                        <div class="table-responsive">
-                                            <table class="table table-hover table-rounded table-striped border gy-7 gs-7">
-                                                <thead>
-                                                    <tr
-                                                        class="fw-bold text-center fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                                        <th colspan="4">INVOICE
-                                                            {{ $invoice->invoice_number }}/JRNL/UINSMDD/{{ $invoice->created_at->format('Y') }}
-                                                            <br>
-                                                            @php
-                                                                $percentLabel = $invoice->is_custom
-                                                                    ? 'Custom 100%'
-                                                                    : (is_null($invoice->payment_percent)
-                                                                        ? '100%'
-                                                                        : $invoice->payment_percent . '%');
-                                                            @endphp
-                                                            <span class="text-muted fs-7">
-                                                                ({{ $percentLabel }})
-                                                                - @money($invoice->payment_amount)
 
-                                                            </span>
-                                                        </th>
-                                                    </tr>
-                                                    <tr
-                                                        class="fw-semibold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                                        <th>Waktu</th>
-                                                        <th>Pembayar</th>
-                                                        <th>Metode Pembayaran</th>
-                                                        <th>Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @forelse ($invoice->payments as $payment)
-                                                        <tr>
-                                                            <td>
-                                                                {{ Carbon\Carbon::parse($payment->created_at)->translatedFormat('l, d F Y H:i:s') }}
-                                                            </td>
-                                                            <td>
-                                                                {{ $payment->payment_account_name }}
-                                                            </td>
-                                                            <td>
-                                                                {{ $payment->payment_method }}
-                                                            </td>
-                                                            <td>
-                                                                @if ($payment->payment_status == 'pending')
-                                                                    <span
-                                                                        class="badge badge-light-warning fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                                @elseif ($payment->payment_status == 'accepted')
-                                                                    <span
-                                                                        class="badge badge-light-success fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                                @elseif ($payment->payment_status == 'rejected')
-                                                                    <span
-                                                                        class="badge badge-light-danger fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                                @else
-                                                                    <span
-                                                                        class="badge badge-light-secondary fs-7 fw-bold">{{ $payment->payment_status }}</span>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @empty
-                                                        <tr>
-                                                            <td colspan="4"
-                                                                class="text-center text-muted fw-semibold fs-6">
-                                                                Belum ada history pembayaran
-                                                            </td>
-                                                        </tr>
-                                                    @endforelse
 
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
 
                         </div>
                         <div class="modal-footer">
@@ -636,7 +556,7 @@
 
             $('#btn_add_article').on('click', function() {
                 // Show the loading spinner
-                $('#list_article').html(`
+                $('#select_article_list').html(`
                     <div class="text-center">
                         <div class="spinner spinner-primary spinner-lg"></div>
                         Loading...
@@ -656,20 +576,24 @@
                             return !submissions.map(Number).includes(item.id);
                         });
                         console.log(filter_data);
-                        $('#list_article').html('');
+                        $('#select_article_list').html('');
                         filter_data.forEach(submission => {
-                            $('#list_article').append(`
-                            <div class="border border-hover-primary p-7 rounded mb-7 submission-item" data-title="${submission.publications[0].fullTitle.en_US}" data-id="${submission.id}">
+                            const publication = submission.publications?.[0] ?? {};
+                            const titleKey = "{{ $journal->ojs_version }}" == '3.3' ? 'en_US' : 'en';
+                            const title = publication.fullTitle?.[titleKey] ?? publication.fullTitle?.en_US ?? publication.fullTitle?.en ?? '';
+                            const authorsString = publication.authorsString ?? '';
+                            $('#select_article_list').append(`
+                            <div class="border border-hover-primary p-7 rounded mb-7 submission-item" data-title="${String(title).toLowerCase()}" data-id="${submission.id}">
                                 <div class="d-flex flex-stack pb-3">
                                     <div class="d-flex">
                                         <div class="">
                                             <div class="d-flex align-items-center">
                                                 <a href="#" class="text-gray-900 fw-bold text-hover-primary fs-5 me-4">
-                                                    ${submission.publications[0].authorsString}
+                                                    ${authorsString}
                                                 </a>
                                             </div>
                                             <span class="text-muted fw-semibold mb-3">
-                                                ${submission.publications[0].fullTitle[("{{ $journal->ojs_version }}" == '3.3') ? "en_US" : "en"]}
+                                                ${title}
                                             </span>
                                         </div>
                                     </div>
@@ -711,10 +635,10 @@
                         });
 
                         // Add search functionality with filter for ID or title
-                        $('#search_article').on('input', function() {
+                        $('#search_article').off('input').on('input', function() {
                             let searchValue = $(this).val().toLowerCase();
-                            $('.submission-item').each(function() {
-                                let title = $(this).data('title').toLowerCase();
+                            $('#select_article_list .submission-item').each(function() {
+                                let title = String($(this).data('title') ?? '').toLowerCase();
                                 let id = $(this).data('id').toString();
                                 if (title.includes(searchValue) || id.includes(
                                         searchValue)) {
