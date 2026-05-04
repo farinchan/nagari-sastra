@@ -22,6 +22,7 @@ use App\Http\Controllers\Back\EventController as BackEventController;
 use App\Http\Controllers\Back\NewsController as BackNewsController;
 use App\Http\Controllers\Back\WelcomeSpeechController as BackWelcomeSpeechController;
 use App\Http\Controllers\Back\journalController as BackJournalController;
+use App\Http\Controllers\Back\BookController as BackBookController;
 use App\Http\Controllers\Back\FinanceController as BackFinanceController;
 use App\Http\Controllers\Back\MasterdataController as BackMasterDataController;
 use App\Http\Controllers\Back\MenuProfilController as BackMenuProfilController;
@@ -136,6 +137,20 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/edit/{id}', [BackAnnouncementController::class, 'edit'])->name('edit');
         Route::put('/edit/{id}', [BackAnnouncementController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [BackAnnouncementController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('book')->name('book.')->group(function () {
+        Route::get('/category', [BackBookController::class, 'category'])->name('category');
+        Route::post('/category', [BackBookController::class, 'categoryStore'])->name('category.store');
+        Route::put('/category/edit/{id}', [BackBookController::class, 'categoryUpdate'])->name('category.update');
+        Route::delete('/category/delete/{id}', [BackBookController::class, 'categoryDestroy'])->name('category.destroy');
+
+        Route::get('/', [BackBookController::class, 'index'])->name('index');
+        Route::get('/create', [BackBookController::class, 'create'])->name('create');
+        Route::post('/create', [BackBookController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [BackBookController::class, 'edit'])->name('edit');
+        Route::put('/edit/{id}', [BackBookController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [BackBookController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('event')->name('event.')->group(function () {

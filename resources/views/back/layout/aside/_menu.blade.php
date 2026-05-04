@@ -148,6 +148,45 @@
 
         @role('editor|super-admin')
             <div class="menu-item pt-5">
+                <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Buku</span>
+                </div>
+            </div>
+            <div data-kt-menu-trigger="click"
+                class="menu-item menu-accordion @if (request()->routeIs('back.book.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-library fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Buku</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.book.category')) active @endif"
+                            href="{{ route('back.book.category') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Kategori</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.book.index')) active @endif"
+                            href="{{ route('back.book.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">List Buku</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="menu-item pt-5">
                 <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Jurnal</span>
                 </div>
             </div>
