@@ -16,7 +16,8 @@ return new class extends Migration
             $table->foreignId('book_category_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->string('slug')->unique();
-            $table->string('author')->nullable();
+            $table->string('authorString')->nullable();
+            $table->json('authors')->nullable();
             $table->string('publisher')->nullable();
             $table->string('isbn', 20)->nullable()->unique();
             $table->string('edition')->nullable();
@@ -26,7 +27,7 @@ return new class extends Migration
             $table->decimal('weight', 8, 2)->nullable();
             $table->decimal('price', 15, 2)->default(0);
             $table->unsignedInteger('stock')->default(0);
-            $table->string('language', 50)->nullable();
+            $table->enum('language', ['en', 'id', 'jp'])->default('id');
             $table->mediumText('description')->nullable();
             $table->string('thumbnail')->nullable();
             $table->string('preview_file')->nullable();

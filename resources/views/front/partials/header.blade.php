@@ -42,6 +42,7 @@
                                 @endforeach
                             </ul>
                         </li>
+                        <li class="nl-simple" aria-haspopup="true"><a href="{{ route('book.index') }}">Buku</a></li>
 
 
                         {{-- <li aria-haspopup="true"><a href="#">Pages <span class="wsarrow"></span></a>

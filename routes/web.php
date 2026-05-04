@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Front\AccountController;
 use App\Http\Controllers\Front\AnnouncementController;
+use App\Http\Controllers\Front\BookController;
 use App\Http\Controllers\Front\ContactController;
 use App\Http\Controllers\Front\EventController;
 use App\Http\Controllers\Front\HomeController;
@@ -79,6 +80,13 @@ Route::prefix('event')->name('event.')->group(function () {
 Route::prefix('announcement')->name('announcement.')->group(function () {
     Route::get('/', [AnnouncementController::class, 'index'])->name('index');
     Route::get('/{slug}', [AnnouncementController::class, 'show'])->name('show');
+});
+
+Route::prefix('book')->name('book.')->group(function () {
+    Route::get('/', [BookController::class, 'index'])->name('index');
+    Route::get('/{slug}/preview', [BookController::class, 'preview'])->name('preview');
+    Route::get('/{slug}', [BookController::class, 'show'])->name('show');
+    Route::get('/category/{slug}', [BookController::class, 'category'])->name('category');
 });
 
 Route::prefix('profil')->name('profil.')->group(function () {

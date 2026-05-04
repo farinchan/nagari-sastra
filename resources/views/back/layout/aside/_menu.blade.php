@@ -174,7 +174,7 @@
                         </a>
                     </div>
                     <div class="menu-item">
-                        <a class="menu-link @if (request()->routeIs('back.book.index')) active @endif"
+                        <a class="menu-link @if (request()->routeIs('back.book.index') || request()->routeIs('back.book.create') || request()->routeIs('back.book.edit')) active @endif"
                             href="{{ route('back.book.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>

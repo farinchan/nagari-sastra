@@ -30,6 +30,7 @@ class Book extends Model
         'weight' => 'float',
         'price' => 'float',
         'stock' => 'integer',
+        'authors' => 'array',
         'keywords' => 'array',
     ];
 
@@ -38,6 +39,63 @@ class Book extends Model
     public function category()
     {
         return $this->belongsTo(BookCategory::class, 'book_category_id');
+    }
+
+    public function getAuthorAttribute(): ?string
+    {
+        if (is_array($this->authors) && count($this->authors) > 0) {
+            return collect($this->authors)
+                ->map(function ($author) {
+                    if (is_array($author)) {
+                        return $author['value'] ?? null;
+                    }
+
+                    if (is_object($author)) {
+                        return $author->value ?? null;
+                    }
+
+                    return $author;
+                })
+                ->filter()
+                ->implode(', ');
+        }
+
+        if ($this->authorString) {
+            return $this->authorString;
+        }
+
+        return null;
+    }
+
+    public function getCitationAuthorsAttribute(): array
+    {
+        if (is_array($this->authors) && count($this->authors) > 0) {
+            return collect($this->authors)
+                ->map(function ($author) {
+                    if (is_array($author)) {
+                        return $author['value'] ?? null;
+                    }
+
+                    if (is_object($author)) {
+                        return $author->value ?? null;
+                    }
+
+                    return $author;
+                })
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        if ($this->authorString) {
+            return collect(preg_split('/\s*(?:,|;|&|\band\b)\s*/i', $this->authorString, -1, PREG_SPLIT_NO_EMPTY))
+                ->map(fn ($author) => trim($author))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
+        return [];
     }
 
     public function getThumbnail()
@@ -59,7 +117,7 @@ class Book extends Model
         if (Str::startsWith(trim($this->preview_file), ['http://', 'https://'])) {
             return $this->preview_file;
         }
-        return Storage::url($this->preview_file);
+        return url(Storage::url($this->preview_file));
     }
 
     public function getAttachment()

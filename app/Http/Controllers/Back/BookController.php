@@ -12,6 +12,34 @@ use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
+    private function normalizeTagifyInput($value): array
+    {
+        if (is_array($value)) {
+            return collect($value)->filter()->values()->all();
+        }
+
+        if (!is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return collect($decoded)->filter()->values()->all();
+        }
+
+        return collect(preg_split('/\s*(?:,|;|\n)\s*/', $value, -1, PREG_SPLIT_NO_EMPTY))
+            ->map(fn ($item) => trim($item))
+            ->filter()
+            ->values()
+            ->map(fn ($item) => ['value' => $item])
+            ->all();
+    }
+
+    private function normalizeAuthorString(?string $authorString, array $authors): ?string
+    {
+        return filled($authorString) ? trim($authorString) : null;
+    }
+
     public function category()
     {
         $data = [
@@ -130,13 +158,14 @@ class BookController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'preview_file' => 'nullable|mimes:pdf|max:10240',
-                'attachment' => 'nullable|mimes:pdf|max:10240',
+                'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192',
+                'preview_file' => 'nullable|mimes:pdf|max:30720',
+                'attachment' => 'nullable|mimes:pdf|max:30720',
                 'title' => 'required',
                 'category_id' => 'required',
                 'status' => 'required',
-                'author' => 'nullable',
+                'authorString' => 'nullable|string',
+                'authors' => 'nullable',
                 'publisher' => 'nullable',
                 'isbn' => 'nullable|unique:books,isbn',
                 'edition' => 'nullable',
@@ -146,7 +175,7 @@ class BookController extends Controller
                 'weight' => 'nullable|numeric',
                 'price' => 'nullable|numeric',
                 'stock' => 'nullable|integer',
-                'language' => 'nullable',
+                'language' => 'nullable|in:en,id,jp',
                 'description' => 'nullable',
                 'keywords' => 'nullable',
             ],
@@ -173,10 +202,13 @@ class BookController extends Controller
             $slug = Str::slug($request->title);
         }
 
+        $authors = $this->normalizeTagifyInput($request->authors);
+
         $book = new Book();
         $book->title = $request->title;
         $book->slug = $slug;
-        $book->author = $request->author;
+        $book->authorString = $this->normalizeAuthorString($request->authorString, $authors);
+        $book->authors = $authors ?: null;
         $book->publisher = $request->publisher;
         $book->isbn = $request->isbn;
         $book->edition = $request->edition;
@@ -186,7 +218,7 @@ class BookController extends Controller
         $book->weight = $request->weight;
         $book->price = $request->price ?? 0;
         $book->stock = $request->stock ?? 0;
-        $book->language = $request->language;
+        $book->language = $request->language ?? 'id';
         $book->description = $request->description;
         $book->book_category_id = $request->category_id;
         $book->status = $request->status;
@@ -245,7 +277,8 @@ class BookController extends Controller
                 'title' => 'required',
                 'category_id' => 'required',
                 'status' => 'required',
-                'author' => 'nullable',
+                'authorString' => 'nullable|string',
+                'authors' => 'nullable',
                 'publisher' => 'nullable',
                 'isbn' => 'nullable|unique:books,isbn,' . $id,
                 'edition' => 'nullable',
@@ -255,7 +288,7 @@ class BookController extends Controller
                 'weight' => 'nullable|numeric',
                 'price' => 'nullable|numeric',
                 'stock' => 'nullable|integer',
-                'language' => 'nullable',
+                'language' => 'nullable|in:en,id,jp',
                 'description' => 'nullable',
                 'keywords' => 'nullable',
             ],
@@ -282,9 +315,12 @@ class BookController extends Controller
             $slug = Str::slug($request->title);
         }
 
+        $authors = $this->normalizeTagifyInput($request->authors);
+
         $book->title = $request->title;
         $book->slug = $slug;
-        $book->author = $request->author;
+        $book->authorString = $this->normalizeAuthorString($request->authorString, $authors);
+        $book->authors = $authors ?: null;
         $book->publisher = $request->publisher;
         $book->isbn = $request->isbn;
         $book->edition = $request->edition;
@@ -294,7 +330,7 @@ class BookController extends Controller
         $book->weight = $request->weight;
         $book->price = $request->price ?? 0;
         $book->stock = $request->stock ?? 0;
-        $book->language = $request->language;
+        $book->language = $request->language ?? 'id';
         $book->description = $request->description;
         $book->book_category_id = $request->category_id;
         $book->status = $request->status;
