@@ -799,13 +799,39 @@ class FinanceController extends Controller
                 }
                 return '<span class="text-muted fs-7">Belum ada</span>';
             })
+            ->addColumn('action', function ($invoice) {
+                $viewUrl = route('back.finance.invoice.show', $invoice->id);
+                $deleteUrl = route('back.finance.invoice.destroy', $invoice->id);
+
+                return '
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Aksi
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="' . $viewUrl . '">
+                                    <i class="ki-duotone ki-eye fs-5 me-2"><span class="path1"></span><span class="path2"></span></i>
+                                    Lihat
+                                </a>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-danger" type="button" onclick="deleteInvoice(' . $invoice->id . ')">
+                                    <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span></i>
+                                    Hapus
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                ';
+            })
             ->with([
                 'total_invoices' => $total_invoices,
                 'total_amount' => $total_amount,
                 'total_paid' => $total_paid,
                 'total_unpaid' => $total_unpaid,
             ])
-            ->rawColumns(['invoice_info', 'items_info', 'amount', 'status', 'due_date', 'file'])
+            ->rawColumns(['invoice_info', 'items_info', 'amount', 'status', 'due_date', 'file', 'action'])
             ->make(true);
     }
 
@@ -820,5 +846,164 @@ class FinanceController extends Controller
             new \App\Exports\InvoiceManagementExport($status, null, $date_start, $date_end, $search),
             'management-invoice-' . date('Y-m-d') . '.xlsx'
         );
+    }
+
+    public function invoiceCreate()
+    {
+        $currentYear = now()->year;
+
+        // Get the last invoice number for this year
+        $lastInvoice = PaymentInvoice::whereYear('created_at', $currentYear)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // Generate next invoice number
+        if ($lastInvoice && $lastInvoice->invoice_number) {
+            // Extract number from last invoice (e.g., INV/2026/001 -> 001)
+            $lastNumber = $lastInvoice->invoice_number;
+            $nextNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $nextNumber = '001';
+        }
+
+        $nextInvoiceNumber = $nextNumber;
+        $nextInvoice = format_nomor($nextNumber, 'INV', 'TR', Carbon::now()->month, $currentYear);
+
+        $data = [
+            'title' => 'Buat Invoice',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard')
+                ],
+                [
+                    'name' => 'Finance',
+                    'link' => '#'
+                ],
+                [
+                    'name' => 'Management Invoice',
+                    'link' => route('back.finance.invoice.index')
+                ],
+                [
+                    'name' => 'Buat Invoice',
+                    'link' => route('back.finance.invoice.create')
+                ]
+            ],
+            'next_invoice_number' => $nextInvoiceNumber,
+            'next_invoice' => $nextInvoice,
+        ];
+
+        return view('back.pages.finance.invoice-form', $data);
+    }
+
+    public function invoiceStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'invoice_number' => 'required|string|max:255|unique:payment_invoices,invoice_number',
+            'items' => 'nullable|json',
+            'payment_percent' => 'nullable|numeric|min:0|max:100',
+            'payment_amount' => 'nullable|numeric|min:0',
+            'payment_due_date' => 'nullable|date',
+            'invoice_file' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->all());
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $invoice = new PaymentInvoice();
+            // Build formatted unique invoice from sequence
+            $sequence = $request->invoice_number;
+            $formattedInvoice = format_nomor($sequence, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year);
+            $invoice->invoice = $formattedInvoice;
+            $invoice->invoice_number = $sequence;
+
+            // Decode items and calculate total
+            $items = $request->items ? json_decode($request->items, true) : null;
+            $invoice->items = $items;
+
+            // Calculate payment_amount from items (qty x amount) if items exist
+            $paymentAmount = 0;
+            if ($items && is_array($items)) {
+                foreach ($items as $item) {
+                    $qty = floatval($item['qty'] ?? 0);
+                    $amount = floatval($item['amount'] ?? 0);
+                    $paymentAmount += ($qty * $amount);
+                }
+            }
+
+            // Use calculated amount if items provided, otherwise use the submitted amount
+            $invoice->payment_amount = $paymentAmount > 0 ? $paymentAmount : ($request->payment_amount ?? 0);
+            $invoice->payment_percent = $request->payment_percent ?? 0;
+            $invoice->payment_due_date = $request->payment_due_date;
+            $invoice->is_custom = true;
+
+            if ($request->hasFile('invoice_file')) {
+                $file = $request->file('invoice_file');
+                $filename = Str::slug($request->invoice_number) . '_' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('invoices', $filename, 'public');
+                $invoice->invoice_file = $path;
+            }
+
+            $invoice->save();
+
+            Alert::success('Berhasil', 'Invoice berhasil dibuat');
+            return redirect()->route('back.finance.invoice.index');
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Invoice gagal dibuat: ' . $e->getMessage());
+            return redirect()->back()->withInput();
+        }
+    }
+
+    public function invoiceShow($id)
+    {
+        $invoice = PaymentInvoice::findOrFail($id);
+
+        $data = [
+            'title' => 'Detail Invoice',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard')
+                ],
+                [
+                    'name' => 'Finance',
+                    'link' => '#'
+                ],
+                [
+                    'name' => 'Management Invoice',
+                    'link' => route('back.finance.invoice.index')
+                ],
+                [
+                    'name' => 'Detail Invoice',
+                    'link' => route('back.finance.invoice.show', $id)
+                ]
+            ],
+            'invoice' => $invoice,
+        ];
+
+        return view('back.pages.finance.invoice-detail', $data);
+    }
+
+    public function invoiceDestroy($id)
+    {
+        try {
+            $invoice = PaymentInvoice::findOrFail($id);
+
+            // Hapus file invoice jika ada
+            if ($invoice->invoice_file && Storage::disk('public')->exists($invoice->invoice_file)) {
+                Storage::disk('public')->delete($invoice->invoice_file);
+            }
+
+            $invoice->delete();
+
+            Alert::success('Berhasil', 'Invoice berhasil dihapus');
+            return redirect()->route('back.finance.invoice.index');
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Invoice gagal dihapus: ' . $e->getMessage());
+            return redirect()->back();
+        }
     }
 }

@@ -9,6 +9,13 @@
                 </div>
                 <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
                     <div class="btn-group">
+                        <a href="{{ route('back.finance.invoice.create') }}" class="btn btn-primary">
+                            <i class="ki-duotone ki-plus fs-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            Buat Invoice
+                        </a>
                         <a href="#" id="export_excel" class="btn btn-light-primary">
                             <i class="ki-duotone ki-file-down fs-2">
                                 <span class="path1"></span>
@@ -91,6 +98,7 @@
                             <th class="min-w-100px">Status</th>
                             <th class="min-w-120px">Jatuh Tempo</th>
                             <th class="min-w-100px">File</th>
+                            <th class="min-w-150px">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="fw-semibold text-gray-600">
@@ -102,6 +110,8 @@
     </div>
 @endsection
 @section('scripts')
+<script src="{{ asset('back/plugins/custom/formrepeater/formrepeater.bundle.js') }}"></script>
+
     <script>
         $(document).ready(function() {
 
@@ -147,6 +157,12 @@
                         name: 'file',
                         orderable: false,
                         searchable: false
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
                     }
                 ]
             });
@@ -179,5 +195,39 @@
             });
 
         });
+
+        function deleteInvoice(id) {
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                text: 'Invoice ini akan dihapus secara permanen!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ route('back.finance.invoice.destroy', ['id' => 'PLACEHOLDER']) }}".replace('PLACEHOLDER', id);
+
+                    let methodInput = document.createElement('input');
+                    methodInput.type = 'hidden';
+                    methodInput.name = '_method';
+                    methodInput.value = 'DELETE';
+
+                    let tokenInput = document.createElement('input');
+                    tokenInput.type = 'hidden';
+                    tokenInput.name = '_token';
+                    tokenInput.value = "{{ csrf_token() }}";
+
+                    form.appendChild(methodInput);
+                    form.appendChild(tokenInput);
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        }
     </script>
 @endsection

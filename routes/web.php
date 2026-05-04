@@ -273,6 +273,10 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/invoice', [BackFinanceController::class, 'invoiceIndex'])->name('invoice.index');
         Route::get('/invoice/datatable', [BackFinanceController::class, 'invoiceDatatable'])->name('invoice.datatable');
         Route::get('/invoice/export', [BackFinanceController::class, 'invoiceExport'])->name('invoice.export');
+        Route::get('/invoice/create', [BackFinanceController::class, 'invoiceCreate'])->name('invoice.create');
+        Route::post('/invoice/store', [BackFinanceController::class, 'invoiceStore'])->name('invoice.store');
+        Route::get('/invoice/{id}/show', [BackFinanceController::class, 'invoiceShow'])->name('invoice.show');
+        Route::delete('/invoice/{id}/destroy', [BackFinanceController::class, 'invoiceDestroy'])->name('invoice.destroy');
     });
 
     Route::prefix('master')->name('master.')->group(function () {

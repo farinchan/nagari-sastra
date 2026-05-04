@@ -256,6 +256,12 @@
             </div>
 
 
+        @endrole
+
+        <div class="menu-item pt-5">
+                <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Laporan</span>
+                </div>
+            </div>
             <div class= "menu-item">
                 <a class="menu-link @if (request()->routeIs('back.finance.report.index')) active @endif"
                     href="{{ route('back.finance.report.index') }}">
@@ -267,10 +273,9 @@
                             <span class="path4"></span>
                         </i>
                     </span>
-                    <span class="menu-title">Laporan</span>
+                    <span class="menu-title">Laporan Jurnal</span>
                 </a>
             </div>
-        @endrole
 
 
         @role('super-admin')
