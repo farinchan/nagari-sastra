@@ -155,9 +155,11 @@
                 class="menu-item menu-accordion @if (request()->routeIs('back.book.*')) here show @endif">
                 <span class="menu-link">
                     <span class="menu-icon">
-                        <i class="ki-duotone ki-library fs-2">
+                        <i class="ki-duotone ki-book fs-2">
                             <span class="path1"></span>
                             <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
                         </i>
                     </span>
                     <span class="menu-title">Buku</span>
@@ -174,7 +176,9 @@
                         </a>
                     </div>
                     <div class="menu-item">
-                        <a class="menu-link @if (request()->routeIs('back.book.index') || request()->routeIs('back.book.create') || request()->routeIs('back.book.edit')) active @endif"
+                        <a class="menu-link @if (request()->routeIs('back.book.index') ||
+                                request()->routeIs('back.book.create') ||
+                                request()->routeIs('back.book.edit')) active @endif"
                             href="{{ route('back.book.index') }}">
                             <span class="menu-bullet">
                                 <span class="bullet bullet-dot"></span>
@@ -201,7 +205,7 @@
                         <a class="menu-link @if (request()->segment(3) == $journal->url_path) active @endif"
                             href="{{ route('back.journal.index', $journal->url_path) }}">
                             <span class="menu-icon">
-                                <i class="ki-duotone ki-book fs-2">
+                                <i class="ki-duotone ki-note-2 fs-2">
                                     <span class="path1"></span>
                                     <span class="path2"></span>
                                     <span class="path3"></span>
@@ -221,29 +225,21 @@
                 </div>
             </div>
 
-            {{-- <div class= "menu-item">
-                <a class="menu-link @if (request()->routeIs('back.finance.verification.index')) active @endif"
-                    href="{{ route('back.finance.verification.index') }}">
+
+            <div class="menu-item">
+                <a class="menu-link @if (request()->routeIs('back.finance.invoice.index')) active @endif"
+                    href="{{ route('back.finance.invoice.index') }}">
                     <span class="menu-icon">
-                        <i class="ki-duotone ki-two-credit-cart fs-2">
+                        <i class="ki-duotone ki-wallet fs-2">
                             <span class="path1"></span>
                             <span class="path2"></span>
                             <span class="path3"></span>
                             <span class="path4"></span>
-                            <span class="path5"></span>
                         </i>
                     </span>
-                    <span class="menu-title">Verifikasi</span>
-                    @php
-                        $payment_count = App\Models\Payment::where('payment_status', 'pending')->count();
-                    @endphp
-                    @if ($payment_count > 0)
-                        <span class="menu-badge">
-                            <span class="badge badge-warning"> {{ $payment_count }} </span>
-                        </span>
-                    @endif
+                    <span class="menu-title">Invoice Management </span>
                 </a>
-            </div> --}}
+            </div>
             <div class="menu-item">
                 <a class="menu-link @if (request()->routeIs('back.finance.cashflow.index')) active @endif"
                     href="{{ route('back.finance.cashflow.index') }}">
@@ -258,20 +254,7 @@
                     <span class="menu-title">CashFlow</span>
                 </a>
             </div>
-            <div class="menu-item">
-                <a class="menu-link @if (request()->routeIs('back.finance.invoice.index')) active @endif"
-                    href="{{ route('back.finance.invoice.index') }}">
-                    <span class="menu-icon">
-                        <i class="ki-duotone ki-wallet fs-2">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                            <span class="path3"></span>
-                            <span class="path4"></span>
-                        </i>
-                    </span>
-                    <span class="menu-title">Invoice</span>
-                </a>
-            </div>
+
 
             <div class= "menu-item">
                 <a class="menu-link @if (request()->routeIs('back.finance.report.index')) active @endif"
