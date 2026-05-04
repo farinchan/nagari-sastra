@@ -107,7 +107,7 @@ Route::prefix('journal')->name('journal.')->group(function () {
 
 Route::prefix('payment')->name('payment.')->group(function () {
     Route::get('/', [PaymentController::class, 'index'])->name('index');
-    Route::get('/{invoice_number}', [PaymentController::class, 'show'])->name('show');
+    Route::get('/{invoice_number}', [PaymentController::class, 'show'])->where('invoice_number', '[a-zA-Z0-9\-]+')->name('show');
 });
 
 Route::prefix('contact')->name('contact.')->group(function () {

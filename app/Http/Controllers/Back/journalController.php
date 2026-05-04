@@ -500,14 +500,12 @@ class journalController extends Controller
         $submission = Submission::find($submission);
         if (! $submission) {
             Alert::error('Error', 'Submission not found');
-
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
         if (! $issue) {
             Alert::error('Error', 'Issue not found');
-
             return redirect()->back()->with('error', 'Issue not found');
         }
 
@@ -524,6 +522,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
+                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -540,7 +539,7 @@ class journalController extends Controller
         }
 
         $data = [
-            'number' => format_nomor($invoice->invoice_number, 'INV', 'TR', $invoice->created_at->month, $invoice->created_at->year),
+            'number' => $invoice->invoice ?? '0000',
             'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
             'name' => $author['name'],
             'affiliation' => $author['affiliation'],
@@ -606,6 +605,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
+                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -624,7 +624,7 @@ class journalController extends Controller
         try {
             if ($author['email']) {
                 $data = [
-                    'number' => $invoice->invoice_number ?? '0000',
+                    'number' => $invoice->invoice ?? '0000',
                     'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
                     'name' => $author['name'],
                     'affiliation' => $author['affiliation'],
@@ -726,6 +726,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
+                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -734,6 +735,7 @@ class journalController extends Controller
             ]);
         } else {
             $invoice->update([
+                'invoice' => $invoice->invoice ?? format_nomor($invoice->invoice_number, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -778,7 +780,7 @@ class journalController extends Controller
         }
 
         $data = [
-            'number' => $invoice->invoice_number ?? '0000',
+            'number' => $invoice->invoice ?? '0000',
             'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
             'name' => $author['name'],
             'authorship' => $submission->authors->pluck('name')->implode(', '),
@@ -847,7 +849,7 @@ class journalController extends Controller
         try {
             if ($author['email']) {
                 $data = [
-                    'number' => $invoice->invoice_number ?? '0000',
+                    'number' => $invoice->invoice ?? '0000',
                     'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
                     'name' => $author['name'],
                     'affiliation' => $author['affiliation'],

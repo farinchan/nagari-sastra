@@ -140,7 +140,9 @@
 
         <p class="notice">
             Please complete the payment directly through the payment link below:
-            <a href="https://adm.makwafoundation.org/payment">https://adm.makwafoundation.org/payment</a>.
+            <a href="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $number)]) }}" target="_blank">
+                {{ route('payment.show', ['invoice_number' => str_replace('/', '-', $number)]) }}
+            </a>.
             If you need assistance, please contact Mr. Fajri Rinaldi Chan via WhatsApp at +62 822-8835-8026.
         </p>
 

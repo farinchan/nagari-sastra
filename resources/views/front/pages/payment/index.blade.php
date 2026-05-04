@@ -36,7 +36,7 @@
                                     <label for="invoice_number" class="form-label">Nomor Invoice</label>
                                     <input type="text" id="invoice_number" name="invoice_number"
                                         class="form-control @error('invoice_number') is-invalid @enderror"
-                                        placeholder="Contoh: INV-0001"
+                                        placeholder="Contoh: 000X/INV/TR/II/2024"
                                         value="{{ request('invoice_number') ?? request('q') }}" required>
                                 </div>
                                 <div class="col-md-3">
@@ -71,7 +71,7 @@
                         @forelse ($payment_invoices as $invoice)
                             <div class="project-2-description mb-4 p-4 bg-light rounded-3 shadow-sm">
                                 <div class="project-title mb-2">
-                                    <h4 class="h4-sm mb-1">{{ $invoice->invoice_number }}</h4>
+                                    <h4 class="h4-sm mb-1">{{ format_nomor($invoice->invoice_number, 'INV', 'TR', $invoice->created_at->month, $invoice->created_at->year) }}</h4>
                                     <p class="mb-0 grey-color">{{ $invoice->submission?->fullTitle ?? 'Judul submission belum tersedia' }}</p>
                                 </div>
 
@@ -90,9 +90,9 @@
 
 
                                     <div>
-                                        <p class="small grey-color mb-2">Periksa rincian invoice di halaman berikut, lalu lanjutkan untuk melakukan pembayaran dan mengunggah bukti pembayaran sesuai instruksi.</p>
+                                        <p class="small grey-color mb-2">Periksa rincian invoice di halaman berikut, lalu lanjutkan untuk melakukan pembayaran.</p>
                                         @if ($invoice->submission && $invoice->submission->issue && $invoice->submission->issue->journal)
-                                            <a href="{{ route('payment.show', ['invoice_number' => $invoice->invoice_number]) }}" class="btn btn-theme btn-sm">
+                                            <a href="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $invoice->invoice)]) }}" class="btn btn-theme btn-sm">
                                                 Detail
                                             </a>
                                         @else

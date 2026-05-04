@@ -21,8 +21,12 @@ class PaymentController extends Controller
 {
     private function resolveInvoiceData(string $invoice_number): array
     {
+        // Convert hyphens back to slashes for database lookup
+        // URL format: 0001-INV-TR-V-2026 -> DB format: 0001/INV/TR/V/2026
+        $invoice_number = str_replace('-', '/', $invoice_number);
+
         $paymentInvoice = PaymentInvoice::with(['submission.issue.journal'])
-            ->where('invoice_number', $invoice_number)
+            ->where('invoice', $invoice_number)
             ->firstOrFail();
 
         $submission = $paymentInvoice->submission;
@@ -39,14 +43,14 @@ class PaymentController extends Controller
     {
         return [
             'transaction_details' => [
-                'order_id' => 'PAY-' . $paymentInvoice->invoice_number . '-' . now()->format('YmdHis'),
+                'order_id' => 'PAY-' . $paymentInvoice->invoice . '-' . now()->format('YmdHis'),
                 'gross_amount' => (int) round($paymentInvoice->payment_amount),
             ],
             'item_details' => [[
-                'id' => $paymentInvoice->invoice_number,
+                'id' => $paymentInvoice->invoice,
                 'price' => (int) round($paymentInvoice->payment_amount),
                 'quantity' => 1,
-                'name' =>  $paymentInvoice->invoice_number,
+                'name' =>  $paymentInvoice->invoice,
             ]],
             'customer_details' => [
                 'first_name' => $submission->authors[0]['name'] ?? ($submission->fullTitle ?? 'Pembayaran'),
@@ -81,7 +85,7 @@ class PaymentController extends Controller
             'invoice_number' => $invoiceNumber,
             'payment_invoices' => filled($invoiceNumber)
                 ? PaymentInvoice::with(['submission.issue.journal'])
-                    ->where('invoice_number', 'like', '%' . $invoiceNumber . '%')
+                    ->where('invoice', 'like', '%' . $invoiceNumber . '%')
                     ->latest()
                     ->get()
                 : collect(),
@@ -92,6 +96,8 @@ class PaymentController extends Controller
 
     public function show(Request $request, $invoice_number)
     {
+
+
         [$paymentInvoice, $submission, $journal] = $this->resolveInvoiceData($invoice_number);
 
         $setting_web = SettingWebsite::first();
@@ -105,11 +111,11 @@ class PaymentController extends Controller
         $snapParams = $this->buildSnapParams($paymentInvoice, $submission);
 
         $data = [
-            'title' => 'Pembayaran - Invoice ' . $paymentInvoice->invoice_number,
+            'title' => 'Pembayaran - Invoice ' . $paymentInvoice->invoice,
             'meta' => [
-                'title' => 'Pembayaran - ' . $paymentInvoice->invoice_number . ' | ' . $setting_web->name,
-                'description' => 'Pembayaran invoice ' . $paymentInvoice->invoice_number . ' melalui Midtrans Snap.',
-                'keywords' => $setting_web->name . ', ' . $paymentInvoice->invoice_number . ', Midtrans, Payment, Invoice',
+                'title' => 'Pembayaran - ' . $paymentInvoice->invoice . ' | ' . $setting_web->name,
+                'description' => 'Pembayaran invoice ' . $paymentInvoice->invoice . ' melalui Midtrans Snap.',
+                'keywords' => $setting_web->name . ', ' . $paymentInvoice->invoice . ', Midtrans, Payment, Invoice',
                 'favicon' => $journal?->getJournalThumbnail() ?? Storage::url($setting_web->favicon)
             ],
             'breadcrumbs' => [
@@ -122,8 +128,8 @@ class PaymentController extends Controller
                     'link' => route('payment.index')
                 ],
                 [
-                    'name' => $paymentInvoice->invoice_number,
-                    'link' => route('payment.show', ['invoice_number' => $paymentInvoice->invoice_number])
+                    'name' => $paymentInvoice->invoice,
+                    'link' => route('payment.show', ['invoice_number' => $paymentInvoice->invoice])
                 ]
 
             ],

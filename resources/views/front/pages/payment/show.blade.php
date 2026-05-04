@@ -8,8 +8,8 @@
 	<meta property="og:title" content="{{ $meta['title'] }}">
 	<meta property="og:description" content="{{ $meta['description'] }}">
 	<meta property="og:type" content="website">
-	<meta property="og:url" content="{{ route('payment.show', ['invoice_number' => $payment_invoice->invoice_number]) }}">
-	<link rel="canonical" href="{{ route('payment.show', ['invoice_number' => $payment_invoice->invoice_number]) }}">
+	<meta property="og:url" content="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $payment_invoice->invoice_number)]) }}">
+	<link rel="canonical" href="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $payment_invoice->invoice_number)]) }}">
 	<meta property="og:image" content="{{ Storage::url($meta['favicon']) }}">
 @endsection
 @section('content')

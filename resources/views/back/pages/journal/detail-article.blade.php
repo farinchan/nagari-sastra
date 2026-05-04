@@ -254,116 +254,115 @@
                         @csrf
                         <div class="modal-body">
 
-                                <div class="">
-                                    <div class="mh-550px scroll-y me-n7 pe-7" id="article_detail_container">
-                                        <table
-                                            class="table table-row-dashed table-row-gray-300 align-top gs-0 gy-4 my-0 fs-6">
-                                            <tr>
-                                                <td>Judul</td>
-                                                <td>:</td>
-                                                <td>
-                                                    {{ $submission->fullTitle }}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Penulis</td>
-                                                <td>:</td>
-                                                <td>
-                                                    <ul>
-                                                        @foreach ($submission->getAuthorsAttribute() as $author)
-                                                            <li>
-                                                                <span class="text-gray-800 fw-bold">
-                                                                    {{ $author['name'] }}
-                                                                </span>
-                                                                <br>
-                                                                {{ $author['affiliation'] }}
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Abstrak</td>
-                                                <td>:</td>
-                                                <td>
-                                                    {!! $submission->abstract !!}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Keywords</td>
-                                                <td>:</td>
-                                                <td>
-                                                    {{ $submission->keywords }}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Published</td>
-                                                <td>:</td>
-                                                <td>
-                                                    {{ $submission->datePublished }}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Terakhir Diubah</td>
-                                                <td>:</td>
-                                                <td>
-                                                    {{ $submission->lastModified }}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Editor</td>
-                                                <td>:</td>
-                                                <td>
-                                                    <select class="form-select" data-control="select2"
-                                                        data-placeholder="Select an option"
-                                                        data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
-                                                        name="editor[]" data-allow-clear="true" multiple="multiple">
-                                                        <option></option>
-                                                        @foreach ($editors as $editor)
-                                                            <option value="{{ $editor->id }}"
-                                                                {{ $submission->editors->contains($editor->id) ? 'selected' : '' }}>
-                                                                {{ $editor->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Reviewer</td>
-                                                <td>:</td>
-                                                <td>
-                                                    <select class="form-select" data-control="select2"
-                                                        data-placeholder="Select an option"
-                                                        data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
-                                                        name="reviewer[]" data-allow-clear="true" multiple="multiple">
-                                                        <option></option>
-                                                        @foreach ($reviewers as $reviewer)
-                                                            <option value="{{ $reviewer->id }}"
-                                                                {{ $submission->reviewers->contains($reviewer->id) ? 'selected' : '' }}>
-                                                                {{ $reviewer->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>Gratis Biaya</td>
-                                                <td>:</td>
-                                                <td>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" value="1"
-                                                            @if ($submission->free_charge) checked @endif
-                                                            id="free_charge_{{ $submission->ojs_submission_id }}"
-                                                            name="free_charge" />
-                                                        <label class="form-check-label"
-                                                            for="free_charge_{{ $submission->ojs_submission_id }}">
-                                                            Ya, (Gratis Biaya publikasi)
-                                                        </label>
-                                                    </div>
+                            <div class="">
+                                <div class="mh-550px scroll-y me-n7 pe-7" id="article_detail_container">
+                                    <table class="table table-row-dashed table-row-gray-300 align-top gs-0 gy-4 my-0 fs-6">
+                                        <tr>
+                                            <td>Judul</td>
+                                            <td>:</td>
+                                            <td>
+                                                {{ $submission->fullTitle }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Penulis</td>
+                                            <td>:</td>
+                                            <td>
+                                                <ul>
+                                                    @foreach ($submission->getAuthorsAttribute() as $author)
+                                                        <li>
+                                                            <span class="text-gray-800 fw-bold">
+                                                                {{ $author['name'] }}
+                                                            </span>
+                                                            <br>
+                                                            {{ $author['affiliation'] }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Abstrak</td>
+                                            <td>:</td>
+                                            <td>
+                                                {!! $submission->abstract !!}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Keywords</td>
+                                            <td>:</td>
+                                            <td>
+                                                {{ $submission->keywords }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Published</td>
+                                            <td>:</td>
+                                            <td>
+                                                {{ $submission->datePublished }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Terakhir Diubah</td>
+                                            <td>:</td>
+                                            <td>
+                                                {{ $submission->lastModified }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Editor</td>
+                                            <td>:</td>
+                                            <td>
+                                                <select class="form-select" data-control="select2"
+                                                    data-placeholder="Select an option"
+                                                    data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
+                                                    name="editor[]" data-allow-clear="true" multiple="multiple">
+                                                    <option></option>
+                                                    @foreach ($editors as $editor)
+                                                        <option value="{{ $editor->id }}"
+                                                            {{ $submission->editors->contains($editor->id) ? 'selected' : '' }}>
+                                                            {{ $editor->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Reviewer</td>
+                                            <td>:</td>
+                                            <td>
+                                                <select class="form-select" data-control="select2"
+                                                    data-placeholder="Select an option"
+                                                    data-dropdown-parent="#modal_view_article_{{ $submission->ojs_submission_id }}"
+                                                    name="reviewer[]" data-allow-clear="true" multiple="multiple">
+                                                    <option></option>
+                                                    @foreach ($reviewers as $reviewer)
+                                                        <option value="{{ $reviewer->id }}"
+                                                            {{ $submission->reviewers->contains($reviewer->id) ? 'selected' : '' }}>
+                                                            {{ $reviewer->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Gratis Biaya</td>
+                                            <td>:</td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="1"
+                                                        @if ($submission->free_charge) checked @endif
+                                                        id="free_charge_{{ $submission->ojs_submission_id }}"
+                                                        name="free_charge" />
+                                                    <label class="form-check-label"
+                                                        for="free_charge_{{ $submission->ojs_submission_id }}">
+                                                        Ya, (Gratis Biaya publikasi)
+                                                    </label>
+                                                </div>
 
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 </div>
+                            </div>
 
 
 
@@ -453,26 +452,90 @@
                                         @endif
                                     </div>
                                 </div>
-                                <div class="fv-row fv-plugins-icon-container mb-3">
-                                    <div class="d-flex">
-                                        <a href="{{ route('back.journal.invoice.mail-send', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3 btn-loading">
-                                            <i class="ki-duotone ki-send fs-2 ">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Kirim ke Author
-                                        </a>
-                                        <a href="{{ route('back.journal.invoice.generate', $submission->id) }}"
-                                            class="btn btn-light w-100 mx-3">
-                                            <i class="ki-duotone ki-file-down fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                            </i>
-                                            Download
-                                        </a>
+                                @if (!$tagihan_custom)
+                                    <div class="fv-row fv-plugins-icon-container mb-3">
+                                        <div class="d-flex">
+                                            <a href="{{ route('back.journal.invoice.mail-send', $submission->id) }}"
+                                                class="btn btn-light w-100 mx-3 btn-loading">
+                                                <i class="ki-duotone ki-send fs-2 ">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                Kirim ke Author
+                                            </a>
+                                            <a href="{{ route('back.journal.invoice.generate', $submission->id) }}"
+                                                class="btn btn-light w-100 mx-3">
+                                                <i class="ki-duotone ki-file-down fs-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($tagihan_custom && !$tagihan3)
+                                    <div class="mb-3">
+                                        <span class="badge badge-light-secondary fs-7 fw-bold">
+                                            Tagihan custom sudah terbit. Tidak bisa membuat tagihan ini.
+                                        </span>
+                                    </div>
+                                @endif
+                                <div class="mb-3 mt-5">
+                                    <div class="fs-7 fw-semibold text-muted">
+                                        @if ($tagihan_custom)
+                                            Tagihan Custom (100%) (@money($tagihan_custom->payment_amount)) -
+                                            @if ($tagihan_custom->is_paid)
+                                                <span class="text-success fs-7 fw-bold">Lunas</span>
+                                            @else
+                                                <span class="text-warning fs-7 fw-bold">Belum Dibayar</span>
+                                            @endif
+                                        @else
+                                            Tagihan Custom (100%) - <span class="text-danger fw-bold">Belum Terbit</span>
+                                        @endif
                                     </div>
                                 </div>
+
+                                @if ($tagihan_custom)
+                                    <div class="fv-row fv-plugins-icon-container mb-3">
+                                        <div class="d-flex">
+                                            <a href="{{ route('back.journal.invoice.custom.mail-send', $tagihan_custom->id) }}"
+                                                class="btn btn-light w-100 mx-3 btn-loading">
+                                                <i class="ki-duotone ki-send fs-2 ">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                Kirim ke Author
+                                            </a>
+                                            <a href="{{ route('back.journal.invoice.custom.generate', $tagihan_custom->id) }}"
+                                                class="btn btn-light w-100 mx-3">
+                                                <i class="ki-duotone ki-file-down fs-2">
+                                                    <span class="path1"></span>
+                                                    <span class="path2"></span>
+                                                </i>
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                @elseif ($tagihan3)
+                                    <div class="mb-3">
+                                        <span class="badge badge-light-secondary fs-7 fw-bold">
+                                            Tagihan sudah terbit. Tidak bisa membuat tagihan custom.
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="fv-row fv-plugins-icon-container mb-3">
+                                        <form action="{{ route('back.journal.invoice.custom.store', $submission->id) }}"
+                                            method="POST" class="d-flex align-items-center">
+                                            @csrf
+                                            <input type="number" name="custom_amount" min="1" step="1"
+                                                class="form-control form-control-solid me-3"
+                                                value="{{ $tagihan_custom ? $tagihan_custom->payment_amount : '' }}"
+                                                placeholder="Jumlah tagihan custom 100%" required />
+                                            <button type="submit" class="btn btn-light">Buat</button>
+                                        </form>
+                                    </div>
+                                @endif
 
                             </div>
                         @endif
@@ -579,8 +642,11 @@
                         $('#select_article_list').html('');
                         filter_data.forEach(submission => {
                             const publication = submission.publications?.[0] ?? {};
-                            const titleKey = "{{ $journal->ojs_version }}" == '3.3' ? 'en_US' : 'en';
-                            const title = publication.fullTitle?.[titleKey] ?? publication.fullTitle?.en_US ?? publication.fullTitle?.en ?? '';
+                            const titleKey = "{{ $journal->ojs_version }}" == '3.3' ?
+                                'en_US' : 'en';
+                            const title = publication.fullTitle?.[titleKey] ??
+                                publication.fullTitle?.en_US ?? publication.fullTitle
+                                ?.en ?? '';
                             const authorsString = publication.authorsString ?? '';
                             $('#select_article_list').append(`
                             <div class="border border-hover-primary p-7 rounded mb-7 submission-item" data-title="${String(title).toLowerCase()}" data-id="${submission.id}">
@@ -613,12 +679,12 @@
                                             <div class="d-flex flex-column mw-200px">
                                                 <div class="d-flex align-items-center mb-2">
                                                     ${submission.status == 1 ? `
-                                                                                                            <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                            ` : submission.status == 3 ? `
-                                                                                                            <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                            ` : submission.status == 4 ? `
-                                                                                                            <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
-                                                                                                            ` :
+                                                                                                                <span class="badge badge-light-warning fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                                ` : submission.status == 3 ? `
+                                                                                                                <span class="badge badge-light-success fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                                ` : submission.status == 4 ? `
+                                                                                                                <span class="badge badge-light-danger fs-5 p-2">${submission.statusLabel}</span>
+                                                                                                                ` :
                                                     `<span class="badge badge-light-secondary fs-5 p-2">${submission.statusLabel}</span>`
                                                     }
                                                 </div>
@@ -638,7 +704,8 @@
                         $('#search_article').off('input').on('input', function() {
                             let searchValue = $(this).val().toLowerCase();
                             $('#select_article_list .submission-item').each(function() {
-                                let title = String($(this).data('title') ?? '').toLowerCase();
+                                let title = String($(this).data('title') ?? '')
+                                    .toLowerCase();
                                 let id = $(this).data('id').toString();
                                 if (title.includes(searchValue) || id.includes(
                                         searchValue)) {

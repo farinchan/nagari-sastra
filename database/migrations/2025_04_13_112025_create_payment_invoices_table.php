@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('payment_invoices', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_number')->nullable();
+            $table->string('invoice')->nullable();
             $table->integer('payment_percent')->nullable();
             $table->integer('payment_amount')->nullable();
             $table->date('payment_due_date')->nullable();
