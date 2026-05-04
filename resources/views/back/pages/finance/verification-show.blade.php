@@ -9,13 +9,13 @@
             </div>
             <div class="card-body pt-0">
                 <h3 class="text-gray-800 text-hover-primary mb-4">
-                    {{ $payment->paymentInvoice->submission->submission_id }} - {{ $payment->paymentInvoice->submission->full_title }}
+                    {{ $payment->paymentInvoice->submissions->first()?->ojs_submission_id ?? '-' }} - {{ $payment->paymentInvoice->submissions->first()?->fullTitle ?? '-' }}
                 </h3>
 
                 <div class="mb-4">
                     <h5 class="fw-bold">Authors:</h5>
                     <ul class="list-unstyled ms-5">
-                        @foreach ($payment->paymentInvoice->submission->authors as $author)
+                        @foreach ($payment->paymentInvoice->submissions->first()?->authors ?? [] as $author)
                             <li class="mb-2">
                                 <span class="text-gray-800 fw-bold">{{ $author['name'] }}</span>,
                                 <span class="text-muted">{{ $author['affiliation'] }}</span>
@@ -25,15 +25,15 @@
                 </div>
                 <div class="mb-2">
                     <h5 class="fw-bold">Journal:</h5>
-                    <a href="{{ route('journal.detail', $payment->paymentInvoice->submission->issue->journal->url_path) }}"
+                    <a href="{{ route('journal.detail', $payment->paymentInvoice->submissions->first()?->issue?->journal?->url_path ?? '#') }}"
                         class="text-gray-800 text-hover-primary ms-5">
-                        {{ $payment->paymentInvoice->submission->issue->journal->title }}
+                        {{ $payment->paymentInvoice->submissions->first()?->issue?->journal?->title ?? '-' }}
                     </a>
                 </div>
                 <div>
                     <h5 class="fw-bold">Issue:</h5>
                     <a href="#" class="text-gray-800 text-hover-primary ms-5">
-                        {{ $payment->paymentInvoice->submission->issue->title }}
+                        {{ $payment->paymentInvoice->submissions->first()?->issue?->title ?? '-' }}
                     </a>
                 </div>
             </div>

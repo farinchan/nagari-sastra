@@ -72,13 +72,13 @@
                             <div class="project-2-description mb-4 p-4 bg-light rounded-3 shadow-sm">
                                 <div class="project-title mb-2">
                                     <h4 class="h4-sm mb-1">{{ format_nomor($invoice->invoice_number, 'INV', 'TR', $invoice->created_at->month, $invoice->created_at->year) }}</h4>
-                                    <p class="mb-0 grey-color">{{ $invoice->submission?->fullTitle ?? 'Judul submission belum tersedia' }}</p>
+                                    <p class="mb-0 grey-color">{{ $invoice->submissions->first()?->fullTitle ?? 'Judul submission belum tersedia' }}</p>
                                 </div>
 
                                 <div class="project-details mt-3">
                                     <div class="project-info">
-                                        <p class="">Submission ID: <span>{{ $invoice->submission?->ojs_submission_id ?? '-' }}</span></p>
-                                        <p class="">Journal: <span>{{ $invoice->submission?->issue?->journal?->title ?? '-' }}</span></p>
+                                        <p class="">Submission ID: <span>{{ $invoice->submissions->first()?->ojs_submission_id ?? '-' }}</span></p>
+                                        <p class="">Journal: <span>{{ $invoice->submissions->first()?->issue?->journal?->title ?? '-' }}</span></p>
                                         <p class="">Persentase Pembayaran: <span>{{ $invoice->payment_percent ?? '-' }}%</span></p>
                                         <p class="">Jumlah Tagihan: <span>@money($invoice->payment_amount ?? 0)</span></p>
                                         <p class="mb-0">Batas Waktu: <span>{{ $invoice->payment_due_date ? \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y') : '-' }}</span></p>
@@ -91,7 +91,7 @@
 
                                     <div>
                                         <p class="small grey-color mb-2">Periksa rincian invoice di halaman berikut, lalu lanjutkan untuk melakukan pembayaran.</p>
-                                        @if ($invoice->submission && $invoice->submission->issue && $invoice->submission->issue->journal)
+                                        @if ($invoice->submissions->first() && $invoice->submissions->first()->issue && $invoice->submissions->first()->issue->journal)
                                             <a href="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $invoice->invoice)]) }}" class="btn btn-theme btn-sm">
                                                 Detail
                                             </a>

@@ -431,15 +431,12 @@
                                     <div class="fs-7 fw-semibold text-muted">
                                         Tagihan 100% (@money($journal->author_fee)) -
                                         @php
-                                            $tagihan3 = $submission->paymentInvoices->first(function ($invoice) {
-                                                return (int) $invoice->payment_percent === 100 && !$invoice->is_custom;
-                                            });
+                                            $invoice = $submission->paymentInvoice;
+                                            $tagihan3 = $invoice && (int) $invoice->payment_percent === 100 && !$invoice->is_custom ? $invoice : null;
                                             $tagihan3_amount = $tagihan3
                                                 ? $tagihan3->payment_amount
                                                 : $journal->author_fee;
-                                            $tagihan_custom = $submission->paymentInvoices->first(function ($invoice) {
-                                                return (int) $invoice->payment_percent === 100 && $invoice->is_custom;
-                                            });
+                                            $tagihan_custom = $invoice && (int) $invoice->payment_percent === 100 && $invoice->is_custom ? $invoice : null;
                                         @endphp
                                         @if ($tagihan3)
                                             @if ($tagihan3->is_paid)

@@ -12,9 +12,13 @@ class PaymentInvoice extends Model
         'updated_at',
     ];
 
-    public function Submission()
+    protected $casts = [
+        'items' => 'array',
+    ];
+
+    public function submissions()
     {
-        return $this->belongsTo(Submission::class, 'submission_id');
+        return $this->hasMany(Submission::class, 'payment_invoice_id');
     }
 
 }

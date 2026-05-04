@@ -500,16 +500,18 @@ class journalController extends Controller
         $submission = Submission::find($submission);
         if (! $submission) {
             Alert::error('Error', 'Submission not found');
+
             return redirect()->back()->with('error', 'Submission not found');
         }
 
         $issue = Issue::find($submission->issue_id);
         if (! $issue) {
             Alert::error('Error', 'Issue not found');
+
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $invoice = $submission->paymentInvoices()->first();
+        $invoice = $submission->paymentInvoice;
         if (! $invoice) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
@@ -526,8 +528,19 @@ class journalController extends Controller
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
-                'submission_id' => $submission->id,
+                'items' => [
+                    [
+                        'id' => $submission->ojs_submission_id,
+                        'name' => 'Biaya Publikasi Artikel Jurnal ID: '.$submission->ojs_submission_id.' - '.$submission->fullTitle,
+                        'qty' => 1,
+                        'detail' => 'Pembayaran Biaya Publikasi jurnal '.$issue->journal->title.' Pada Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+
+                        'amount' => $issue->journal->author_fee,
+                    ],
+                ],
             ]);
+
+            $submission->update(['payment_invoice_id' => $invoice->id]);
         }
 
         // Get first author only
@@ -562,6 +575,8 @@ class journalController extends Controller
         $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
         if (Storage::exists($storagePath.$fileName)) {
+            $invoice->update(['invoice_file' => $storagePath.$fileName]);
+
             return response()->download(storage_path('app/public/'.$storagePath.$fileName));
         } else {
             // Create directory if not exists
@@ -571,6 +586,7 @@ class journalController extends Controller
 
             $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
             Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+            $invoice->update(['invoice_file' => $storagePath.$fileName]);
 
             return response()->download(storage_path('app/public/'.$storagePath.$fileName));
         }
@@ -592,7 +608,7 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $invoice = $submission->paymentInvoices()->first();
+        $invoice = $submission->paymentInvoice;
         if (! $invoice) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
@@ -609,8 +625,18 @@ class journalController extends Controller
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
-                'submission_id' => $submission->id,
+                'items' => [
+                    [
+                        'id' => $submission->ojs_submission_id,
+                        'name' => 'Biaya Publikasi Artikel Jurnal ID: '.$submission->ojs_submission_id.' - '.$submission->fullTitle,
+                        'qty' => 1,
+                        'detail' => 'Pembayaran Biaya Publikasi jurnal '.$issue->journal->title.' Pada Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+                        'amount' => $issue->journal->author_fee,
+                    ],
+                ],
             ]);
+
+            $submission->update(['payment_invoice_id' => $invoice->id]);
         }
 
         // Get first author only
@@ -628,6 +654,9 @@ class journalController extends Controller
                     'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
                     'name' => $author['name'],
                     'affiliation' => $author['affiliation'],
+                    'authorship' => collect($submission->authors)->map(function ($author) {
+                        return $author['name'];
+                    })->implode(', '),
                     'title' => $submission->fullTitle,
                     'authorString' => $submission->authorsString,
                     'journal' => $issue->journal->title,
@@ -655,6 +684,8 @@ class journalController extends Controller
                     Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
                     $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
                 }
+
+                $invoice->update(['invoice_file' => $storagePath.$fileName]);
 
                 $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
                 if ($mailEnvirontment == 'production') {
@@ -705,16 +736,14 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $invoice = $submission->paymentInvoices()
-            ->where('is_custom', true)
-            ->first();
-        if ($invoice && $invoice->is_paid) {
+        $invoice = $submission->paymentInvoice;
+        if ($invoice && $invoice->is_custom && $invoice->is_paid) {
             Alert::error('Error', 'Tagihan custom sudah lunas');
 
             return redirect()->back();
         }
 
-        if (! $invoice) {
+        if (! $invoice || ! $invoice->is_custom) {
             $year = Carbon::now()->year;
             $last = PaymentInvoice::whereYear('created_at', $year)
                 ->orderBy('invoice_number', 'desc')
@@ -731,8 +760,18 @@ class journalController extends Controller
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
                 'is_custom' => true,
-                'submission_id' => $submission->id,
+                'items' => [
+                    [
+                        'id' => $submission->ojs_submission_id,
+                        'name' => 'Biaya Publikasi Artikel Jurnal ID: '.$submission->ojs_submission_id.' - '.$submission->fullTitle,
+                        'qty' => 1,
+                        'detail' => 'Pembayaran Biaya Publikasi jurnal '.$issue->journal->title.' Pada Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+                        'amount' => (int) $request->custom_amount,
+                    ],
+                ],
             ]);
+
+            $submission->update(['payment_invoice_id' => $invoice->id]);
         } else {
             $invoice->update([
                 'invoice' => $invoice->invoice ?? format_nomor($invoice->invoice_number, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
@@ -742,6 +781,38 @@ class journalController extends Controller
                 'is_custom' => true,
             ]);
         }
+
+        // Generate PDF invoice and save to storage
+        $author = $submission->authors[0] ?? null;
+        $data = [
+            'number' => $invoice->invoice ?? '0000',
+            'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
+            'name' => $author['name'] ?? '-',
+            'authorship' => collect($submission->authors)->map(function ($a) {
+                return $a['name'];
+            })->implode(', '),
+            'affiliation' => $author['affiliation'] ?? '-',
+            'title' => $submission->fullTitle,
+            'authorString' => $submission->authorsString,
+            'journal' => $issue->journal->title,
+            'payment_percent' => $invoice->payment_percent,
+            'payment_amount' => $invoice->payment_amount,
+            'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
+            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
+            'id' => $submission->ojs_submission_id,
+        ];
+
+        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+        $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
+
+        if (! Storage::exists($storagePath)) {
+            Storage::makeDirectory($storagePath, 0777, true, true);
+        }
+
+        $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
+        Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
+        $invoice->update(['invoice_file' => $storagePath.$fileName]);
 
         Alert::success('Success', 'Tagihan custom berhasil disimpan');
 
@@ -757,62 +828,13 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Custom invoice not found');
         }
 
-        $submission = Submission::find($invoice->ojs_submission_id);
-        if (! $submission) {
-            Alert::error('Error', 'Submission not found');
+        if (! $invoice->invoice_file || ! Storage::disk('public')->exists($invoice->invoice_file)) {
+            Alert::error('Error', 'File invoice belum tersedia');
 
-            return redirect()->back()->with('error', 'Submission not found');
+            return redirect()->back()->with('error', 'File invoice belum tersedia');
         }
 
-        $issue = Issue::find($submission->issue_id);
-        if (! $issue) {
-            Alert::error('Error', 'Issue not found');
-
-            return redirect()->back()->with('error', 'Issue not found');
-        }
-
-        // Get first author only
-        $author = $submission->authors[0] ?? null;
-        if (! $author) {
-            Alert::error('Error', 'No authors found');
-
-            return redirect()->back()->with('error', 'No authors found');
-        }
-
-        $data = [
-            'number' => $invoice->invoice ?? '0000',
-            'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
-            'name' => $author['name'],
-            'authorship' => $submission->authors->pluck('name')->implode(', '),
-            'affiliation' => $author['affiliation'],
-            'title' => $submission->fullTitle,
-            'authorString' => $submission->authorsString,
-            'journal' => $issue->journal->title,
-            'payment_percent' => $invoice->payment_percent,
-            'payment_amount' => $invoice->payment_amount,
-            'payment_due_date' => \Carbon\Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y'),
-            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
-            'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-            'id' => $submission->ojs_submission_id,
-        ];
-
-        // Check if file exists
-        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
-        $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
-
-        if (Storage::exists($storagePath.$fileName)) {
-            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
-        } else {
-            // Create directory if not exists
-            if (! Storage::exists($storagePath)) {
-                Storage::makeDirectory($storagePath, 0777, true, true);
-            }
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-            Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
-
-            return response()->download(storage_path('app/public/'.$storagePath.$fileName));
-        }
+        return response()->download(storage_path('app/public/'.$invoice->invoice_file));
     }
 
     public function invoiceMailSendCustom($invoiceId)
@@ -824,7 +846,7 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Custom invoice not found');
         }
 
-        $submission = Submission::find($invoice->ojs_submission_id);
+        $submission = $invoice->submissions()->first();
         if (! $submission) {
             Alert::error('Error', 'Submission not found');
 
@@ -853,6 +875,9 @@ class journalController extends Controller
                     'year' => $invoice->created_at->format('Y') ?? Carbon::now()->format('Y'),
                     'name' => $author['name'],
                     'affiliation' => $author['affiliation'],
+                    'authorship' => collect($submission->authors)->map(function ($a) {
+                        return $a['name'];
+                    })->implode(', '),
                     'title' => $submission->fullTitle,
                     'authorString' => $submission->authorsString,
                     'journal' => $issue->journal->title,
@@ -862,24 +887,10 @@ class journalController extends Controller
                     'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
                     'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
                     'id' => $submission->ojs_submission_id,
-                    'is_custom' => true,
                 ];
 
-                // Check if file exists
-                $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
-                $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
-
-                if (Storage::exists($storagePath.$fileName)) {
-                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
-                } else {
-                    // Create directory if not exists
-                    if (! Storage::exists($storagePath)) {
-                        Storage::makeDirectory($storagePath, 0777, true, true);
-                    }
-
-                    $pdf = Pdf::loadView('back.pages.journal.pdf.invoice', $data)->setPaper('A4', 'portrait');
-                    Storage::disk('public')->put($storagePath.$fileName, $pdf->output());
-                    $data['attachments'] = storage_path('app/public/'.$storagePath.$fileName);
+                if ($invoice->invoice_file && Storage::disk('public')->exists($invoice->invoice_file)) {
+                    $data['attachments'] = storage_path('app/public/'.$invoice->invoice_file);
                 }
 
                 $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
@@ -950,7 +961,8 @@ class journalController extends Controller
             return;
         }
 
-        $jurnal = Journal::where('url_path', $paymentInvoice->submission->issue->journal->url_path)->first();
+        $submission = $paymentInvoice->submissions()->first();
+        $jurnal = $submission ? Journal::where('url_path', $submission->issue->journal->url_path)->first() : null;
         $paymentAccount = PaymentAccount::first();
 
         if (! $jurnal) {
@@ -963,7 +975,7 @@ class journalController extends Controller
             $response1 = Http::withHeaders([
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer '.$jurnal->api_key,
-            ])->get($jurnal->url.'/api/v1/submissions/'.$paymentInvoice->submission->ojs_submission_id.'/participants', [
+            ])->get($jurnal->url.'/api/v1/submissions/'.$submission->ojs_submission_id.'/participants', [
                 'apiToken' => $jurnal->api_key,
             ]);
 
@@ -982,7 +994,7 @@ class journalController extends Controller
                         'session' => env('WHATSAPP_API_SESSION'),
                         'to' => whatsappNumber($data2['phone']),
                         'text' => 'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
-                            'Invoice untuk untuk pembayaran artikel Anda dengan *SUBMISSION ID: '.$paymentInvoice->submission->ojs_submission_id."* telah terbit. Berikut adalah detail invoice Anda:\n\n".
+                            'Invoice untuk untuk pembayaran artikel Anda dengan *SUBMISSION ID: '.$submission->ojs_submission_id."* telah terbit. Berikut adalah detail invoice Anda:\n\n".
                             'INVOICE: '.($paymentInvoice->invoice_number ?? '0000').'/JRNL/UINSMDD/'.($paymentInvoice->created_at->format('Y') ?? Carbon::now()->format('Y'))."\n".
                             'Jumlah: Rp '.number_format($paymentInvoice->payment_amount, 0, ',', '.')."\n".
                             'Persentase Pembayaran: '.($paymentInvoice->payment_percent ?? '-')."%\n".
@@ -993,10 +1005,10 @@ class journalController extends Controller
                             'Atas Nama: '.($paymentAccount->account_name ?? '-')."\n\n".
 
                             "berikut kami lampirkan file invoice kepada anda, jika file tidak terkirim anda dapat mengunduhnya melalui tautan berikut:\n".
-                            asset('storage/arsip/invoice/'.$paymentInvoice->created_at->format('Y').'/'.$paymentInvoice->invoice_number.'/invoice-'.$paymentInvoice->submission->ojs_submission_id.'-'.$paymentInvoice->submission->authors[0]['id'].'.pdf')."\n\n".
+                            asset('storage/arsip/invoice/'.$paymentInvoice->created_at->format('Y').'/'.$paymentInvoice->invoice_number.'/invoice-'.$submission->ojs_submission_id.'-'.$submission->authors[0]['id'].'.pdf')."\n\n".
 
                             'batas waktu pembayaran anda adalah '.\Carbon\Carbon::parse($paymentInvoice->payment_due_date)->translatedFormat('d F Y').". Setelah melakukan pembayaran, silakan unggah bukti pembayaran melalui tautan berikut:\n".
-                            route('payment.pay', [$paymentInvoice->submission->issue->journal->url_path, $paymentInvoice->submission->ojs_submission_id])."\n\n".
+                            route('payment.pay', [$submission->issue->journal->url_path, $submission->ojs_submission_id])."\n\n".
                             'Terima kasih atas perhatian dan kerjasama Anda '.
 
                             "Salam,\n".

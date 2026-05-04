@@ -25,11 +25,11 @@ class PaymentController extends Controller
         // URL format: 0001-INV-TR-V-2026 -> DB format: 0001/INV/TR/V/2026
         $invoice_number = str_replace('-', '/', $invoice_number);
 
-        $paymentInvoice = PaymentInvoice::with(['submission.issue.journal'])
+        $paymentInvoice = PaymentInvoice::with(['submissions.issue.journal'])
             ->where('invoice', $invoice_number)
             ->firstOrFail();
 
-        $submission = $paymentInvoice->submission;
+        $submission = $paymentInvoice->submissions->first();
         $journal = $submission?->issue?->journal;
 
         if (! $submission || ! $journal) {
@@ -84,7 +84,7 @@ class PaymentController extends Controller
             ],
             'invoice_number' => $invoiceNumber,
             'payment_invoices' => filled($invoiceNumber)
-                ? PaymentInvoice::with(['submission.issue.journal'])
+                ? PaymentInvoice::with(['submissions.issue.journal'])
                     ->where('invoice', 'like', '%' . $invoiceNumber . '%')
                     ->latest()
                     ->get()

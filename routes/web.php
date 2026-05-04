@@ -233,14 +233,6 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
 
 
     Route::prefix('finance')->name('finance.')->group(function () {
-        Route::get('/verification', [BackFinanceController::class, 'verificationIndex'])->name('verification.index');
-        Route::get('/verification/datatable', [BackFinanceController::class, 'verificationDatatable'])->name('verification.datatable');
-        Route::get('/verification/{id}/detail', [BackFinanceController::class, 'verificationDetail'])->name('verification.detail');
-        Route::put('/verification/{id}/update', [BackFinanceController::class, 'verificationUpdate'])->name('verification.update');
-        Route::get('/verification/{id}/delete', [BackFinanceController::class, 'verificationDelete'])->name('verification.delete');
-        Route::get('/confirm-payment/{id}/generate', [BackFinanceController::class, 'confirmPaymentGenerate'])->name('confirm-payment.generate');
-        Route::get('/confirm-payment/{id}/mail-send', [BackFinanceController::class, 'confirmPaymentMailSend'])->name('confirm-payment.mail-send');
-
         Route::get('/report', [BackFinanceController::class, 'reportIndex'])->name('report.index');
         Route::get('/report/datatable', [BackFinanceController::class, 'reportDatatable'])->name('report.datatable');
         Route::get('/report/export', [BackFinanceController::class, 'reportExport'])->name('report.export');
@@ -254,6 +246,10 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/cashflow/store', [BackFinanceController::class, 'cashflowStore'])->name('cashflow.store');
         Route::put('/cashflow/{id}/update', [BackFinanceController::class, 'cashflowUpdate'])->name('cashflow.update');
         Route::get('/cashflow/{id}/delete', [BackFinanceController::class, 'cashflowDestroy'])->name('cashflow.destroy');
+
+        Route::get('/invoice', [BackFinanceController::class, 'invoiceIndex'])->name('invoice.index');
+        Route::get('/invoice/datatable', [BackFinanceController::class, 'invoiceDatatable'])->name('invoice.datatable');
+        Route::get('/invoice/export', [BackFinanceController::class, 'invoiceExport'])->name('invoice.export');
     });
 
     Route::prefix('master')->name('master.')->group(function () {
