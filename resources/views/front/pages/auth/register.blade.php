@@ -3,7 +3,7 @@
     <title>{{ $meta['description'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Torkata Research">
+    <meta name="author" content="Nagari Sastra">
 
     <meta property="og:title" content="{{ $meta['title'] }}">
     <meta property="og:description" content="{{ $meta['description'] }}">
@@ -24,7 +24,7 @@
                         <!-- REGISTER FORM TITLE -->
                         <div class="section-title text-center mb-50">
                             <h3 class="h3-md">Daftar Akun Baru</h3>
-                            <p class="p-lg grey-color">Bergabunglah dengan Torkata Research untuk mengakses fitur lengkap penelitian dan publikasi ilmiah</p>
+                            <p class="p-lg grey-color">Bergabunglah dengan Nagari Sastra untuk mengakses fitur lengkap penelitian dan publikasi ilmiah</p>
                         </div>
 
                         <!-- REGISTER FORM -->
@@ -285,7 +285,7 @@
             <div class="row">
                 <div class="col-lg-10 offset-lg-1">
                     <div class="section-title text-center mb-60">
-                        <h3 class="h3-md">Keuntungan Bergabung dengan Torkata Research</h3>
+                        <h3 class="h3-md">Keuntungan Bergabung dengan Nagari Sastra</h3>
                         <p class="p-xl">Dapatkan akses ke berbagai fitur unggulan untuk mendukung karir akademik dan penelitian Anda</p>
                     </div>
                 </div>

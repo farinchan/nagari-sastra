@@ -3,7 +3,7 @@
     <title>{{ $meta['title'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="keywords" content="{{ $meta['keywords'] }}">
-<meta name="author" content="Torkata Research">
+<meta name="author" content="Nagari Sastra">
 
     <meta property="og:title" content="{{ $meta['title'] }}">
     <meta property="og:description" content="{{ $meta['description'] }}">
@@ -156,7 +156,7 @@
 
                         <!-- Text -->
                         <p class="grey-color">
-                                Temukan berita terbaru, artikel menarik, dan informasi terkini seputar riset, teknologi, dan inovasi di Torkata Research. Selalu update wawasan Anda bersama kami!
+                                Temukan berita terbaru, artikel menarik, dan informasi terkini seputar riset, teknologi, dan inovasi di Nagari Sastra. Selalu update wawasan Anda bersama kami!
                         </p>
 
                     </div> <!-- End Text Widget -->

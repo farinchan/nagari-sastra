@@ -13,12 +13,12 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
 		<meta name="author" content="Jthemes"/>
-		<meta name="description" content="Torkata Research - Publication, Research, and Education">
-		<meta name="keywords" content="Torkata, Torkata Research, Research, Publication, Education">
+		<meta name="description" content="Nagari Sastra - Publication, Research, and Education">
+		<meta name="keywords" content="Nagari Sastra, Research, Publication, Education">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
   		<!-- SITE TITLE -->
-		<title>Torkata Research</title>
+		<title>Nagari Sastra</title>
 
 		<!-- FAVICON AND TOUCH ICONS -->
 		<link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
@@ -109,7 +109,7 @@
 									{{-- <div class="hero-logo"><img src="{{ asset("front/images/logo-white.png") }}" alt="header-logo"></div> --}}
 
 									<!-- Title -->
-                                    <h3 class="h3-md">Torkata Research is currently under maintenance</h3>
+									<h3 class="h3-md">Nagari Sastra is currently under maintenance</h3>
 
                                     <!-- Text -->
                                     <p class="p-xl">Please wait a moment. A new look, new features, and a faster interface are coming soon.</p>

@@ -3,7 +3,7 @@
     <title>{{ $meta['title'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="{{ $news->user->name ?? 'Torkata Research' }}">
+    <meta name="author" content="{{ $news->user->name ?? 'Nagari Sastra' }}">
 
     <meta property="og:title" content="{{ $meta['title'] }}">
     <meta property="og:description" content="{{ $meta['description'] }}">

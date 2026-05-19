@@ -10,7 +10,7 @@
                         <div class="hero-13-txt text-center white-color">
 
                             <!-- Title -->
-                            <h3 class="h3-lg">Torkata Research: Publication, Research, Training & Education</h3>
+                            <h3 class="h3-lg">Nagari Sastra: Publication, Research, Training & Technology</h3>
 
                             <!-- Text -->
                             <p class="p-xl">

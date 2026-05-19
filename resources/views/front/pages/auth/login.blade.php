@@ -3,7 +3,7 @@
     <title>{{ $meta['description'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Torkata Research">
+    <meta name="author" content="Nagari Sastra">
 
     <meta property="og:title" content="{{ $meta['title'] }}">
     <meta property="og:description" content="{{ $meta['description'] }}">
@@ -24,7 +24,7 @@
                         <!-- LOGIN FORM TITLE -->
                         <div class="section-title text-center mb-50">
                             <h3 class="h3-md">Masuk ke Akun Anda</h3>
-                            <p class="p-lg grey-color">Masuk untuk mengakses fitur lengkap Torkata Research
+                            <p class="p-lg grey-color">Masuk untuk mengakses fitur lengkap Nagari Sastra
                             </p>
                         </div>
 
