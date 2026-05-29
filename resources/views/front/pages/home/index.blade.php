@@ -14,7 +14,7 @@
 @endsection
 @section('content')
     <!-- HERO-4
-                                       ============================================= -->
+                                           ============================================= -->
     <section id="hero-4" class="hero-section division">
         <div class="container">
 
@@ -83,7 +83,7 @@
 
 
     <!-- FEATURES-2
-                                       ============================================= -->
+                                           ============================================= -->
     <section id="features-2" class="wide-60 features-section division">
         <div class="container">
 
@@ -117,10 +117,9 @@
 
                             <!-- Text -->
                             <div class="fbox-txt">
-                                <h5 class="h5-xs">Publikasi</h5>
+                                <h5 class="h5-xs">Penerbitan</h5>
                                 <p class="p-md grey-color">
-                                    Publikasikan karya ilmiah Anda di jurnal bereputasi untuk meningkatkan visibilitas
-                                    penelitian.
+                                    Layanan penerbitan buku ilmiah, monograf, buku ajar, dan prosiding berkualitas tinggi ber-ISBN.
                                 </p>
                             </div>
 
@@ -137,9 +136,9 @@
 
                             <!-- Text -->
                             <div class="fbox-txt">
-                                <h5 class="h5-xs">Penelitian</h5>
+                                <h5 class="h5-xs">Publikasi</h5>
                                 <p class="p-md grey-color">
-                                    Lakukan penelitian terapan untuk mengembangkan solusi inovatif di berbagai bidang ilmu.
+                                    Bimbingan dan pendampingan publikasi artikel ilmiah pada jurnal nasional terakreditasi maupun internasional bereputasi.
                                 </p>
                             </div>
 
@@ -156,9 +155,9 @@
 
                             <!-- Text -->
                             <div class="fbox-txt">
-                                <h5 class="h5-xs">Training & Education</h5>
+                                <h5 class="h5-xs">Teknologi</h5>
                                 <p class="p-md grey-color">
-                                    Ikuti pelatihan dan workshop untuk meningkatkan keterampilan riset dan penulisan ilmiah.
+                                    Solusi teknologi informasi, sistem digital terintegrasi, dan platform riset modern untuk kemajuan inovasi Anda.
                                 </p>
                             </div>
 
@@ -176,7 +175,7 @@
 
 
     <!-- BLOG-1
-                                       ============================================= -->
+                                           ============================================= -->
     <section id="blog-1" class="bg-lightgrey wide-60 reviews-section division">
         <div class="container">
 
@@ -265,7 +264,7 @@
 
 
     <!-- STATISTIC-4
-                                       ============================================= -->
+                                           ============================================= -->
     <section id="statistic-4" class="bg-07 statistic-section division">
         <div class="container white-color">
             <div class="row">
@@ -336,7 +335,7 @@
 
 
     <!-- FEATURES-10
-                                   ============================================= -->
+                                       ============================================= -->
     <section id="features-10" class="wide-40 features-section division">
         <div class="container">
 
@@ -391,7 +390,7 @@
 
 
     <!-- CONTENT-6
-                                       ============================================= -->
+                                           ============================================= -->
     <section id="content-6" class="wide-60 content-section division">
         <div class="container">
             <div class="row d-flex align-items-center m-row">
@@ -448,7 +447,7 @@
 
 
     <!-- TESTIMONIALS-3
-                               ============================================= -->
+                                   ============================================= -->
     <section id="reviews-3" class="wide-100 reviews-section division">
         <div class="container">
 

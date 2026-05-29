@@ -126,7 +126,7 @@
                 <!-- FOOTER COPYRIGHT -->
                 <div class="col-lg-6">
                     <div class="footer-copyright">
-                        <p>&copy; {{ date('Y') }} All Rights Reserved. {{ $setting_web?->name ?? '' }}</p>
+                        <p>&copy; {{ date('Y') }} PT Nagari Sastra Group. All Rights Reserved</p>
                     </div>
                 </div>
 
