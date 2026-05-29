@@ -275,11 +275,11 @@
                     <div class="statistic-block text-center mb-40 wow fadeInUp" data-wow-delay="0.4s">
 
                         <!-- Icon  -->
-                        <div class="statistic-ico ico-60"><span class="flaticon-browser"></span></div>
+                        <div class="statistic-ico ico-60"><span class="flaticon-book"></span></div>
 
                         <!-- Text -->
-                        <h3 class="h3-xs statistic-number">1,<span class="count-element">186</span></h3>
-                        <p class="p-md txt-400">Finished Projects</p>
+                        <h3 class="h3-xs statistic-number"><span class="count-element">{{ $count_book ?: 0 }}</span></h3>
+                        <p class="p-md txt-400">Buku Terbit</p>
 
                     </div>
                 </div>
@@ -290,11 +290,11 @@
                     <div class="statistic-block text-center mb-40 wow fadeInUp" data-wow-delay="0.6s">
 
                         <!-- Icon  -->
-                        <div class="statistic-ico ico-60"><span class="flaticon-like-1"></span></div>
+                        <div class="statistic-ico ico-60"><span class="flaticon-files"></span></div>
 
                         <!-- Text -->
-                        <h3 class="h3-xs statistic-number">1,<span class="count-element">122</span></h3>
-                        <p class="p-md txt-400">Happy Customers</p>
+                        <h3 class="h3-xs statistic-number"><span class="count-element">{{ $count_submission_published ?: 0 }}</span></h3>
+                        <p class="p-md txt-400">Artikel Terbit</p>
                     </div>
                 </div>
 
@@ -304,11 +304,11 @@
                     <div class="statistic-block text-center mb-40 wow fadeInUp" data-wow-delay="0.8s">
 
                         <!-- Icon  -->
-                        <div class="statistic-ico ico-60"><span class="flaticon-users"></span></div>
+                        <div class="statistic-ico ico-60"><span class="flaticon-browser"></span></div>
 
                         <!-- Text -->
-                        <h3 class="h3-xs statistic-number">3,<span class="count-element">659</span></h3>
-                        <p class="p-md txt-400">Active Accounts</p>
+                        <h3 class="h3-xs statistic-number"><span class="count-element">{{ $count_journal ?: 0 }}</span></h3>
+                        <p class="p-md txt-400">Jurnal Terkelola</p>
 
                     </div>
                 </div>
@@ -319,11 +319,11 @@
                     <div class="statistic-block text-center mb-40 wow fadeInUp" data-wow-delay="1s">
 
                         <!-- Icon  -->
-                        <div class="statistic-ico ico-60"><span class="flaticon-help"></span></div>
+                        <div class="statistic-ico ico-60"><span class="flaticon-monitor"></span></div>
 
                         <!-- Text -->
-                        <h3 class="h3-xs statistic-number"><span class="count-element">648</span></h3>
-                        <p class="p-md txt-400">Tickets Closed</p>
+                        <h3 class="h3-xs statistic-number"><span class="count-element">3</span></h3>
+                        <p class="p-md txt-400">Klien Teknologi</p>
 
                     </div>
                 </div>
@@ -333,6 +333,239 @@
         </div> <!-- End container -->
     </section> <!-- END STATISTIC-4 -->
 
+
+    <!-- BOOKS SECTION
+    ============================================= -->
+    <style>
+        .books-scroll-container {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 24px;
+            padding: 15px 5px 30px 5px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .books-scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .books-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .books-scroll-container::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        .books-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+        .book-card {
+            width: 260px;
+            min-width: 260px;
+            background: #ffffff;
+            border: 1px solid #eaeaea;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .book-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+            border-color: #d1d1d1;
+        }
+        .book-img-wrapper {
+            position: relative;
+            height: 340px;
+            overflow: hidden;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .book-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .book-card:hover .book-img {
+            transform: scale(1.05);
+        }
+        .book-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .book-price-badge {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: #007bff;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .book-price-free {
+            background: #28a745;
+        }
+        .book-info {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .book-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            color: #333;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 40px;
+        }
+        .book-author {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .book-btn {
+            margin-top: auto;
+            width: 100%;
+            padding: 8px 16px;
+            background: #f1f3f5;
+            color: #495057;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .book-card:hover .book-btn {
+            background: #007bff;
+            color: #ffffff;
+        }
+        .book-scroll-nav {
+            display: flex;
+            gap: 10px;
+        }
+        .scroll-nav-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scroll-nav-btn:hover {
+            background: #007bff;
+            border-color: #007bff;
+            color: #fff;
+        }
+    </style>
+
+    <section id="books-latest" class="wide-60 division bg-lightgrey">
+        <div class="container">
+            <!-- SECTION TITLE -->
+            <div class="row align-items-center mb-40">
+                <div class="col-md-8">
+                    <div class="section-title text-left">
+                        <div class="section-id grey-color">Koleksi Buku</div>
+                        <h3 class="h3-sm">Buku Terbaru</h3>
+                        <p class="p-lg grey-color">Jelajahi berbagai buku berkualitas dari para penulis.</p>
+                    </div>
+                </div>
+                @if(!$list_book->isEmpty())
+                <div class="col-md-4 text-right d-none d-md-flex align-items-center justify-content-end">
+                    <div class="book-scroll-nav mr-3">
+                        <button id="slide-left-btn" class="scroll-nav-btn"><span class="flaticon-left-arrow"></span></button>
+                        <button id="slide-right-btn" class="scroll-nav-btn"><span class="flaticon-right-arrow"></span></button>
+                    </div>
+                    <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Semua Buku</a>
+                </div>
+                @endif
+            </div>
+
+            <!-- SCROLLABLE CONTAINER / EMPTY STATE -->
+            @if($list_book->isEmpty())
+                <div class="row">
+                    <div class="col-12 text-center py-4">
+                        <div class="no-books-box p-5" style="background: #ffffff; border: 1px dashed #ddd; border-radius: 16px; max-width: 550px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+                            <div class="ico-55 mb-20" style="color: #bbb;"><span class="flaticon-book"></span></div>
+                            <h5 class="h5-xs" style="color: #444; font-weight: 700; margin-bottom: 10px;">Belum Ada Koleksi Buku</h5>
+                            <p class="p-md grey-color">Saat ini belum ada buku yang diterbitkan. Buku terbaru yang terbit akan tampil di sini.</p>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="books-scroll-container" id="books-scroll">
+                    @foreach($list_book as $book)
+                        <div class="book-card">
+                            <div class="book-img-wrapper">
+                                <span class="book-badge">{{ $book->category->name ?? 'Buku' }}</span>
+                                <img class="book-img" src="{{ $book->getThumbnail() }}" alt="{{ $book->title }}">
+                                @if($book->price == 0)
+                                    <span class="book-price-badge book-price-free">Gratis</span>
+                                @else
+                                    <span class="book-price-badge">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
+                            <div class="book-info">
+                                <h5 class="book-title">{{ $book->title }}</h5>
+                                <p class="book-author">{{ $book->author ?? 'Penulis' }}</p>
+                                <a href="{{ route('book.show', $book->slug) }}" class="book-btn">Detail Buku</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- MOBILE ALL BOOKS LINK -->
+                <div class="row d-md-none mt-3">
+                    <div class="col text-center">
+                        <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Semua Buku</a>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </section>
+ 
+    <script>
+        if (document.getElementById('slide-left-btn')) {
+            document.getElementById('slide-left-btn').addEventListener('click', function() {
+                document.getElementById('books-scroll').scrollBy({ left: -300, behavior: 'smooth' });
+            });
+        }
+        if (document.getElementById('slide-right-btn')) {
+            document.getElementById('slide-right-btn').addEventListener('click', function() {
+                document.getElementById('books-scroll').scrollBy({ left: 300, behavior: 'smooth' });
+            });
+        }
+    </script>
 
     <!-- FEATURES-10
                                        ============================================= -->

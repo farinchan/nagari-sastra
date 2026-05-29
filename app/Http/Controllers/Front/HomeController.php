@@ -34,6 +34,14 @@ class HomeController extends Controller
             'welcome_speech' => WelcomeSpeech::first(),
             'list_announcement' => Announcement::latest()->where('is_active', true)->limit(8)->get(),
             'list_event' => Event::latest()->where('is_active', true)->where('access', 'terbuka')->limit(8)->get(),
+            
+            // Dynamic Stats
+            'count_book' => \App\Models\Book::count(),
+            'count_submission_published' => \App\Models\Submission::where('status', '3')->orWhere('status', 'published')->orWhere('status_label', 'Published')->count(),
+            'count_journal' => \App\Models\Journal::count(),
+            
+            // Latest Books
+            'list_book' => \App\Models\Book::where('status', 'published')->latest()->take(10)->get(),
         ];
         return view('front.pages.home.index', $data);
     }
