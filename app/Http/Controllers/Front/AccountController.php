@@ -26,18 +26,18 @@ class AccountController extends Controller
         $data = [
             'title' => $me->name . ' | ' . $setting_web->name,
             'meta' => [
-                'title' => __('front.profile'),
+                'title' => 'Profil',
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
                 'favicon' => $setting_web->favicon
             ],
             'breadcrumbs' => [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('front.profile'),
+                    'name' => 'Profil',
                     'link' => route('account.profile')
                 ]
             ],

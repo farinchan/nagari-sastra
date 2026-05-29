@@ -26,7 +26,7 @@ class MenuProfilController extends Controller
             ],
             'breadcrumbs' => [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [

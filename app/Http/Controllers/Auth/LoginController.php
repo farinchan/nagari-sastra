@@ -15,20 +15,20 @@ class LoginController extends Controller
     {
         $setting_web = SettingWebsite::first();
         $data = [
-            'title' => __('front.login') . ' | ' . $setting_web->name,
+            'title' =>  'Masuk | ' . $setting_web->name,
             'meta' => [
-                'title' => __('front.login') . ' | ' . $setting_web->name,
+                'title' => 'Masuk' . ' | ' . $setting_web->name,
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Contact Us, Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
                 'favicon' => $setting_web->favicon
             ],
             'breadcrumbs' =>  [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('front.login'),
+                    'name' => 'Masuk',
                     'link' => route('login')
                 ]
             ],

@@ -77,7 +77,7 @@ class TeamController extends Controller
             ],
             'breadcrumbs' =>  [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
@@ -220,7 +220,7 @@ class TeamController extends Controller
             ],
             'breadcrumbs' =>  [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [

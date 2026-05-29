@@ -19,20 +19,20 @@ class ForgotPasswordController extends Controller
     {
         $setting_web = SettingWebsite::first();
         $data = [
-            'title' => __('auth.forgot_password') . ' | ' . $setting_web->name,
+            'title' => 'Lupa Password' . ' | ' . $setting_web->name,
             'meta' => [
-                'title' => __('auth.forgot_password') . ' | ' . $setting_web->name,
+                'title' => 'Lupa Password' . ' | ' . $setting_web->name,
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Forgot Password, Reset Password, Journal, Research, OJS System',
                 'favicon' => $setting_web->favicon
             ],
             'breadcrumbs' =>  [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('auth.forgot_password'),
+                    'name' => 'Lupa Password',
                     'link' => route('password.request')
                 ]
             ],
@@ -99,20 +99,20 @@ class ForgotPasswordController extends Controller
     {
         $setting_web = SettingWebsite::first();
         $data = [
-            'title' => __('auth.reset_password') . ' | ' . $setting_web->name,
+            'title' => 'Reset Password' . ' | ' . $setting_web->name,
             'meta' => [
-                'title' => __('auth.reset_password') . ' | ' . $setting_web->name,
+                'title' => 'Reset Password' . ' | ' . $setting_web->name,
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Reset Password, Journal, Research, OJS System',
                 'favicon' => $setting_web->favicon
             ],
             'breadcrumbs' =>  [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('auth.reset_password'),
+                    'name' => 'Reset Password',
                     'link' => '#'
                 ]
             ],

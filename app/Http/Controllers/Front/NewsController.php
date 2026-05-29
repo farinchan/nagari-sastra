@@ -26,20 +26,20 @@ class NewsController extends Controller
             ->paginate(6);
         $news->appends(['q' => $search]);
         $data = [
-            'title' => __('front.news') . ' | ' . $setting_web->name,
+            'title' => 'Berita | ' . $setting_web->name,
             'meta' => [
-                'title' => __('front.news') . ' | ' . $setting_web->name,
+                'title' => 'Berita | ' . $setting_web->name,
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
                 'favicon' => $setting_web->favicon
             ],
             'breadcrumbs' => [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('front.news'),
+                    'name' => 'Berita',
                     'link' => route('news.index')
                 ]
             ],
@@ -65,11 +65,11 @@ class NewsController extends Controller
             ],
             'breadcrumbs' => [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('front.news'),
+                    'name' => 'Berita',
                     'link' => route('news.index')
                 ],
                 [
@@ -101,11 +101,11 @@ class NewsController extends Controller
             ],
             'breadcrumbs' => [
                 [
-                    'name' => __('front.home'),
+                    'name' => 'Beranda',
                     'link' => route('home')
                 ],
                 [
-                    'name' => __('front.news'),
+                    'name' => 'Berita',
                     'link' => route('news.index')
                 ],
                 [
