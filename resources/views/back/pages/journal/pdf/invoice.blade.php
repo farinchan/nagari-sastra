@@ -78,7 +78,7 @@
 
         .signature img {
             display: block;
-            margin: 8px 0;
+            margin: 0px 0 0 -70px;
         }
     </style>
 </head>
@@ -148,7 +148,8 @@
 
         <div class="signature">
             <p>Padang, {{ $date }}</p>
-            <img style="height: 110px;" src="{{ public_path('ext_images/ttd.png') }}" alt="">
+            <p>Direktur,</p>
+            <img style="height: 160px;" src="{{ public_path('ext_images/ttd.png') }}" alt="">
             <p><strong>Fajri Rinaldi Chan, S.Pd., M.Kom</strong><br>
                 {{-- <small>Scopus ID. 57216153330</small> --}}
             </p>

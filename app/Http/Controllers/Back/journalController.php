@@ -353,73 +353,88 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        $files = [];
+        // Cek kategori LOA di persuratan
+        $loaCategory = \App\Models\OutgoingMailCategory::where('kode', 'LOA')->first();
+        if (! $loaCategory) {
+            Alert::error('Error', 'Kategori surat dengan kode "LOA" belum dibuat. Silakan buat terlebih dahulu di menu Kategori Surat.');
 
-        foreach ($submission->authors as $author) {
-            $data = [
-                'number' => $submission->number ?? '0000',
-                'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                'name' => $author['name'],
-                'affiliation' => $author['affiliation'],
-                'title' => $submission->fullTitle,
-                'journal' => $issue->journal->title,
-                'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
-                'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                'chief_editor' => $issue->journal->editor_chief_name,
-                'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
-            ];
-            $datas[] = $data;
-
-            // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
-            //     $files[] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
-            // } else {
-            //     $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-            //     $path = 'arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
-
-            //     Storage::disk('public')->put($path, $pdf->output());
-            //     $files[] = $data['attachments'] = storage_path('app/public/' . $path);
-            // }
-
-            $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-            $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf';
-
-            // Cek apakah file sudah ada di storage
-            if (Storage::exists('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf')) {
-                // Jika maka hapus dari storage
-                Storage::disk('public')->delete('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf');
-            }
-            Storage::disk('public')->put($path, $pdf->output());
-            $files[] = $data['attachments'] = storage_path('app/public/'.$path);
+            return redirect()->back();
         }
 
-        $zipFileName = 'LoA-'.$submission->ojs_submission_id.'.zip';
-        $zip = new ZipArchive;
+        // Ambil penulis pertama saja
+        $authors = $submission->authors;
+        if (empty($authors)) {
+            Alert::error('Error', 'Tidak ada penulis pada submission ini');
 
-        // Temporary path buat zip-nya
-        $zipPath = storage_path('app/temp/'.$zipFileName);
-
-        // Pastikan folder temp ada
-        if (! file_exists(storage_path('app/temp'))) {
-            mkdir(storage_path('app/temp'), 0777, true);
+            return redirect()->back();
         }
+        $author = $authors[0];
+        $displayName = count($authors) > 1 ? $author['name'] . ', et al.' : $author['name'];
 
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-            foreach ($files as $file) {
-                $filePath = $file;
-                if (file_exists($filePath)) {
-                    // Add file ke zip (hanya nama file saja di dalam zip)
-                    $zip->addFile($filePath, basename($file));
-                }
-            }
-            $zip->close();
+        $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'.pdf';
+
+        // Cek apakah surat keluar sudah pernah dibuat untuk submission ini
+        $outgoingMail = \App\Models\OutgoingMail::where('file_surat', $path)
+            ->where('outgoing_mail_category_id', $loaCategory->id)
+            ->first();
+
+        if ($outgoingMail) {
+            // Pakai nomor surat yang sudah ada
+            $nomorSurat = $outgoingMail->nomor_surat;
         } else {
-            Alert::error('Error', 'Failed to create zip file');
+            // Generate nomor surat baru
+            $now = Carbon::now();
+            $year = $now->year;
+            $month = $now->month;
 
-            return redirect()->back()->with('error', 'Failed to create zip file');
+            $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+            $romanMonth = $romans[$month] ?? '';
+
+            $count = \App\Models\OutgoingMail::whereYear('tanggal_surat', $year)->count();
+            $sequence = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $nomorSurat = "{$sequence}/{$loaCategory->kode}/NSG/{$romanMonth}/{$year}";
+
+            // Simpan ke tabel surat keluar (persuratan)
+            $outgoingMail = new \App\Models\OutgoingMail();
+            $outgoingMail->nomor_surat = $nomorSurat;
+            $outgoingMail->outgoing_mail_category_id = $loaCategory->id;
+            $outgoingMail->tujuan = $displayName . ($author['affiliation'] ? ' - ' . $author['affiliation'] : '');
+            $outgoingMail->tanggal_surat = $now->toDateString();
+            $outgoingMail->perihal = 'Letter of Acceptance (LoA) - ' . $submission->fullTitle;
+            $outgoingMail->klasifikasi = 'biasa';
+            $outgoingMail->keterangan = 'LoA untuk submission #' . $submission->ojs_submission_id . ' pada jurnal ' . $issue->journal->title . ' (' . 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ')';
+            $outgoingMail->user_id = \Illuminate\Support\Facades\Auth::user()->id;
         }
 
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        $data = [
+            'number' => $nomorSurat,
+            'year' => Carbon::parse($outgoingMail->tanggal_surat)->format('Y'),
+            'authors_string' => $submission->authorsString,
+            'name' => $displayName,
+            'affiliation' => $author['affiliation'],
+            'title' => $submission->fullTitle,
+            'journal' => $issue->journal->title,
+            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+            'date' => Carbon::parse($outgoingMail->tanggal_surat)->translatedFormat('d F Y'),
+            'article_url' => $issue->journal->url . '/article/view/' . $submission->ojs_submission_id,
+            'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
+            'chief_editor' => $issue->journal->editor_chief_name,
+            'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
+        ];
+
+        $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
+
+        // Hapus file lama jika ada
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+        Storage::disk('public')->put($path, $pdf->output());
+
+        // Simpan path file ke surat keluar
+        $outgoingMail->file_surat = $path;
+        $outgoingMail->save();
+
+        return response()->download(storage_path('app/public/'.$path), 'LoA-'.$submission->ojs_submission_id.'.pdf');
     }
 
     public function loaMailSend($submission)
@@ -438,51 +453,98 @@ class journalController extends Controller
             return redirect()->back()->with('error', 'Issue not found');
         }
 
-        foreach ($submission->authors as $author) {
-            if ($author['email']) {
-                $data = [
-                    'subject' => 'Letter of Acceptance (LoA) for '.$author['name'],
-                    'number' => $submission->number ?? '0000',
-                    'year' => $submission->created_at->format('Y') ?? Carbon::now()->format('Y'),
-                    'name' => $author['name'],
-                    'email' => $author['email'],
-                    'affiliation' => $author['affiliation'],
-                    'title' => $submission->fullTitle,
-                    'journal' => $issue->journal->title,
-                    'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
-                    'date' => \Carbon\Carbon::now()->translatedFormat('d F Y'),
-                    'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
-                    'chief_editor' => $issue->journal->editor_chief_name,
-                    'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
-                    'setting_web' => SettingWebsite::first(),
-                ];
+        // Cek kategori LOA di persuratan
+        $loaCategory = \App\Models\OutgoingMailCategory::where('kode', 'LOA')->first();
+        if (! $loaCategory) {
+            Alert::error('Error', 'Kategori surat dengan kode "LOA" belum dibuat. Silakan buat terlebih dahulu di menu Kategori Surat.');
 
-                // if (Storage::exists('arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf')) {
-                //     $data['attachments'] = storage_path('app/public/arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf');
-                // } else {
-                //     $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-                //     $path = 'arsip/loa/' . 'LoA-' . $submission->ojs_submission_id . '-' . $submission->id . '-' . $author['id'] . '.pdf';
+            return redirect()->back();
+        }
 
-                //     Storage::disk('public')->put($path, $pdf->output());
-                //     $data['attachments'] = $data['attachments'] = storage_path('app/public/' . $path);
-                // }
+        // Ambil penulis pertama saja
+        $authors = $submission->authors;
+        if (empty($authors)) {
+            Alert::error('Error', 'Tidak ada penulis pada submission ini');
 
-                $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
-                $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf';
+            return redirect()->back();
+        }
+        $author = $authors[0];
+        $displayName = count($authors) > 1 ? $author['name'] . ', et al.' : $author['name'];
 
-                // Cek apakah file sudah ada di storage
-                if (Storage::exists('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf')) {
-                    // Jika maka hapus dari storage
-                    Storage::disk('public')->delete('arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$author['id'].'.pdf');
-                }
-                Storage::disk('public')->put($path, $pdf->output());
-                $files[] = $data['attachments'] = storage_path('app/public/'.$path);
+        $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'.pdf';
 
-                $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
+        // Cek apakah surat keluar sudah pernah dibuat untuk submission ini
+        $outgoingMail = \App\Models\OutgoingMail::where('file_surat', $path)
+            ->where('outgoing_mail_category_id', $loaCategory->id)
+            ->first();
+
+        if ($outgoingMail) {
+            // Pakai nomor surat yang sudah ada
+            $nomorSurat = $outgoingMail->nomor_surat;
+        } else {
+            // Generate nomor surat baru
+            $now = Carbon::now();
+            $year = $now->year;
+            $month = $now->month;
+
+            $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+            $romanMonth = $romans[$month] ?? '';
+
+            $count = \App\Models\OutgoingMail::whereYear('tanggal_surat', $year)->count();
+            $sequence = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $nomorSurat = "{$sequence}/{$loaCategory->kode}/NSG/{$romanMonth}/{$year}";
+
+            // Simpan ke tabel surat keluar (persuratan)
+            $outgoingMail = new \App\Models\OutgoingMail();
+            $outgoingMail->nomor_surat = $nomorSurat;
+            $outgoingMail->outgoing_mail_category_id = $loaCategory->id;
+            $outgoingMail->tujuan = $displayName . ($author['affiliation'] ? ' - ' . $author['affiliation'] : '');
+            $outgoingMail->tanggal_surat = $now->toDateString();
+            $outgoingMail->perihal = 'Letter of Acceptance (LoA) - ' . $submission->fullTitle;
+            $outgoingMail->klasifikasi = 'biasa';
+            $outgoingMail->keterangan = 'LoA untuk submission #' . $submission->ojs_submission_id . ' pada jurnal ' . $issue->journal->title . ' (' . 'Vol. ' . $issue->volume . ' No. ' . $issue->number . ' Tahun ' . $issue->year . ')';
+            $outgoingMail->user_id = \Illuminate\Support\Facades\Auth::user()->id;
+        }
+
+        $data = [
+            'subject' => 'Letter of Acceptance (LoA) for '.$displayName,
+            'number' => $nomorSurat,
+            'year' => Carbon::parse($outgoingMail->tanggal_surat)->format('Y'),
+            'authors_string' => $submission->authorsString,
+            'name' => $displayName,
+            'email' => $author['email'],
+            'affiliation' => $author['affiliation'],
+            'title' => $submission->fullTitle,
+            'journal' => $issue->journal->title,
+            'edition' => 'Vol. '.$issue->volume.' No. '.$issue->number.' Tahun '.$issue->year,
+            'date' => Carbon::parse($outgoingMail->tanggal_surat)->translatedFormat('d F Y'),
+            'article_url' => $issue->journal->url . '/article/view/' . $submission->ojs_submission_id,
+            'journal_thumbnail' => 'data:image/png;base64,'.base64_encode(file_get_contents($issue->journal->getJournalThumbnail())),
+            'chief_editor' => $issue->journal->editor_chief_name,
+            'chief_editor_signature' => $issue->journal->editor_chief_signature ? 'data:image/png;base64,'.base64_encode(file_get_contents(storage_path('app/public/'.$issue->journal->editor_chief_signature))) : null,
+            'setting_web' => SettingWebsite::first(),
+        ];
+
+        $pdf = Pdf::loadView('back.pages.journal.pdf.loa', $data)->setPaper('A4', 'portrait');
+
+        // Hapus file lama jika ada
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+        Storage::disk('public')->put($path, $pdf->output());
+
+        // Simpan path file ke surat keluar
+        $outgoingMail->file_surat = $path;
+        $outgoingMail->save();
+
+        $data['attachments'] = storage_path('app/public/'.$path);
+
+        $mailEnvirontment = env('MAIL_ENVIRONMENT', 'local');
+        foreach ($authors as $a) {
+            if (!empty($a['email'])) {
                 if ($mailEnvirontment == 'production') {
-                    Mail::to($author['email'])->send(new LoaMail($data));
+                    Mail::to($a['email'])->send(new LoaMail($data));
                 } else {
-                    // For testing purpose
                     Mail::to(env('MAIL_LOCAL_ADDRESS'))->send(new LoaMail($data));
                 }
             }
@@ -524,7 +586,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
-                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
+                'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -621,7 +683,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
-                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
+                'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -755,7 +817,7 @@ class journalController extends Controller
 
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
-                'invoice' => format_nomor($formattedNumber, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
+                'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
@@ -774,7 +836,7 @@ class journalController extends Controller
             $submission->update(['payment_invoice_id' => $invoice->id]);
         } else {
             $invoice->update([
-                'invoice' => $invoice->invoice ?? format_nomor($invoice->invoice_number, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year),
+                'invoice' => $invoice->invoice ?? format_nomor($invoice->invoice_number, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
