@@ -30,6 +30,8 @@ use App\Http\Controllers\Back\MenuProfilController as BackMenuProfilController;
 use App\Http\Controllers\Back\UserController as BackUserController;
 use App\Http\Controllers\Back\MessageController as BackMessageController;
 use App\Http\Controllers\Back\SettingController as BackSettingController;
+use App\Http\Controllers\Back\IncomingMailController as BackIncomingMailController;
+use App\Http\Controllers\Back\OutgoingMailController as BackOutgoingMailController;
 
 
 
@@ -352,4 +354,29 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
     //     Route::post('/send-mail', [EmailController::class, 'sendEmail'])->name('send-mail');
     //     Route::post('/send-multi-mail', [EmailController::class, 'sendEmailMultiple'])->name('send-multi-mail');
     // });
+
+    Route::prefix('incoming-mail')->name('incoming-mail.')->group(function () {
+        Route::get('/', [BackIncomingMailController::class, 'index'])->name('index');
+        Route::get('/create', [BackIncomingMailController::class, 'create'])->name('create');
+        Route::post('/create', [BackIncomingMailController::class, 'store'])->name('store');
+        Route::get('/show/{id}', [BackIncomingMailController::class, 'show'])->name('show');
+        Route::get('/edit/{id}', [BackIncomingMailController::class, 'edit'])->name('edit');
+        Route::put('/edit/{id}', [BackIncomingMailController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [BackIncomingMailController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('outgoing-mail')->name('outgoing-mail.')->group(function () {
+        Route::get('/category', [BackOutgoingMailController::class, 'category'])->name('category');
+        Route::post('/category', [BackOutgoingMailController::class, 'categoryStore'])->name('category.store');
+        Route::put('/category/edit/{id}', [BackOutgoingMailController::class, 'categoryUpdate'])->name('category.update');
+        Route::delete('/category/delete/{id}', [BackOutgoingMailController::class, 'categoryDestroy'])->name('category.destroy');
+
+        Route::get('/', [BackOutgoingMailController::class, 'index'])->name('index');
+        Route::get('/create', [BackOutgoingMailController::class, 'create'])->name('create');
+        Route::post('/create', [BackOutgoingMailController::class, 'store'])->name('store');
+        Route::get('/show/{id}', [BackOutgoingMailController::class, 'show'])->name('show');
+        Route::get('/edit/{id}', [BackOutgoingMailController::class, 'edit'])->name('edit');
+        Route::put('/edit/{id}', [BackOutgoingMailController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [BackOutgoingMailController::class, 'destroy'])->name('destroy');
+    });
 });

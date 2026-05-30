@@ -278,6 +278,60 @@
             </div>
 
 
+        @role('humas|super-admin')
+            <div class="menu-item pt-5">
+                <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Persuratan</span>
+                </div>
+            </div>
+
+            <div class="menu-item">
+                <a class="menu-link @if (request()->routeIs('back.incoming-mail.*')) active @endif"
+                    href="{{ route('back.incoming-mail.index') }}">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-sms fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Surat Masuk</span>
+                </a>
+            </div>
+
+            <div data-kt-menu-trigger="click"
+                class="menu-item menu-accordion @if (request()->routeIs('back.outgoing-mail.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-sms fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Surat Keluar</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.outgoing-mail.index') || request()->routeIs('back.outgoing-mail.create') || request()->routeIs('back.outgoing-mail.edit') || request()->routeIs('back.outgoing-mail.show')) active @endif"
+                            href="{{ route('back.outgoing-mail.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Kelola Surat</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.outgoing-mail.category*')) active @endif"
+                            href="{{ route('back.outgoing-mail.category') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Kategori Surat</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endrole
+
         @role('super-admin')
             <div class="menu-item pt-5">
                 <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Administrator</span>
