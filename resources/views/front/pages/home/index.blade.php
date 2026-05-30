@@ -39,7 +39,7 @@
                 <div class="col-lg-5">
                     <div class="hero-4-txt pc-25">
                         <p class="p-lg grey-color">
-                            Kami adalah unit dari Torkata Tech solution yang berfokus pada publikasi ilmiah, penelitian
+                            Nagari Sastra Group berfokus pada penerbitan buku, publikasi ilmiah, penelitian
                             terapan, serta pelatihan dan edukasi di berbagai bidang ilmu pengetahuan dan teknologi untuk
                             mendukung kemajuan ilmu pengetahuan dan inovasi di Indonesia.
                         </p>
@@ -553,7 +553,7 @@
             @endif
         </div>
     </section>
- 
+
     <script>
         if (document.getElementById('slide-left-btn')) {
             document.getElementById('slide-left-btn').addEventListener('click', function() {

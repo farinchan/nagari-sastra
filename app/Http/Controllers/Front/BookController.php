@@ -88,7 +88,7 @@ class BookController extends Controller
                     'link' => route('book.category', $book->category->slug)
                 ],
                 [
-                    'name' => $book->title,
+                    'name' => $book->isbn,
                     'link' => route('book.show', $book->slug)
                 ]
             ],

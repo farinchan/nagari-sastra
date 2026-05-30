@@ -28,7 +28,7 @@
             alt="">
     </div>
     <p style="top: 200px; left: 260px; position: absolute; font-size: 12px;">
-        Number: {{ $number }}/LoA/JRNL/RJ/{{ $year }}
+        NO: {{ $number }}/LoA/JRNL/RJ/{{ $year }}
     </p>
 
     <div style="top: 250px;  position: absolute; font-size: 14px;">

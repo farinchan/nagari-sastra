@@ -90,7 +90,7 @@
     </div>
     <h2 style="margin-top: 125px; font-weight: bold; text-decoration: underline;">INVOICE</h2>
     <p style="top: 175px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
-        Number: {{ $number }}
+        NO: {{ $number }}
     </p>
 
 
