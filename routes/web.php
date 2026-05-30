@@ -262,9 +262,6 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/report/datatable', [BackFinanceController::class, 'reportDatatable'])->name('report.datatable');
         Route::get('/report/export', [BackFinanceController::class, 'reportExport'])->name('report.export');
 
-        Route::post('cashflow-year/store', [BackFinanceController::class, 'cashflowYearStore'])->name('cashflow-year.store');
-        Route::put('cashflow-year/edit', [BackFinanceController::class, 'cashflowYearEdit'])->name('cashflow-year.edit');
-
         Route::get('/cashflow', [BackFinanceController::class, 'cashflowIndex'])->name('cashflow.index');
         Route::get('/cashflow/datatable', [BackFinanceController::class, 'cashflowDatatables'])->name('cashflow.datatable');
         Route::get('/cashflow/export', [BackFinanceController::class, 'cashflowExport'])->name('cashflow.export');

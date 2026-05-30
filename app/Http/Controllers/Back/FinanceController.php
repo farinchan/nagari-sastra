@@ -7,10 +7,8 @@ use App\Exports\FinanceReportExport;
 use App\Http\Controllers\Controller;
 use App\Mail\ConfirmPaymentMail;
 use App\Models\Finance;
-use App\Models\FinanceYear;
 use App\Models\Issue;
 use App\Models\Journal;
-use App\Models\Payment;
 use App\Models\PaymentInvoice;
 use App\Models\SettingWebsite;
 use App\Models\Submission;
@@ -178,95 +176,11 @@ class FinanceController extends Controller
         return Excel::download(new FinanceReportExport($journal_id, $issue_id, $date_start, $date_end), 'laporan-journal-' . date('Y-m-d') . '.xlsx');
     }
 
-    public function cashflowYearStore(Request $request)
-    {
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'name' => 'required|string|max:255|unique:finance_years,name',
-                'start_date' => 'required|date',
-            ],
-            [
-                'name.required' => 'Nama Tahun Keuangan harus diisi',
-                'name.string' => 'Nama Tahun Keuangan harus berupa teks',
-                'name.max' => 'Nama Tahun Keuangan maksimal 255 karakter',
-                'name.unique' => 'Nama Tahun Keuangan sudah ada',
-                'start_date.required' => 'Tanggal Mulai harus diisi',
-                'start_date.date' => 'Tanggal Mulai tidak valid',
-            ]
-        );
-        if ($validator->fails()) {
-            Alert::error('Gagal', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-        FinanceYear::latest()->first()?->update([
-            'end_date' => Carbon::parse($request->start_date)->subDay()->toDateString(),
-            'is_active' => 0,
-        ]);
-        FinanceYear::create([
-            'name' => $request->name,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'created_by' => Auth::user()->name,
-        ]);
-
-        Alert::success('Berhasil', 'Tahun Keuangan berhasil ditambahkan');
-        return redirect()->back()->with('success', 'Tahun Keuangan berhasil ditambahkan');
-    }
-
-    public function cashflowYearEdit(Request $request)
-    {
-        $finance_year = FinanceYear::latest()->first();
-        if (!$finance_year) {
-            Alert::error('Gagal', 'Tahun Keuangan tidak ditemukan');
-            return redirect()->back()->with('error', 'Tahun Keuangan tidak ditemukan');
-        }
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'name' => 'required|string|max:255|unique:finance_years,name,' . $finance_year->id,
-                'start_date' => 'required|date',
-            ],
-            [
-                'name.required' => 'Nama Tahun Keuangan harus diisi',
-                'name.string' => 'Nama Tahun Keuangan harus berupa teks',
-                'name.max' => 'Nama Tahun Keuangan maksimal 255 karakter',
-                'name.unique' => 'Nama Tahun Keuangan sudah ada',
-                'start_date.required' => 'Tanggal Mulai harus diisi',
-                'start_date.date' => 'Tanggal Mulai tidak valid',
-            ]
-        );
-        if ($validator->fails()) {
-            Alert::error('Gagal', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        try {
-            $finance_year->update([
-                'name' => $request->name,
-                'start_date' => $request->start_date,
-                'updated_by' => Auth::user()->name,
-            ]);
-            Alert::success('Berhasil', 'Tahun Keuangan berhasil diperbarui');
-            return redirect()->back()->with('success', 'Tahun Keuangan berhasil diperbarui');
-        } catch (\Exception $e) {
-            Alert::error('Gagal', 'Tahun Keuangan gagal diperbarui');
-            return redirect()->back()->with('error', 'Tahun Keuangan gagal diperbarui');
-        }
-    }
-
     public function cashflowIndex(Request $request)
     {
-        $id = $request->id;
-        if ($id) {
-            $finance_year_now = FinanceYear::findOrFail($id);
-            $start_date = $finance_year_now->start_date;
-            $end_date = $finance_year_now->end_date ?? now()->addDay()->toDateString();
-        } else {
-            $finance_year_now = FinanceYear::latest()->first();
-            $start_date = $finance_year_now ? $finance_year_now->start_date : now()->startOfYear()->toDateString();
-            $end_date = $finance_year_now && $finance_year_now->end_date ? $finance_year_now->end_date : now()->addDay()->toDateString();
-        }
+        $year = $request->year ?? now()->year;
+        $start_date = Carbon::create($year, 1, 1)->startOfYear()->toDateString();
+        $end_date = Carbon::create($year, 12, 31)->endOfYear()->toDateString();
 
         $finance_now = Finance::where('date', '>=', $start_date)
             ->where('date', '<=', $end_date);
@@ -274,17 +188,25 @@ class FinanceController extends Controller
         $outcome = (clone $finance_now)->where('type', 'expense')->sum('amount');
         $income_temp = (clone $finance_now)->where('type', 'income')->sum('amount');
 
-        $payment = Payment::with(['paymentInvoice'])
-            ->where('created_at', '>=', $start_date)
-            ->where('created_at', '<=', $end_date)
-            ->where('payment_status', 'accepted')
-            ->get()
-            ->map(function ($item) {
-            return $item->paymentInvoice->payment_amount ?? 0;
-            })->sum();
+        $paidInvoices = PaymentInvoice::where('is_paid', true)
+            ->whereYear('created_at', $year)
+            ->sum('payment_amount');
 
-        $income = $income_temp + $payment;
+        $income = $income_temp + $paidInvoices;
         $balance = $income - $outcome;
+
+        // Ambil daftar tahun yang tersedia dari data finance
+        $availableYears = Finance::selectRaw('YEAR(date) as year')
+            ->groupBy('year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->toArray();
+
+        // Pastikan tahun sekarang selalu ada di list
+        if (!in_array((int) now()->year, $availableYears)) {
+            array_unshift($availableYears, (int) now()->year);
+        }
+
         $data = [
             'title' => 'Laporan Keuangan',
             'breadcrumbs' => [
@@ -297,14 +219,12 @@ class FinanceController extends Controller
                     'link' => route('back.finance.cashflow.index')
                 ]
             ],
-            'finance_year' => $finance_year_now,
-            'list_finance_year' => FinanceYear::latest()->get(),
+            'selected_year' => (int) $year,
+            'available_years' => $availableYears,
             'total_outcome_now' => $outcome,
             'total_income_now' => $income,
             'total_balance_now' => $balance,
-
         ];
-        // return response()->json($data);
         return view('back.pages.finance.cashflow', $data);
     }
 
@@ -314,6 +234,7 @@ class FinanceController extends Controller
         $date_end = $request->date_end ?? now()->toDateString();
         $date_start = $request->date_start ?? now()->subMonth()->toDateString();
 
+        // Ambil data finance manual
         $finance = Finance::where('date', '>=', $date_start)
             ->where('date', '<=', $date_end)
             ->get()
@@ -337,30 +258,30 @@ class FinanceController extends Controller
                 ];
             })->collect();
 
-        $billing = Payment::with(['paymentInvoice'])
-            ->whereBetween('created_at', [$date_start, $date_end])
-            ->where('payment_status', 'accepted')
+        // Ambil data pembayaran invoice yang sudah lunas
+        $billing = PaymentInvoice::where('is_paid', true)
+            ->whereDate('confirmed_at', '>=', $date_start)
+            ->whereDate('confirmed_at', '<=', $date_end)
             ->get()
             ->map(function ($item) {
                 return (object)[
                     'id' => null,
-                    'name' => 'Pembayaran Invoice ' . ($item->paymentInvoice->invoice_number ?? 'Unknown Invoice')  . "/JRNL/UINSMDD/" . ($item->paymentInvoice->created_at ? $item->paymentInvoice->created_at->format('Y') : '-'),
-                    'description' => 'Pembayaran Invoice ' . ($item->paymentInvoice->invoice_number ?? 'Unknown Invoice') . "/JRNL/UINSMDD/" . ($item->paymentInvoice->created_at ? $item->paymentInvoice->created_at->format('Y') : '-') . ' Yang Telah Dibayarkan Oleh ' . ($item->name ?? 'Unknown Payer'),
+                    'name' => 'Pembayaran Invoice ' . ($item->invoice ?? '-'),
+                    'description' => 'Pembayaran invoice ' . ($item->invoice ?? '-') . ' — ' . ($item->kepada ?? '-'),
                     'type' => 'income',
-                    'amount' => $item->paymentInvoice->payment_amount ?? 0,
-                    'date' => $item->payment_timestamp,
-                    'payment_method' => ($item->payment_method ?? "-") . ' a/n ' . ($item->payment_account_name ?? "-"),
-                    'payment_reference' => "-",
-                    'payment_note' => $item->payment_note,
-                    'attachment' => $item->payment_file,
+                    'amount' => $item->payment_amount ?? 0,
+                    'date' => $item->confirmed_at ?? $item->created_at,
+                    'payment_method' => $item->midtrans_payment_method ?? 'Manual',
+                    'payment_reference' => $item->midtrans_transaction_id ?? '-',
+                    'payment_note' => $item->confirmation_note ?? '-',
+                    'attachment' => $item->confirmation_file ?? $item->invoice_file,
                     'editable' => false,
                     'created_at' => $item->created_at,
-                    'created_by' => $item->created_by ?? '-',
+                    'created_by' => null,
                     'updated_at' => $item->updated_at,
-                    'updated_by' => $item->updated_by ?? '-',
+                    'updated_by' => null,
                 ];
             })->collect();
-
 
         $data = $finance->merge($billing)->when($type != 'all', function ($query) use ($type) {
             return $query->where('type', $type);
@@ -370,12 +291,15 @@ class FinanceController extends Controller
         $total_expense = $data->where('type', 'expense')->sum('amount');
         $total_balance = $total_income - $total_expense;
 
+        // Preload users untuk menghindari N+1
+        $userIds = $data->pluck('created_by')->merge($data->pluck('updated_by'))->filter()->unique()->values()->toArray();
+        $users = User::whereIn('id', $userIds)->pluck('name', 'id');
+
         return datatables()->of($data)
             ->addColumn('transaction', function ($row) {
                 return '<div class="d-flex flex-column">
-                            <a href="#"
-                            class="text-gray-800 text-hover-primary mb-1">' . $row->name . '</a>
-                            <span class="text-muted">' . $row->description . '</span>
+                            <span class="text-gray-800 fw-bold mb-1">' . e($row->name) . '</span>
+                            <span class="text-muted fs-7">' . e($row->description) . '</span>
                         </div>';
             })
             ->addColumn('date', function ($row) {
@@ -383,182 +307,125 @@ class FinanceController extends Controller
             })
             ->addColumn('amount', function ($row) {
                 if ($row->type == 'income') {
-                    return '<span class="text-success">+' . number_format($row->amount, 0, ',', '.') . '</span>';
+                    return '<span class="text-success fw-bold">+ Rp ' . number_format($row->amount, 0, ',', '.') . '</span>';
                 } else {
-                    return '<span class="text-danger">-' . number_format($row->amount, 0, ',', '.') . '</span>';
+                    return '<span class="text-danger fw-bold">- Rp ' . number_format($row->amount, 0, ',', '.') . '</span>';
                 }
             })
             ->addColumn('type', function ($row) {
-                return '<span class="badge badge-' . ($row->type == 'income' ? 'success' : 'danger') . '">' . $row->type . '</span>';
+                $badge = $row->type == 'income' ? 'badge-light-success' : 'badge-light-danger';
+                $label = $row->type == 'income' ? 'Pemasukan' : 'Pengeluaran';
+                return '<span class="badge ' . $badge . '">' . $label . '</span>';
             })
             ->addColumn('payment_info', function ($row) {
-                return '<ul>
-                            <li>
-                                <span class="fw-bold">Metode Pembayaran:</span>
-                                <span>' . ($row->payment_method ?? '-') . '</span>
-                            </li>
-                            <li>
-                                <span class="fw-bold">No Ref:</span>
-                                <span>' . ($row->payment_reference ?? '-') . '</span>
-                            </li>
-                            <li>
-                                <span class="fw-bold">Note:</span>
-                                <span>' . ($row->payment_note ?? '-') . '</span>
-                            </li>
-                        </ul>';
+                $method = e($row->payment_method ?? '-');
+                $ref = e($row->payment_reference ?? '-');
+                $note = e($row->payment_note ?? '-');
+                return '<div class="fs-7">
+                            <div class="mb-1"><span class="fw-bold">Metode:</span> ' . $method . '</div>
+                            <div class="mb-1"><span class="fw-bold">Ref:</span> ' . $ref . '</div>
+                            <div><span class="fw-bold">Note:</span> ' . $note . '</div>
+                        </div>';
             })
             ->addColumn('attachment', function ($row) {
                 if ($row->attachment) {
-                    return '<a href="' . asset('storage/' . $row->attachment) . '" target="_blank">
-                        <i class="ki-duotone ki-file-added text-primary fs-3x" data-bs-toggle="tooltip" data-bs-placement="right" title="Lihat File">
-                            <span class="path1"></span>
-                            <span class="path2"></span>
-                        </i>
+                    return '<a href="' . asset('storage/' . $row->attachment) . '" target="_blank" class="btn btn-sm btn-light-primary">
+                        <i class="ki-duotone ki-file fs-4"><span class="path1"></span><span class="path2"></span></i> Lihat
                     </a>';
-                } else {
-                    return '<i class="ki-duotone ki-file-deleted text-danger fs-3x" data-bs-toggle="tooltip" data-bs-placement="right" title="File Tidak Ada">
-                        <span class="path1"></span>
-                        <span class="path2"></span>
-                    </i>';
                 }
+                return '<span class="text-muted fs-7">-</span>';
             })
-            ->addColumn('log', function ($row) {
-                return '<ul>
-                    <li>
-                        <span class="fw-bold">Created At:</span>
-                        <span>' . Carbon::parse($row->created_at)->format('d M Y H:i') . '</span>
-                    </li>
-                    <li>
-                        <span class="fw-bold">Created By:</span>
-                        <span>' . ($row->created_by ? (User::find($row->created_by)->name ?? "-") : '-') . '</span>
-                    </li>
-
-                    <br>
-
-                    <li>
-                        <span class="fw-bold">Update At:</span>
-                        <span>' . Carbon::parse($row->updated_at)->format('d M Y H:i')  . '</span>
-                    </li>
-                    <li>
-                        <span class="fw-bold">Update By:</span>
-                        <span>' . ($row->updated_by ? (User::find($row->updated_by)->name ?? "-") : '-') . '</span>
-                    </li>
-                </ul>';
+            ->addColumn('log', function ($row) use ($users) {
+                $createdBy = $row->created_by ? ($users[$row->created_by] ?? '-') : '-';
+                $updatedBy = $row->updated_by ? ($users[$row->updated_by] ?? '-') : '-';
+                return '<div class="fs-7">
+                            <div class="mb-1"><span class="fw-bold">Dibuat:</span> ' . Carbon::parse($row->created_at)->format('d M Y H:i') . '</div>
+                            <div class="mb-2"><span class="fw-bold">Oleh:</span> ' . e($createdBy) . '</div>
+                            <div class="mb-1"><span class="fw-bold">Diubah:</span> ' . Carbon::parse($row->updated_at)->format('d M Y H:i') . '</div>
+                            <div><span class="fw-bold">Oleh:</span> ' . e($updatedBy) . '</div>
+                        </div>';
             })
             ->addColumn('action', function ($row) {
-                if ($row->editable) {
-                    return ' <div class="d-flex justify-content-end">
-                        <a href="#" class="btn btn-icon btn-light-warning me-3" data-bs-toggle="modal" data-bs-target="#edit_' . $row->id . '"><i class="fa-solid fa-pen-to-square fs-4"></i></a>
-                        <a href="#" class="btn btn-icon btn-light-danger" data-bs-toggle="modal" data-bs-target="#delete_' . $row->id . '"><i class="fa-solid fa-trash fs-4"></i></a>
-                    </div>
-                    <!-- Modal Edit -->
-                    <div class="modal fade" tabindex="-1" id="edit_' . $row->id . '" aria-labelledby="editLabel_' . $row->id . '" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="editLabel_' . $row->id . '">Edit Transaksi</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <form action="' . route('back.finance.cashflow.update', $row->id) . '" method="POST" enctype="multipart/form-data">
-                                    ' . csrf_field() . '
-                                    ' . method_field('PUT') . '
-                                    <div class="modal-body">
-                                        <div class="mb-5">
-                                            <label for="name_' . $row->id . '" class="form-label required">Nama Transaksi</label>
-                                            <input type="text" class="form-control" id="name_' . $row->id . '" name="name" value="' . $row->name . '" required>
-                                        </div>
-                                        <div class="mb-5">
-                                            <label for="description_' . $row->id . '" class="form-label">Deskripsi</label>
-                                            <textarea class="form-control" id="description_' . $row->id . '" name="description">' . $row->description . '</textarea>
-                                        </div>
-                                        <div class="mb-5">
-                                            <label for="amount_' . $row->id . '" class="form-label required">Jumlah</label>
-                                            <div class="input-group mb-5">
-                                                <span class="input-group-text">Rp</span>
-                                                <input type="number" class="form-control" id="amount_' . $row->id . '" name="amount" value="' . $row->amount . '" required>
-                                            </div>
-                                        </div>
-                                        <div class="mb-5">
-                                            <label for="date_' . $row->id . '" class="form-label required">Tanggal</label>
-                                            <input type="date" class="form-control" id="date_' . $row->id . '" name="date" value="' . Carbon::parse($row->date)->format('Y-m-d') . '" required>
-                                        </div>
-                                        <div class="mb-5">
-                                            <label for="type_' . $row->id . '" class="form-label required">Type</label>
-                                            <select class="form-select" id="type_' . $row->id . '" name="type" required>
-                                                <option value="income" ' . ($row->type == 'income' ? 'selected' : '') . '>Income</option>
-                                                <option value="expense" ' . ($row->type == 'expense' ? 'selected' : '') . '>Expense</option>
-                                            </select>
-                                        </div>
-                                        <div class="mb-5">
-                                            <div class="row mb-5">
-                                                <div class="col">
-                                                    <label for="payment_method_' . $row->id . '" class="form-label">Metode Pembayaran</label>
-                                                    <input type="text" class="form-control" id="payment_method_' . $row->id . '" name="payment_method" value="' . $row->payment_method . '">
-                                                </div>
-                                                <div class="col">
-                                                    <label for="payment_reference_' . $row->id . '" class="form-label">No Referensi</label>
-                                                    <input type="text" class="form-control" id="payment_reference_' . $row->id . '" name="payment_reference" value="' . $row->payment_reference . '">
-                                                </div>
-                                            </div>
-                                            <div class="mb-5">
-                                                <label for="payment_note_' . $row->id . '" class="form-label">Note</label>
-                                                <textarea class="form-control" id="payment_note_' . $row->id . '" name="payment_note">' . $row->payment_note . '</textarea>
-                                            </div>
-                                            <div class="mb-5">
-                                                <label for="attachment_' . $row->id . '" class="form-label">Lampiran</label>
-                                                <input type="file" class="form-control" id="attachment_' . $row->id . '" name="attachment" accept=".jpg,.jpeg,.png,.pdf">
-                                                <div class="mt-2">
-                                                    File saat ini:
-                                                    <a href="' . ($row->attachment ? asset('storage/' . $row->attachment) : '#') . '" target="_blank">
-                                                        ' . ($row->attachment ? basename($row->attachment) : 'Tidak ada file yang diunggah') . '
-                                                    </a>
-                                                </div>
-                                                <small class="form-text text-muted">Format: jpg, jpeg, png, pdf. Maksimal 10MB.</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                            Batal
-                                        </button>
-                                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                                    </div>
-                                </form>
+                if (!$row->editable) {
+                    return '<span class="badge badge-light-secondary">Invoice</span>';
+                }
+
+                return '<div class="d-flex gap-2">
+                    <a href="#" class="btn btn-sm btn-icon btn-light-warning" data-bs-toggle="modal" data-bs-target="#edit_' . $row->id . '">
+                        <i class="ki-duotone ki-pencil fs-5"><span class="path1"></span><span class="path2"></span></i>
+                    </a>
+                    <a href="' . route('back.finance.cashflow.destroy', $row->id) . '" class="btn btn-sm btn-icon btn-light-danger"
+                        onclick="return confirm(\'Yakin hapus transaksi ini?\')">
+                        <i class="ki-duotone ki-trash fs-5"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                    </a>
+                </div>
+                <!-- Modal Edit -->
+                <div class="modal fade" tabindex="-1" id="edit_' . $row->id . '">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Transaksi</h5>
+                                <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                             </div>
-                        </div>
-                    </div>
-                    <!-- Modal Delete -->
-                    <div class="modal fade" tabindex="-1" id="delete_' . $row->id . '" aria-labelledby="deleteLabel_' . $row->id . '" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h3 class="modal-title" id="deleteLabel_' . $row->id . '">Hapus Transaksi</h3>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body mb-5">
-                                    <p>Apakah Anda yakin ingin menghapus transaksi ini?</p>
-                                    <p class="text-danger">
-                                        <strong>Peringatan: </strong> Seluruh data yang terkait dengan transaksi ini
-                                        akan dihapus dan tidak dapat dikembalikan.
-                                    </p>
+                            <form action="' . route('back.finance.cashflow.update', $row->id) . '" method="POST" enctype="multipart/form-data">
+                                ' . csrf_field() . method_field('PUT') . '
+                                <div class="modal-body">
+                                    <div class="mb-5">
+                                        <label class="form-label required">Nama Transaksi</label>
+                                        <input type="text" class="form-control" name="name" value="' . e($row->name) . '" required>
+                                    </div>
+                                    <div class="mb-5">
+                                        <label class="form-label">Deskripsi</label>
+                                        <textarea class="form-control" name="description">' . e($row->description) . '</textarea>
+                                    </div>
+                                    <div class="row mb-5">
+                                        <div class="col-md-6">
+                                            <label class="form-label required">Jumlah</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">Rp</span>
+                                                <input type="number" class="form-control" name="amount" value="' . $row->amount . '" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label required">Tanggal</label>
+                                            <input type="date" class="form-control" name="date" value="' . Carbon::parse($row->date)->format('Y-m-d') . '" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-5">
+                                        <label class="form-label required">Tipe</label>
+                                        <select class="form-select" name="type" required>
+                                            <option value="income" ' . ($row->type == 'income' ? 'selected' : '') . '>Pemasukan</option>
+                                            <option value="expense" ' . ($row->type == 'expense' ? 'selected' : '') . '>Pengeluaran</option>
+                                        </select>
+                                    </div>
+                                    <div class="row mb-5">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Metode Pembayaran</label>
+                                            <input type="text" class="form-control" name="payment_method" value="' . e($row->payment_method) . '">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">No Referensi</label>
+                                            <input type="text" class="form-control" name="payment_reference" value="' . e($row->payment_reference) . '">
+                                        </div>
+                                    </div>
+                                    <div class="mb-5">
+                                        <label class="form-label">Catatan</label>
+                                        <textarea class="form-control" name="payment_note">' . e($row->payment_note) . '</textarea>
+                                    </div>
+                                    <div class="mb-5">
+                                        <label class="form-label">Lampiran</label>
+                                        <input type="file" class="form-control" name="attachment" accept=".jpg,.jpeg,.png,.pdf">
+                                        ' . ($row->attachment ? '<div class="mt-2 fs-7">File saat ini: <a href="' . asset('storage/' . $row->attachment) . '" target="_blank">' . basename($row->attachment) . '</a></div>' : '') . '
+                                    </div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                    <form action="' . route('back.finance.cashflow.destroy', $row->id) . '" method="POST" style="display:inline;">
-                                        ' . csrf_field() . '
-                                        ' . method_field('DELETE') . '
-                                        <button type="submit" class="btn btn-danger">Ya, Hapus</button>
-                                    </form>
+                                    <button type="submit" class="btn btn-primary">Simpan</button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
-                    ';
-                } else {
-                    return '<div class="d-flex justify-content-end">
-                        <span class="badge badge-secondary">Tidak Dapat Diedit</span>
-                    </div>';
-                }
+                </div>';
             })
             ->with([
                 'total_income' => $total_income,
@@ -619,9 +486,9 @@ class FinanceController extends Controller
         return redirect()->back();
     }
 
-    public function cashflowDestroy(Request $request)
+    public function cashflowDestroy($id)
     {
-        $finance = Finance::find($request->id);
+        $finance = Finance::find($id);
         if (!$finance) {
             Alert::error('Error', 'Finance record not found.');
             return redirect()->back();
@@ -637,7 +504,7 @@ class FinanceController extends Controller
         return redirect()->back();
     }
 
-    public function cashflowUpdate(Request $request)
+    public function cashflowUpdate(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:1000',
@@ -656,11 +523,7 @@ class FinanceController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $finance = Finance::findOrFail($request->id);
-        if (!$finance) {
-            Alert::error('Error', 'Finance record not found.');
-            return redirect()->back();
-        }
+        $finance = Finance::findOrFail($id);
 
         $finance->name = $request->name;
         $finance->description = $request->description;
@@ -1106,4 +969,6 @@ class FinanceController extends Controller
             return redirect()->back();
         }
     }
+
+
 }
