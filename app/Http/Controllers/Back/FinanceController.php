@@ -867,7 +867,7 @@ class FinanceController extends Controller
         }
 
         $nextInvoiceNumber = $nextNumber;
-        $nextInvoice = format_nomor($nextNumber, 'INV', 'TR', Carbon::now()->month, $currentYear);
+        $nextInvoice = format_nomor($nextNumber, 'INV', 'NSG', Carbon::now()->month, $currentYear);
 
         $data = [
             'title' => 'Buat Invoice',
@@ -900,6 +900,9 @@ class FinanceController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'invoice_number' => 'required|string|max:255|unique:payment_invoices,invoice_number',
+            'kepada' => 'required|string|max:255',
+            'kepada_detail' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string|max:2000',
             'items' => 'nullable|json',
             'payment_percent' => 'nullable|numeric|min:0|max:100',
             'payment_amount' => 'nullable|numeric|min:0',
@@ -916,7 +919,7 @@ class FinanceController extends Controller
             $invoice = new PaymentInvoice();
             // Build formatted unique invoice from sequence
             $sequence = $request->invoice_number;
-            $formattedInvoice = format_nomor($sequence, 'INV', 'TR', Carbon::now()->month, Carbon::now()->year);
+            $formattedInvoice = format_nomor($sequence, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year);
             $invoice->invoice = $formattedInvoice;
             $invoice->invoice_number = $sequence;
 
@@ -940,7 +943,14 @@ class FinanceController extends Controller
             $invoice->payment_due_date = $request->payment_due_date;
             $invoice->is_custom = true;
 
+            // Simpan field baru
+            $invoice->kepada = $request->kepada;
+            $invoice->kepada_detail = $request->kepada_detail;
+            $invoice->keterangan = $request->keterangan;
+            $invoice->created_by = Auth::user()->id;
+
             if ($request->hasFile('invoice_file')) {
+                // Upload file manual
                 $file = $request->file('invoice_file');
                 $filename = Str::slug($request->invoice_number) . '_' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('invoices', $filename, 'public');
@@ -948,6 +958,34 @@ class FinanceController extends Controller
             }
 
             $invoice->save();
+
+            // Jika tidak upload file manual, generate PDF otomatis
+            if (!$request->hasFile('invoice_file')) {
+                $pdfData = [
+                    'number' => $formattedInvoice,
+                    'kepada' => $invoice->kepada,
+                    'kepada_detail' => $invoice->kepada_detail ?? '',
+                    'items' => $items,
+                    'payment_amount' => $invoice->payment_amount,
+                    'payment_percent' => $invoice->payment_percent,
+                    'payment_due_date' => $invoice->payment_due_date ? Carbon::parse($invoice->payment_due_date)->translatedFormat('d F Y') : null,
+                    'keterangan' => $invoice->keterangan,
+                    'payment_link' => route('payment.show', ['invoice_number' => str_replace('/', '-', $formattedInvoice)]),
+                    'date' => Carbon::now()->translatedFormat('d F Y'),
+                ];
+
+                $pdf = Pdf::loadView('back.pages.finance.pdf.invoice', $pdfData)->setPaper('A4', 'portrait');
+                $pdfPath = 'arsip/invoice/' . Carbon::now()->format('Y') . '/invoice-' . $sequence . '.pdf';
+
+                // Hapus file lama jika ada
+                if (Storage::disk('public')->exists($pdfPath)) {
+                    Storage::disk('public')->delete($pdfPath);
+                }
+                Storage::disk('public')->put($pdfPath, $pdf->output());
+
+                $invoice->invoice_file = $pdfPath;
+                $invoice->save();
+            }
 
             Alert::success('Berhasil', 'Invoice berhasil dibuat');
             return redirect()->route('back.finance.invoice.index');
@@ -985,6 +1023,68 @@ class FinanceController extends Controller
         ];
 
         return view('back.pages.finance.invoice-detail', $data);
+    }
+
+    public function invoiceConfirm(Request $request, $id)
+    {
+        try {
+            $invoice = PaymentInvoice::findOrFail($id);
+
+            if ($request->action === 'confirm') {
+                $validator = Validator::make($request->all(), [
+                    'note' => 'nullable|string|max:2000',
+                    'confirmation_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
+                ]);
+
+                if ($validator->fails()) {
+                    Alert::error('Gagal', $validator->errors()->all());
+                    return redirect()->back()->withErrors($validator);
+                }
+
+                $invoice->is_paid = true;
+                $invoice->confirmed_by = Auth::user()->id;
+                $invoice->confirmed_at = now();
+                $invoice->confirmation_note = $request->note;
+                $invoice->midtrans_payment_method = 'Manual Confirmation';
+                $invoice->midtrans_paid_at = now();
+                $invoice->midtrans_gross_amount_paid = $invoice->payment_amount;
+
+                if ($request->hasFile('confirmation_file')) {
+                    $file = $request->file('confirmation_file');
+                    $filename = 'bukti-' . $invoice->invoice_number . '-' . time() . '.' . $file->getClientOriginalExtension();
+                    $path = $file->storeAs('arsip/invoice/bukti/' . now()->format('Y'), $filename, 'public');
+                    $invoice->confirmation_file = $path;
+                }
+
+                $invoice->save();
+
+                Alert::success('Berhasil', 'Pembayaran invoice berhasil dikonfirmasi');
+            } elseif ($request->action === 'cancel') {
+                // Hapus file bukti jika ada
+                if ($invoice->confirmation_file && Storage::disk('public')->exists($invoice->confirmation_file)) {
+                    Storage::disk('public')->delete($invoice->confirmation_file);
+                }
+
+                $invoice->is_paid = false;
+                $invoice->confirmed_by = null;
+                $invoice->confirmed_at = null;
+                $invoice->confirmation_note = null;
+                $invoice->confirmation_file = null;
+                $invoice->midtrans_payment_method = null;
+                $invoice->midtrans_paid_at = null;
+                $invoice->midtrans_gross_amount_paid = null;
+                $invoice->midtrans_response = null;
+                $invoice->midtrans_transaction_id = null;
+                $invoice->save();
+
+                Alert::success('Berhasil', 'Konfirmasi pembayaran invoice berhasil dibatalkan');
+            }
+
+            return redirect()->back();
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Gagal mengubah status pembayaran: ' . $e->getMessage());
+            return redirect()->back();
+        }
     }
 
     public function invoiceDestroy($id)

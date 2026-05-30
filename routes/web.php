@@ -278,6 +278,7 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/invoice/create', [BackFinanceController::class, 'invoiceCreate'])->name('invoice.create');
         Route::post('/invoice/store', [BackFinanceController::class, 'invoiceStore'])->name('invoice.store');
         Route::get('/invoice/{id}/show', [BackFinanceController::class, 'invoiceShow'])->name('invoice.show');
+        Route::post('/invoice/{id}/confirm', [BackFinanceController::class, 'invoiceConfirm'])->name('invoice.confirm');
         Route::delete('/invoice/{id}/destroy', [BackFinanceController::class, 'invoiceDestroy'])->name('invoice.destroy');
     });
 

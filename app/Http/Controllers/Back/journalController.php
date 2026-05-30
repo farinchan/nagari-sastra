@@ -584,19 +584,24 @@ class journalController extends Controller
             // Format jadi 4 digit
             $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
+            $displayName = count($submission->authors) > 1 ? $submission->authors[0]['name'] . ', et al.' : $submission->authors[0]['name'];
+
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
                 'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
+                'kepada' => $displayName,
+                'kepada_detail' => $submission->authors[0]['affiliation'] ?? '',
+                'keterangan' => 'Biaya Publikasi jurnal '.$issue->journal->title.' Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+                'created_by' => \Illuminate\Support\Facades\Auth::user()->id,
                 'items' => [
                     [
                         'id' => $submission->ojs_submission_id,
                         'name' => 'Biaya Publikasi Artikel Jurnal ID: '.$submission->ojs_submission_id.' - '.$submission->fullTitle,
                         'qty' => 1,
                         'detail' => 'Pembayaran Biaya Publikasi jurnal '.$issue->journal->title.' Pada Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
-
                         'amount' => $issue->journal->author_fee,
                     ],
                 ],
@@ -633,7 +638,7 @@ class journalController extends Controller
         ];
 
         // Check if file exists
-        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+        $storagePath = 'arsip/invoice/'.$invoice->created_at->format('Y').'/';
         $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
         if (Storage::exists($storagePath.$fileName)) {
@@ -681,12 +686,18 @@ class journalController extends Controller
             // Format jadi 4 digit
             $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
+            $displayName = count($submission->authors) > 1 ? $submission->authors[0]['name'] . ', et al.' : $submission->authors[0]['name'];
+
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
                 'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
                 'payment_percent' => 100,
                 'payment_amount' => $issue->journal->author_fee,
                 'payment_due_date' => Carbon::now()->addDays(3),
+                'kepada' => $displayName,
+                'kepada_detail' => $submission->authors[0]['affiliation'] ?? '',
+                'keterangan' => 'Biaya Publikasi jurnal '.$issue->journal->title.' Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+                'created_by' => \Illuminate\Support\Facades\Auth::user()->id,
                 'items' => [
                     [
                         'id' => $submission->ojs_submission_id,
@@ -731,7 +742,7 @@ class journalController extends Controller
                 ];
 
                 // Check if file exists
-                $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+                $storagePath = 'arsip/invoice/'.$invoice->created_at->format('Y').'/';
                 $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
                 if (Storage::exists($storagePath.$fileName)) {
@@ -815,6 +826,8 @@ class journalController extends Controller
             // Format jadi 4 digit
             $formattedNumber = str_pad($newNumber, 4, '0', STR_PAD_LEFT);
 
+            $displayName = count($submission->authors) > 1 ? $submission->authors[0]['name'] . ', et al.' : $submission->authors[0]['name'];
+
             $invoice = PaymentInvoice::create([
                 'invoice_number' => $formattedNumber,
                 'invoice' => format_nomor($formattedNumber, 'INV', 'NSG', Carbon::now()->month, Carbon::now()->year),
@@ -822,6 +835,10 @@ class journalController extends Controller
                 'payment_amount' => (int) $request->custom_amount,
                 'payment_due_date' => Carbon::now()->addDays(3),
                 'is_custom' => true,
+                'kepada' => $displayName,
+                'kepada_detail' => $submission->authors[0]['affiliation'] ?? '',
+                'keterangan' => 'Biaya Publikasi Custom jurnal '.$issue->journal->title.' Vol. '.$issue->volume.' No. '.$issue->number.' ('.$issue->year.')',
+                'created_by' => \Illuminate\Support\Facades\Auth::user()->id,
                 'items' => [
                     [
                         'id' => $submission->ojs_submission_id,
@@ -865,7 +882,7 @@ class journalController extends Controller
             'id' => $submission->ojs_submission_id,
         ];
 
-        $storagePath = 'arsip/invoice/jurnal/'.$invoice->created_at->format('Y').'/';
+        $storagePath = 'arsip/invoice/'.$invoice->created_at->format('Y').'/';
         $fileName = 'invoice-'.$invoice->invoice_number.'-'.$submission->ojs_submission_id.'.pdf';
 
         if (! Storage::exists($storagePath)) {

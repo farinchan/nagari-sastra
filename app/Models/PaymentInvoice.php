@@ -14,6 +14,12 @@ class PaymentInvoice extends Model
 
     protected $casts = [
         'items' => 'array',
+        'midtrans_response' => 'array',
+        'payment_due_date' => 'date',
+        'confirmed_at' => 'datetime',
+        'midtrans_paid_at' => 'datetime',
+        'is_paid' => 'boolean',
+        'is_custom' => 'boolean',
     ];
 
     public function submissions()
