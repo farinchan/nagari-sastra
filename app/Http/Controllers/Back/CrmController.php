@@ -5,8 +5,13 @@ namespace App\Http\Controllers\Back;
 use App\Http\Controllers\Controller;
 use App\Models\EmailAccount;
 use App\Models\EmailMessage;
+use App\Models\TelegramBot;
+use App\Models\TelegramChat;
+use App\Models\TelegramMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use RealRashid\SweetAlert\Facades\Alert;
 use Illuminate\Support\Facades\Mail;
@@ -597,5 +602,352 @@ class CrmController extends Controller
 
         Alert::success('Berhasil', 'Email berhasil dihapus.');
         return redirect()->route('back.crm.email.inbox', ['account_id' => $account->id, 'folder' => $folder]);
+    }
+
+    // ==========================================
+    // TELEGRAM BOT CRUD
+    // ==========================================
+
+    public function telegramBotIndex()
+    {
+        $bots = TelegramBot::orderBy('created_at', 'desc')->get();
+        return view('back.pages.crm.telegram.bots', compact('bots'));
+    }
+
+    public function telegramBotStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $username = null;
+        try {
+            $response = Http::get('https://api.telegram.org/bot' . $request->token . '/getMe');
+            $data = $response->json();
+            if (isset($data['ok']) && $data['ok'] && isset($data['result']['username'])) {
+                $username = $data['result']['username'];
+            }
+        } catch (\Exception $e) {
+            // Token mungkin tidak valid, tapi tetap simpan
+        }
+
+        TelegramBot::create([
+            'name' => $request->name,
+            'token' => $request->token,
+            'username' => $username,
+            'welcome_message' => $request->welcome_message,
+            'created_by' => Auth::id(),
+        ]);
+
+        Alert::success('Berhasil', 'Bot Telegram berhasil ditambahkan.');
+        return redirect()->route('back.crm.telegram.bots');
+    }
+
+    public function telegramBotUpdate(Request $request, $id)
+    {
+        $bot = TelegramBot::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $bot->name = $request->name;
+        $bot->welcome_message = $request->welcome_message;
+
+        if ($request->filled('token')) {
+            $bot->token = $request->token;
+            // Verify new token
+            try {
+                $response = Http::get('https://api.telegram.org/bot' . $request->token . '/getMe');
+                $data = $response->json();
+                if (isset($data['ok']) && $data['ok'] && isset($data['result']['username'])) {
+                    $bot->username = $data['result']['username'];
+                }
+            } catch (\Exception $e) {
+                // Token verification failed
+            }
+        }
+
+        $bot->save();
+
+        Alert::success('Berhasil', 'Bot Telegram berhasil diperbarui.');
+        return redirect()->route('back.crm.telegram.bots');
+    }
+
+    public function telegramBotDestroy($id)
+    {
+        $bot = TelegramBot::findOrFail($id);
+
+        // Unset webhook if active
+        if ($bot->webhook_active) {
+            try {
+                $bot->sendRequest('deleteWebhook');
+            } catch (\Exception $e) {
+                // Continue with deletion
+            }
+        }
+
+        $bot->delete();
+
+        Alert::success('Berhasil', 'Bot Telegram berhasil dihapus.');
+        return redirect()->route('back.crm.telegram.bots');
+    }
+
+    public function telegramBotSetWebhook(Request $request)
+    {
+        $bot = TelegramBot::findOrFail($request->bot_id);
+        $webhookUrl = url('/api/telegram/webhook/' . $bot->id);
+
+        try {
+            $result = $bot->sendRequest('setWebhook', [
+                'url' => $webhookUrl,
+            ]);
+
+            if (isset($result['ok']) && $result['ok']) {
+                $bot->update([
+                    'webhook_url' => $webhookUrl,
+                    'webhook_active' => true,
+                ]);
+                return response()->json(['success' => true, 'message' => 'Webhook berhasil diaktifkan.']);
+            }
+
+            return response()->json(['success' => false, 'message' => $result['description'] ?? 'Gagal mengatur webhook.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
+    public function telegramBotUnsetWebhook(Request $request)
+    {
+        $bot = TelegramBot::findOrFail($request->bot_id);
+
+        try {
+            $result = $bot->sendRequest('deleteWebhook');
+
+            if (isset($result['ok']) && $result['ok']) {
+                $bot->update([
+                    'webhook_url' => null,
+                    'webhook_active' => false,
+                ]);
+                return response()->json(['success' => true, 'message' => 'Webhook berhasil dinonaktifkan.']);
+            }
+
+            return response()->json(['success' => false, 'message' => $result['description'] ?? 'Gagal menghapus webhook.']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
+    }
+
+    // ==========================================
+    // TELEGRAM CHATS
+    // ==========================================
+
+    public function telegramChats(Request $request)
+    {
+        $bots = TelegramBot::active()->orderBy('name')->get();
+
+        $selectedBot = null;
+        if ($request->has('bot_id')) {
+            $selectedBot = TelegramBot::find($request->bot_id);
+        }
+        if (!$selectedBot) {
+            $selectedBot = $bots->first();
+        }
+
+        $chats = collect();
+        if ($selectedBot) {
+            $chats = TelegramChat::where('telegram_bot_id', $selectedBot->id)
+                ->with(['messages' => fn($q) => $q->latest()->limit(1)])
+                ->orderByDesc('last_message_at')
+                ->get();
+        }
+
+        return view('back.pages.crm.telegram.chats', compact('bots', 'selectedBot', 'chats'));
+    }
+
+    public function telegramChatShow(Request $request, $id)
+    {
+        $chat = TelegramChat::with(['bot', 'messages' => fn($q) => $q->latest()->limit(100)])
+            ->findOrFail($id);
+
+        return view('back.pages.crm.telegram.chat-show', compact('chat'));
+    }
+
+    public function telegramSendMessage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'chat_id' => 'required',
+            'text' => 'required|string',
+            'bot_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        $bot = TelegramBot::findOrFail($request->bot_id);
+        $chat = TelegramChat::where('telegram_bot_id', $bot->id)
+            ->where('chat_id', $request->chat_id)
+            ->firstOrFail();
+
+        try {
+            $result = $bot->sendRequest('sendMessage', [
+                'chat_id' => $request->chat_id,
+                'text' => $request->text,
+            ]);
+
+            if (isset($result['ok']) && $result['ok']) {
+                TelegramMessage::create([
+                    'telegram_bot_id' => $bot->id,
+                    'telegram_chat_id' => $chat->id,
+                    'message_id' => $result['result']['message_id'] ?? null,
+                    'direction' => 'out',
+                    'text' => $request->text,
+                    'type' => 'text',
+                    'sent_at' => now(),
+                ]);
+
+                Alert::success('Berhasil', 'Pesan berhasil dikirim.');
+            } else {
+                Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim pesan.');
+            }
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Gagal mengirim pesan: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    // ==========================================
+    // TELEGRAM WEBHOOK (PUBLIC)
+    // ==========================================
+
+    public function telegramWebhook(Request $request, $id)
+    {
+        $bot = TelegramBot::find($id);
+        if (!$bot) {
+            return response('OK', 200);
+        }
+
+        Log::info('Telegram Webhook [Bot: ' . $bot->name . ']', $request->all());
+
+        $update = $request->all();
+
+        // Get message from update
+        $message = $update['message'] ?? $update['edited_message'] ?? null;
+        if (!$message) {
+            return response('OK', 200);
+        }
+
+        // Extract chat info
+        $chatData = $message['chat'] ?? null;
+        if (!$chatData) {
+            return response('OK', 200);
+        }
+
+        $telegramChatId = $chatData['id'];
+        $chatType = $chatData['type'] ?? 'private';
+
+        // Create or update chat
+        $chat = TelegramChat::updateOrCreate(
+            [
+                'telegram_bot_id' => $bot->id,
+                'chat_id' => $telegramChatId,
+            ],
+            [
+                'chat_type' => $chatType,
+                'first_name' => $chatData['first_name'] ?? null,
+                'last_name' => $chatData['last_name'] ?? null,
+                'username' => $chatData['username'] ?? null,
+                'title' => $chatData['title'] ?? null,
+                'last_message_at' => now(),
+            ]
+        );
+
+        // Determine message type and content
+        $text = $message['text'] ?? $message['caption'] ?? null;
+        $type = 'text';
+        $fileId = null;
+        $fileName = null;
+        $mimeType = null;
+
+        if (isset($message['photo'])) {
+            $type = 'photo';
+            // Take largest photo (last in array)
+            $photos = $message['photo'];
+            $fileId = end($photos)['file_id'] ?? null;
+        } elseif (isset($message['document'])) {
+            $type = 'document';
+            $fileId = $message['document']['file_id'] ?? null;
+            $fileName = $message['document']['file_name'] ?? null;
+            $mimeType = $message['document']['mime_type'] ?? null;
+        } elseif (isset($message['sticker'])) {
+            $type = 'sticker';
+            $fileId = $message['sticker']['file_id'] ?? null;
+        } elseif (isset($message['video'])) {
+            $type = 'video';
+            $fileId = $message['video']['file_id'] ?? null;
+            $mimeType = $message['video']['mime_type'] ?? null;
+        } elseif (isset($message['voice'])) {
+            $type = 'voice';
+            $fileId = $message['voice']['file_id'] ?? null;
+            $mimeType = $message['voice']['mime_type'] ?? null;
+        } elseif (isset($message['location'])) {
+            $type = 'location';
+            $text = 'Lat: ' . ($message['location']['latitude'] ?? '') . ', Lng: ' . ($message['location']['longitude'] ?? '');
+        } elseif (isset($message['contact'])) {
+            $type = 'contact';
+            $text = ($message['contact']['first_name'] ?? '') . ' ' . ($message['contact']['phone_number'] ?? '');
+        }
+
+        // Save incoming message
+        TelegramMessage::create([
+            'telegram_bot_id' => $bot->id,
+            'telegram_chat_id' => $chat->id,
+            'message_id' => $message['message_id'] ?? null,
+            'direction' => 'in',
+            'text' => $text,
+            'type' => $type,
+            'file_id' => $fileId,
+            'file_name' => $fileName,
+            'mime_type' => $mimeType,
+            'reply_to_message_id' => $message['reply_to_message']['message_id'] ?? null,
+            'sent_at' => isset($message['date']) ? Carbon::createFromTimestamp($message['date']) : now(),
+        ]);
+
+        // Handle /start command
+        if (isset($message['text']) && $message['text'] === '/start' && $bot->welcome_message) {
+            try {
+                $bot->sendRequest('sendMessage', [
+                    'chat_id' => $telegramChatId,
+                    'text' => $bot->welcome_message,
+                ]);
+
+                TelegramMessage::create([
+                    'telegram_bot_id' => $bot->id,
+                    'telegram_chat_id' => $chat->id,
+                    'direction' => 'out',
+                    'text' => $bot->welcome_message,
+                    'type' => 'text',
+                    'sent_at' => now(),
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Telegram: Gagal mengirim welcome message: ' . $e->getMessage());
+            }
+        }
+
+        return response('OK', 200);
     }
 }

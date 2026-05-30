@@ -360,6 +360,30 @@
                     </div>
                 </div>
             </div>
+
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion @if(request()->routeIs('back.crm.telegram.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-message-text-2 fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                    </span>
+                    <span class="menu-title">Telegram</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.telegram.chats') || request()->routeIs('back.crm.telegram.chats.*')) active @endif" href="{{ route('back.crm.telegram.chats') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Percakapan</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.telegram.bots')) active @endif" href="{{ route('back.crm.telegram.bots') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Kelola Bot</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         @endrole
 
         @role('super-admin')

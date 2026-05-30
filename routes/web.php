@@ -394,5 +394,19 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/email/send', [BackCrmController::class, 'emailSend'])->name('email.send');
         Route::post('/email/delete', [BackCrmController::class, 'emailDelete'])->name('email.delete');
         Route::post('/email/sync', [BackCrmController::class, 'emailSync'])->name('email.sync');
+
+        // Telegram Bot
+        Route::get('/telegram/bots', [BackCrmController::class, 'telegramBotIndex'])->name('telegram.bots');
+        Route::post('/telegram/bots/store', [BackCrmController::class, 'telegramBotStore'])->name('telegram.bots.store');
+        Route::put('/telegram/bots/{id}/update', [BackCrmController::class, 'telegramBotUpdate'])->name('telegram.bots.update');
+        Route::delete('/telegram/bots/{id}/destroy', [BackCrmController::class, 'telegramBotDestroy'])->name('telegram.bots.destroy');
+        Route::post('/telegram/bots/set-webhook', [BackCrmController::class, 'telegramBotSetWebhook'])->name('telegram.bots.set-webhook');
+        Route::post('/telegram/bots/unset-webhook', [BackCrmController::class, 'telegramBotUnsetWebhook'])->name('telegram.bots.unset-webhook');
+
+        // Telegram Chats
+        Route::get('/telegram/chats', [BackCrmController::class, 'telegramChats'])->name('telegram.chats');
+        Route::get('/telegram/chats/{id}', [BackCrmController::class, 'telegramChatShow'])->name('telegram.chats.show');
+        Route::post('/telegram/send-message', [BackCrmController::class, 'telegramSendMessage'])->name('telegram.send-message');
     });
 });
+

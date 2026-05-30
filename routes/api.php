@@ -46,3 +46,6 @@ Route::prefix('whatsapp-api')->name('api.whatsapp.')->group(function () {
     Route::post('/send-bulk-message', [App\Http\Controllers\Api\WhatsappController::class, 'sendBulkMessage'])->name('send-bulk-message');
     Route::post('/send-image', [App\Http\Controllers\Api\WhatsappController::class, 'sendImage'])->name('send-image');
 });
+
+// Telegram Webhook (public, no auth)
+Route::post('/telegram/webhook/{id}', [App\Http\Controllers\Back\CrmController::class, 'telegramWebhook'])->name('telegram.webhook');
