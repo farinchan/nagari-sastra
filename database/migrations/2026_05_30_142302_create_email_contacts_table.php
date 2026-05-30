@@ -6,20 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('email_contacts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('email_group_id');
+            $table->string('name');
+            $table->string('email');
+            $table->string('phone')->nullable();
+            $table->string('company')->nullable();
+            $table->boolean('is_subscribed')->default(true);
             $table->timestamps();
+            $table->foreign('email_group_id')->references('id')->on('email_groups')->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('email_contacts');

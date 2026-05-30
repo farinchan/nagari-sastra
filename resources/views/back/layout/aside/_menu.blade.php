@@ -358,6 +358,24 @@
                             <span class="menu-title">Akun Email</span>
                         </a>
                     </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.overview')) active @endif" href="{{ route('back.crm.email.overview') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Overview</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.groups') || request()->routeIs('back.crm.email.contacts')) active @endif" href="{{ route('back.crm.email.groups') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Grup Kontak</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.campaigns') || request()->routeIs('back.crm.email.campaigns.*')) active @endif" href="{{ route('back.crm.email.campaigns') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Marketing</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 

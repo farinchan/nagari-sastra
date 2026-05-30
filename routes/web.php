@@ -395,6 +395,26 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/email/delete', [BackCrmController::class, 'emailDelete'])->name('email.delete');
         Route::post('/email/sync', [BackCrmController::class, 'emailSync'])->name('email.sync');
 
+        // Email Overview
+        Route::get('/email/overview', [BackCrmController::class, 'emailOverview'])->name('email.overview');
+
+        // Email Groups & Contacts
+        Route::get('/email/groups', [BackCrmController::class, 'emailGroupIndex'])->name('email.groups');
+        Route::post('/email/groups/store', [BackCrmController::class, 'emailGroupStore'])->name('email.groups.store');
+        Route::put('/email/groups/{id}/update', [BackCrmController::class, 'emailGroupUpdate'])->name('email.groups.update');
+        Route::delete('/email/groups/{id}/destroy', [BackCrmController::class, 'emailGroupDestroy'])->name('email.groups.destroy');
+        Route::get('/email/groups/{groupId}/contacts', [BackCrmController::class, 'emailContactIndex'])->name('email.contacts');
+        Route::post('/email/contacts/store', [BackCrmController::class, 'emailContactStore'])->name('email.contacts.store');
+        Route::delete('/email/contacts/{id}/destroy', [BackCrmController::class, 'emailContactDestroy'])->name('email.contacts.destroy');
+        Route::post('/email/contacts/import', [BackCrmController::class, 'emailContactImport'])->name('email.contacts.import');
+
+        // Email Campaigns
+        Route::get('/email/campaigns', [BackCrmController::class, 'emailCampaignIndex'])->name('email.campaigns');
+        Route::get('/email/campaigns/create', [BackCrmController::class, 'emailCampaignCreate'])->name('email.campaigns.create');
+        Route::post('/email/campaigns/store', [BackCrmController::class, 'emailCampaignStore'])->name('email.campaigns.store');
+        Route::post('/email/campaigns/send', [BackCrmController::class, 'emailCampaignSend'])->name('email.campaigns.send');
+        Route::delete('/email/campaigns/{id}/destroy', [BackCrmController::class, 'emailCampaignDestroy'])->name('email.campaigns.destroy');
+
         // Telegram Bot
         Route::get('/telegram/bots', [BackCrmController::class, 'telegramBotIndex'])->name('telegram.bots');
         Route::post('/telegram/bots/store', [BackCrmController::class, 'telegramBotStore'])->name('telegram.bots.store');

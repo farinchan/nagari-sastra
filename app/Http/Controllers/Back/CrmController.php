@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Back;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmailAccount;
+use App\Models\EmailCampaign;
+use App\Models\EmailCampaignLog;
+use App\Models\EmailContact;
+use App\Models\EmailGroup;
 use App\Models\EmailMessage;
 use App\Models\TelegramBot;
 use App\Models\TelegramChat;
@@ -949,5 +953,377 @@ class CrmController extends Controller
         }
 
         return response('OK', 200);
+    }
+
+    // ==========================================
+    // EMAIL OVERVIEW
+    // ==========================================
+
+    public function emailOverview(Request $request)
+    {
+        $accounts = EmailAccount::active()->orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+
+        $selectedAccount = null;
+        if ($request->has('account_id')) {
+            $selectedAccount = EmailAccount::find($request->account_id);
+        }
+        if (!$selectedAccount) {
+            $selectedAccount = $accounts->where('is_default', true)->first() ?? $accounts->first();
+        }
+
+        // Stats
+        $stats = [
+            'total_emails' => 0,
+            'total_inbox' => 0,
+            'total_sent' => 0,
+            'total_spam' => 0,
+            'total_trash' => 0,
+            'total_unread' => 0,
+            'emails_today' => 0,
+            'emails_this_week' => 0,
+            'emails_this_month' => 0,
+        ];
+
+        if ($selectedAccount) {
+            $query = EmailMessage::where('email_account_id', $selectedAccount->id);
+            $stats['total_emails'] = (clone $query)->count();
+            $stats['total_inbox'] = (clone $query)->where('folder', 'INBOX')->count();
+            $stats['total_sent'] = (clone $query)->where('folder', 'LIKE', '%sent%')->count();
+            $stats['total_spam'] = (clone $query)->where(function ($q) {
+                $q->where('folder', 'LIKE', '%spam%')->orWhere('folder', 'LIKE', '%junk%');
+            })->count();
+            $stats['total_trash'] = (clone $query)->where(function ($q) {
+                $q->where('folder', 'LIKE', '%trash%')->orWhere('folder', 'LIKE', '%delete%');
+            })->count();
+            $stats['total_unread'] = (clone $query)->where('folder', 'INBOX')->where('is_seen', false)->count();
+            $stats['emails_today'] = (clone $query)->whereDate('email_date', Carbon::today())->count();
+            $stats['emails_this_week'] = (clone $query)->where('email_date', '>=', Carbon::now()->startOfWeek())->count();
+            $stats['emails_this_month'] = (clone $query)->where('email_date', '>=', Carbon::now()->startOfMonth())->count();
+        }
+
+        // Daily email count for last 30 days
+        $chartData = ['labels' => [], 'data' => []];
+        if ($selectedAccount) {
+            $dailyCounts = EmailMessage::where('email_account_id', $selectedAccount->id)
+                ->where('email_date', '>=', Carbon::now()->subDays(30))
+                ->selectRaw('DATE(email_date) as date, COUNT(*) as count')
+                ->groupBy('date')
+                ->orderBy('date', 'asc')
+                ->get()
+                ->keyBy('date');
+
+            for ($i = 29; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $chartData['labels'][] = Carbon::parse($date)->format('d M');
+                $chartData['data'][] = $dailyCounts->has($date) ? $dailyCounts[$date]->count : 0;
+            }
+        }
+
+        $totalGroups = EmailGroup::count();
+        $totalContacts = EmailContact::count();
+        $totalCampaigns = EmailCampaign::count();
+        $recentCampaigns = EmailCampaign::with(['emailAccount', 'group'])->orderBy('created_at', 'desc')->limit(5)->get();
+
+        return view('back.pages.crm.email.overview', compact(
+            'accounts', 'selectedAccount', 'stats', 'chartData',
+            'totalGroups', 'totalContacts', 'totalCampaigns', 'recentCampaigns'
+        ));
+    }
+
+    // ==========================================
+    // EMAIL GROUPS
+    // ==========================================
+
+    public function emailGroupIndex()
+    {
+        $groups = EmailGroup::withCount('contacts')->orderBy('name', 'asc')->get();
+        return view('back.pages.crm.email.groups', compact('groups'));
+    }
+
+    public function emailGroupStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'color' => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        EmailGroup::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'color' => $request->color ?? '#3699FF',
+            'created_by' => Auth::id(),
+        ]);
+
+        Alert::success('Berhasil', 'Grup kontak berhasil ditambahkan.');
+        return redirect()->back();
+    }
+
+    public function emailGroupUpdate(Request $request, $id)
+    {
+        $group = EmailGroup::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'color' => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $group->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'color' => $request->color ?? $group->color,
+        ]);
+
+        Alert::success('Berhasil', 'Grup kontak berhasil diperbarui.');
+        return redirect()->back();
+    }
+
+    public function emailGroupDestroy($id)
+    {
+        $group = EmailGroup::findOrFail($id);
+        $group->delete();
+
+        Alert::success('Berhasil', 'Grup kontak berhasil dihapus.');
+        return redirect()->back();
+    }
+
+    // ==========================================
+    // EMAIL CONTACTS
+    // ==========================================
+
+    public function emailContactIndex(Request $request, $groupId)
+    {
+        $group = EmailGroup::findOrFail($groupId);
+        $contacts = EmailContact::where('email_group_id', $groupId)->orderBy('name', 'asc')->paginate(20);
+        return view('back.pages.crm.email.contacts', compact('group', 'contacts'));
+    }
+
+    public function emailContactStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email_group_id' => 'required|exists:email_groups,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'company' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        EmailContact::create([
+            'email_group_id' => $request->email_group_id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'company' => $request->company,
+        ]);
+
+        Alert::success('Berhasil', 'Kontak berhasil ditambahkan.');
+        return redirect()->back();
+    }
+
+    public function emailContactDestroy($id)
+    {
+        $contact = EmailContact::findOrFail($id);
+        $contact->delete();
+
+        Alert::success('Berhasil', 'Kontak berhasil dihapus.');
+        return redirect()->back();
+    }
+
+    public function emailContactImport(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'group_id' => 'required|exists:email_groups,id',
+            'csv_file' => 'required|file|mimes:csv,txt|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        $file = $request->file('csv_file');
+        $content = file_get_contents($file->getRealPath());
+        $lines = array_filter(explode("\n", $content));
+        $count = 0;
+
+        foreach ($lines as $index => $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+
+            $parts = str_getcsv($line);
+            if (count($parts) < 2) continue;
+
+            $name = trim($parts[0]);
+            $email = trim($parts[1]);
+
+            // Skip header row
+            if ($index === 0 && (strtolower($name) === 'name' || strtolower($name) === 'nama')) {
+                continue;
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+
+            EmailContact::create([
+                'email_group_id' => $request->group_id,
+                'name' => $name,
+                'email' => $email,
+            ]);
+            $count++;
+        }
+
+        Alert::success('Berhasil', "Berhasil mengimpor {$count} kontak.");
+        return redirect()->back();
+    }
+
+    // ==========================================
+    // EMAIL CAMPAIGNS
+    // ==========================================
+
+    public function emailCampaignIndex()
+    {
+        $campaigns = EmailCampaign::with(['emailAccount', 'group'])->orderBy('created_at', 'desc')->get();
+        return view('back.pages.crm.email.campaigns', compact('campaigns'));
+    }
+
+    public function emailCampaignCreate()
+    {
+        $accounts = EmailAccount::active()->orderBy('name', 'asc')->get();
+        $groups = EmailGroup::withCount('contacts')->orderBy('name', 'asc')->get();
+        return view('back.pages.crm.email.campaign-compose', compact('accounts', 'groups'));
+    }
+
+    public function emailCampaignStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email_account_id' => 'required|exists:email_accounts,id',
+            'email_group_id' => 'required|exists:email_groups,id',
+            'subject' => 'required|string|max:255',
+            'body_html' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        EmailCampaign::create([
+            'name' => $request->name,
+            'email_account_id' => $request->email_account_id,
+            'email_group_id' => $request->email_group_id,
+            'subject' => $request->subject,
+            'body_html' => $request->body_html,
+            'status' => 'draft',
+            'created_by' => Auth::id(),
+        ]);
+
+        Alert::success('Berhasil', 'Campaign berhasil dibuat sebagai draft.');
+        return redirect()->route('back.crm.email.campaigns');
+    }
+
+    public function emailCampaignSend(Request $request)
+    {
+        set_time_limit(0);
+
+        $campaign = EmailCampaign::with(['emailAccount', 'group'])->findOrFail($request->campaign_id);
+
+        if ($campaign->status !== 'draft') {
+            return response()->json(['success' => false, 'message' => 'Campaign ini sudah dikirim atau sedang dikirim.']);
+        }
+
+        $contacts = EmailContact::where('email_group_id', $campaign->email_group_id)->subscribed()->get();
+
+        if ($contacts->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada kontak yang aktif di grup ini.']);
+        }
+
+        $campaign->update([
+            'total_recipients' => $contacts->count(),
+            'status' => 'sending',
+        ]);
+
+        $account = $campaign->emailAccount;
+        $smtpConfig = $account->getSmtpConfig();
+        $sentCount = 0;
+        $failedCount = 0;
+
+        foreach ($contacts as $contact) {
+            try {
+                Config::set('mail.default', 'smtp');
+                Config::set('mail.mailers.smtp.host', $smtpConfig['host']);
+                Config::set('mail.mailers.smtp.port', $smtpConfig['port']);
+                Config::set('mail.mailers.smtp.encryption', $smtpConfig['encryption'] === 'none' ? null : $smtpConfig['encryption']);
+                Config::set('mail.mailers.smtp.username', $smtpConfig['username']);
+                Config::set('mail.mailers.smtp.password', $smtpConfig['password']);
+                Config::set('mail.from.address', $account->email);
+                Config::set('mail.from.name', $account->name);
+
+                app('mail.manager')->purge('smtp');
+
+                $body = $campaign->body_html;
+                $subject = $campaign->subject;
+
+                Mail::html($body, function ($message) use ($contact, $subject, $account) {
+                    $message->from($account->email, $account->name);
+                    $message->to($contact->email, $contact->name);
+                    $message->subject($subject);
+                });
+
+                EmailCampaignLog::create([
+                    'email_campaign_id' => $campaign->id,
+                    'email_contact_id' => $contact->id,
+                    'status' => 'sent',
+                    'sent_at' => now(),
+                ]);
+
+                $sentCount++;
+            } catch (\Exception $e) {
+                EmailCampaignLog::create([
+                    'email_campaign_id' => $campaign->id,
+                    'email_contact_id' => $contact->id,
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                ]);
+
+                $failedCount++;
+            }
+        }
+
+        $campaign->update([
+            'sent_count' => $sentCount,
+            'failed_count' => $failedCount,
+            'status' => 'sent',
+            'sent_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Campaign berhasil dikirim. Terkirim: {$sentCount}, Gagal: {$failedCount}",
+            'sent_count' => $sentCount,
+            'failed_count' => $failedCount,
+        ]);
+    }
+
+    public function emailCampaignDestroy($id)
+    {
+        $campaign = EmailCampaign::findOrFail($id);
+        $campaign->delete();
+
+        Alert::success('Berhasil', 'Campaign berhasil dihapus.');
+        return redirect()->back();
     }
 }

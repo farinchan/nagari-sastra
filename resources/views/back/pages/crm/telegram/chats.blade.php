@@ -1,16 +1,6 @@
 @extends('back.app')
 @section('content')
-    <div id="kt_content_container" class="container-fluid">
-        {{-- Breadcrumb --}}
-        <div class="d-flex align-items-center mb-5">
-            <span class="text-muted fw-semibold fs-7">
-                <a href="{{ route('back.dashboard') }}" class="text-muted">Dashboard</a>
-                <i class="ki-duotone ki-right fs-7 mx-1"></i>
-                CRM
-                <i class="ki-duotone ki-right fs-7 mx-1"></i>
-                <span class="text-dark">Telegram Chats</span>
-            </span>
-        </div>
+    <div id="kt_content_container" class=" container-xxl ">
 
         {{-- Bot Switcher --}}
         @if($bots->count() > 1)
