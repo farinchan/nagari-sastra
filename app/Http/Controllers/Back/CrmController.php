@@ -1,0 +1,601 @@
+<?php
+
+namespace App\Http\Controllers\Back;
+
+use App\Http\Controllers\Controller;
+use App\Models\EmailAccount;
+use App\Models\EmailMessage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use RealRashid\SweetAlert\Facades\Alert;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Config;
+use Webklex\IMAP\Facades\Client as ImapClient;
+use Carbon\Carbon;
+
+class CrmController extends Controller
+{
+    // ==========================================
+    // EMAIL ACCOUNTS CRUD
+    // ==========================================
+
+    public function emailAccountIndex()
+    {
+        $accounts = EmailAccount::orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+        return view('back.pages.crm.email.accounts', compact('accounts'));
+    }
+
+    public function emailAccountStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:email_accounts,email',
+            'imap_host' => 'required|string',
+            'imap_port' => 'required|string',
+            'imap_encryption' => 'required|in:ssl,tls,none',
+            'imap_username' => 'required|string',
+            'imap_password' => 'required|string',
+            'smtp_host' => 'required|string',
+            'smtp_port' => 'required|string',
+            'smtp_encryption' => 'required|in:ssl,tls,none',
+            'smtp_username' => 'required|string',
+            'smtp_password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        if ($request->has('is_default') && $request->is_default) {
+            EmailAccount::where('is_default', true)->update(['is_default' => false]);
+        }
+
+        EmailAccount::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'imap_host' => $request->imap_host,
+            'imap_port' => $request->imap_port,
+            'imap_encryption' => $request->imap_encryption,
+            'imap_username' => $request->imap_username,
+            'imap_password' => $request->imap_password,
+            'smtp_host' => $request->smtp_host,
+            'smtp_port' => $request->smtp_port,
+            'smtp_encryption' => $request->smtp_encryption,
+            'smtp_username' => $request->smtp_username,
+            'smtp_password' => $request->smtp_password,
+            'is_active' => $request->has('is_active') ? true : false,
+            'is_default' => $request->has('is_default') ? true : false,
+            'created_by' => Auth::user()->id,
+        ]);
+
+        Alert::success('Berhasil', 'Akun email berhasil ditambahkan.');
+        return redirect()->route('back.crm.email.accounts');
+    }
+
+    public function emailAccountUpdate(Request $request, $id)
+    {
+        $account = EmailAccount::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:email_accounts,email,' . $id,
+            'imap_host' => 'required|string',
+            'imap_port' => 'required|string',
+            'imap_encryption' => 'required|in:ssl,tls,none',
+            'imap_username' => 'required|string',
+            'smtp_host' => 'required|string',
+            'smtp_port' => 'required|string',
+            'smtp_encryption' => 'required|in:ssl,tls,none',
+            'smtp_username' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        if ($request->has('is_default') && $request->is_default) {
+            EmailAccount::where('is_default', true)->where('id', '!=', $id)->update(['is_default' => false]);
+        }
+
+        $account->name = $request->name;
+        $account->email = $request->email;
+        $account->imap_host = $request->imap_host;
+        $account->imap_port = $request->imap_port;
+        $account->imap_encryption = $request->imap_encryption;
+        $account->imap_username = $request->imap_username;
+        $account->smtp_host = $request->smtp_host;
+        $account->smtp_port = $request->smtp_port;
+        $account->smtp_encryption = $request->smtp_encryption;
+        $account->smtp_username = $request->smtp_username;
+        $account->is_active = $request->has('is_active') ? true : false;
+        $account->is_default = $request->has('is_default') ? true : false;
+
+        if ($request->filled('imap_password')) {
+            $account->imap_password = $request->imap_password;
+        }
+        if ($request->filled('smtp_password')) {
+            $account->smtp_password = $request->smtp_password;
+        }
+
+        $account->save();
+
+        Alert::success('Berhasil', 'Akun email berhasil diperbarui.');
+        return redirect()->route('back.crm.email.accounts');
+    }
+
+    public function emailAccountDestroy($id)
+    {
+        $account = EmailAccount::findOrFail($id);
+        $account->delete(); // cascade deletes email_messages
+        Alert::success('Berhasil', 'Akun email berhasil dihapus.');
+        return redirect()->route('back.crm.email.accounts');
+    }
+
+    public function emailAccountTest(Request $request)
+    {
+        $account = EmailAccount::findOrFail($request->account_id);
+        $results = ['imap' => false, 'smtp' => false, 'imap_error' => '', 'smtp_error' => ''];
+
+        try {
+            $client = $this->getImapClient($account);
+            $client->connect();
+            $results['imap'] = true;
+            $client->disconnect();
+        } catch (\Exception $e) {
+            $results['imap_error'] = 'IMAP: ' . $e->getMessage();
+        }
+
+        try {
+            $fp = @fsockopen($account->smtp_host, (int) $account->smtp_port, $errno, $errstr, 10);
+            if ($fp) {
+                $results['smtp'] = true;
+                fclose($fp);
+            } else {
+                $results['smtp_error'] = "SMTP: Tidak dapat terhubung ($errstr)";
+            }
+        } catch (\Exception $e) {
+            $results['smtp_error'] = 'SMTP: ' . $e->getMessage();
+        }
+
+        return response()->json($results);
+    }
+
+    // ==========================================
+    // IMAP CLIENT HELPER
+    // ==========================================
+
+    private function getImapClient(EmailAccount $account): \Webklex\PHPIMAP\Client
+    {
+        $config = $account->getImapConfig();
+
+        return ImapClient::make([
+            'host'          => $config['host'],
+            'port'          => (int) $config['port'],
+            'encryption'    => $config['encryption'] === 'none' ? false : $config['encryption'],
+            'validate_cert' => false,
+            'username'      => $config['username'],
+            'password'      => $config['password'],
+            'protocol'      => 'imap',
+            'authentication' => null,
+            'timeout'       => 30,
+        ]);
+    }
+
+    // ==========================================
+    // SYNC: Incremental — only fetch new emails
+    // ==========================================
+
+    public function emailSync(Request $request)
+    {
+        set_time_limit(300);
+
+        $account = EmailAccount::findOrFail($request->account_id);
+        $folder = $request->get('folder', 'INBOX');
+
+        try {
+            $client = $this->getImapClient($account);
+            $client->connect();
+
+            // Fetch and save folder list from IMAP
+            try {
+                $imapFolders = $client->getFolders(false);
+                $folderList = [];
+                foreach ($imapFolders as $f) {
+                    $folderList[] = [
+                        'name' => $f->name,
+                        'full_name' => $f->full_name,
+                        'path' => $f->path,
+                    ];
+                }
+                $account->imap_folders = $folderList;
+                $account->save();
+            } catch (\Exception $e) {
+                // Folder fetch failed — continue with sync
+            }
+
+            $imapFolder = $client->getFolder($folder);
+            if (!$imapFolder) {
+                $client->disconnect();
+                return response()->json(['success' => false, 'error' => 'Folder "' . $folder . '" tidak ditemukan']);
+            }
+
+            // Get existing UIDs to skip duplicates
+            $existingUids = EmailMessage::forAccount($account->id)
+                ->forFolder($folder)
+                ->pluck('uid')
+                ->toArray();
+
+            // Build query — use SINCE date for incremental sync
+            $query = $imapFolder->messages();
+
+            if (!empty($existingUids) && $account->last_synced_at) {
+                // Incremental: fetch emails since last sync date (minus 1 day buffer)
+                $sinceDate = $account->last_synced_at->subDay()->format('d-M-Y');
+                $query = $query->since($sinceDate);
+            } else {
+                // First sync: fetch all, limit handled below
+                $query = $query->all();
+            }
+
+            $messages = $query
+                ->setFetchBody(true)
+                ->setFetchFlags(true)
+                ->setFetchOrder('desc')
+                ->limit(50)
+                ->get();
+
+            $synced = 0;
+
+            foreach ($messages as $message) {
+                try {
+                    $uid = $message->getUid();
+
+                    // Skip if already exists (in-memory check — fast)
+                    if (in_array($uid, $existingUids)) {
+                        continue;
+                    }
+
+                    // Parse from
+                    $fromName = '';
+                    $fromEmail = '';
+                    $from = $message->getFrom();
+                    if ($from && $from->first()) {
+                        $addr = $from->first();
+                        $fromName = $addr->personal ?: '';
+                        $fromEmail = $addr->mail ?? '';
+                    }
+
+                    // Parse to
+                    $toList = [];
+                    $to = $message->getTo();
+                    if ($to && $to->first()) {
+                        foreach ($to->toArray() as $addr) {
+                            $toList[] = $addr->mail ?? '';
+                        }
+                    }
+
+                    // Parse cc
+                    $ccList = [];
+                    $cc = $message->getCc();
+                    if ($cc && $cc->first()) {
+                        foreach ($cc->toArray() as $addr) {
+                            $ccList[] = $addr->mail ?? '';
+                        }
+                    }
+
+                    // Subject
+                    $subject = '(Tanpa Subjek)';
+                    $subj = $message->getSubject();
+                    if ($subj) $subject = $subj->toString() ?: '(Tanpa Subjek)';
+
+                    // Date
+                    $emailDate = null;
+                    $d = $message->getDate();
+                    if ($d) {
+                        try { $emailDate = Carbon::parse($d->first()); } catch (\Exception $e) {}
+                    }
+
+                    // Body
+                    $bodyHtml = $message->getHTMLBody() ?: '';
+                    $bodyText = $message->getTextBody() ?: '';
+
+                    // Flags
+                    $isSeen = false;
+                    $flags = $message->getFlags();
+                    if ($flags) {
+                        $flagArr = $flags->toArray();
+                        $isSeen = in_array('Seen', $flagArr) || in_array('\Seen', $flagArr);
+                    }
+
+                    // Attachments
+                    $hasAttachment = $message->hasAttachments();
+
+                    // Message ID
+                    $messageId = '';
+                    $mid = $message->getMessageId();
+                    if ($mid) $messageId = $mid->toString() ?: '';
+
+                    EmailMessage::create([
+                        'email_account_id' => $account->id,
+                        'uid' => $uid,
+                        'message_id' => $messageId,
+                        'folder' => $folder,
+                        'from_name' => mb_substr($fromName, 0, 255),
+                        'from_email' => mb_substr($fromEmail, 0, 255),
+                        'to_email' => $toList,
+                        'cc_email' => $ccList,
+                        'subject' => mb_substr($subject, 0, 255),
+                        'body_html' => $bodyHtml,
+                        'body_text' => $bodyText,
+                        'is_seen' => $isSeen,
+                        'has_attachment' => $hasAttachment,
+                        'email_date' => $emailDate,
+                    ]);
+
+                    $synced++;
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            $client->disconnect();
+
+            // Update last sync time
+            $account->last_synced_at = now();
+            $account->save();
+
+            return response()->json([
+                'success' => true,
+                'synced' => $synced,
+                'message' => $synced > 0
+                    ? "Berhasil sinkronisasi {$synced} email baru."
+                    : 'Tidak ada email baru.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Gagal sinkronisasi: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ==========================================
+    // INBOX: Read from local DB (instant)
+    // ==========================================
+
+    public function emailInbox(Request $request)
+    {
+        $accounts = EmailAccount::active()->orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+
+        if ($accounts->isEmpty()) {
+            return view('back.pages.crm.email.inbox', [
+                'accounts' => $accounts,
+                'selectedAccount' => null,
+                'emails' => collect(),
+                'error' => null,
+                'no_account' => true,
+                'folder' => 'INBOX',
+                'folders' => [],
+            ]);
+        }
+
+        $selectedAccount = null;
+        if ($request->has('account_id')) {
+            $selectedAccount = EmailAccount::find($request->account_id);
+        }
+        if (!$selectedAccount) {
+            $selectedAccount = $accounts->where('is_default', true)->first() ?? $accounts->first();
+        }
+
+        $folder = $request->get('folder', 'INBOX');
+
+        // Read from local DB — instant!
+        $emails = EmailMessage::forAccount($selectedAccount->id)
+            ->forFolder($folder)
+            ->orderByDesc('email_date')
+            ->limit(50)
+            ->get();
+
+        // Get folder list from DB (saved during sync)
+        $folderList = $selectedAccount->imap_folders ?? [];
+
+        // Fallback: always include INBOX
+        if (empty($folderList)) {
+            $folderList = [['name' => 'INBOX', 'full_name' => 'INBOX', 'path' => 'INBOX']];
+        }
+
+        return view('back.pages.crm.email.inbox', [
+            'accounts' => $accounts,
+            'selectedAccount' => $selectedAccount,
+            'emails' => $emails,
+            'error' => null,
+            'no_account' => false,
+            'folder' => $folder,
+            'folders' => $folderList,
+        ]);
+    }
+
+    // ==========================================
+    // SHOW EMAIL: Read from local DB
+    // ==========================================
+
+    public function emailShow(Request $request, $uid)
+    {
+        $accounts = EmailAccount::active()->orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+
+        $selectedAccount = null;
+        if ($request->has('account_id')) {
+            $selectedAccount = EmailAccount::find($request->account_id);
+        }
+        if (!$selectedAccount) {
+            $selectedAccount = $accounts->where('is_default', true)->first() ?? $accounts->first();
+        }
+
+        if (!$selectedAccount) {
+            Alert::error('Error', 'Tidak ada akun email.');
+            return redirect()->route('back.crm.email.accounts');
+        }
+
+        $folder = $request->get('folder', 'INBOX');
+
+        $email = EmailMessage::where('email_account_id', $selectedAccount->id)
+            ->where('uid', $uid)
+            ->where('folder', $folder)
+            ->first();
+
+        if (!$email) {
+            Alert::error('Error', 'Email tidak ditemukan. Coba sync ulang.');
+            return redirect()->route('back.crm.email.inbox', ['account_id' => $selectedAccount->id]);
+        }
+
+        // Mark as read
+        if (!$email->is_seen) {
+            $email->update(['is_seen' => true]);
+        }
+
+        $bodyHtml = $email->body_html;
+        if (empty($bodyHtml) && !empty($email->body_text)) {
+            $bodyHtml = nl2br(htmlspecialchars($email->body_text));
+        }
+        if (empty($bodyHtml)) {
+            $bodyHtml = '<p class="text-muted"><em>Email ini tidak memiliki konten.</em></p>';
+        }
+
+        return view('back.pages.crm.email.show', [
+            'uid' => $uid,
+            'from_name' => $email->from_name,
+            'from_email' => $email->from_email,
+            'to_list' => $email->to_email ?? [],
+            'cc_list' => $email->cc_email ?? [],
+            'subject' => $email->subject,
+            'date' => $email->email_date ? $email->email_date->format('d M Y H:i') : '',
+            'body_html' => $bodyHtml,
+            'attachments' => [],
+            'selectedAccount' => $selectedAccount,
+            'folder' => $folder,
+        ]);
+    }
+
+    // ==========================================
+    // COMPOSE & SEND
+    // ==========================================
+
+    public function emailCompose(Request $request)
+    {
+        $accounts = EmailAccount::active()->orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+
+        return view('back.pages.crm.email.compose', [
+            'accounts' => $accounts,
+            'selectedAccountId' => $request->get('account_id'),
+            'to' => $request->get('to', ''),
+            'subject' => $request->get('subject', ''),
+            'replyBody' => $request->get('reply_body', ''),
+        ]);
+    }
+
+    public function emailSend(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'account_id' => 'required|exists:email_accounts,id',
+            'to' => 'required|email',
+            'subject' => 'required|string|max:255',
+            'body' => 'required|string',
+            'cc' => 'nullable|string',
+            'bcc' => 'nullable|string',
+            'attachments' => 'nullable|array',
+            'attachments.*' => 'file|max:10240',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $account = EmailAccount::findOrFail($request->account_id);
+        $smtpConfig = $account->getSmtpConfig();
+
+        try {
+            Config::set('mail.default', 'smtp');
+            Config::set('mail.mailers.smtp.host', $smtpConfig['host']);
+            Config::set('mail.mailers.smtp.port', $smtpConfig['port']);
+            Config::set('mail.mailers.smtp.encryption', $smtpConfig['encryption'] === 'none' ? null : $smtpConfig['encryption']);
+            Config::set('mail.mailers.smtp.username', $smtpConfig['username']);
+            Config::set('mail.mailers.smtp.password', $smtpConfig['password']);
+            Config::set('mail.from.address', $account->email);
+            Config::set('mail.from.name', $account->name);
+
+            app('mail.manager')->purge('smtp');
+
+            $to = $request->to;
+            $subject = $request->subject;
+            $body = $request->body;
+            $ccEmails = $request->filled('cc') ? array_filter(array_map('trim', explode(',', $request->cc))) : [];
+            $bccEmails = $request->filled('bcc') ? array_filter(array_map('trim', explode(',', $request->bcc))) : [];
+
+            Mail::html($body, function ($message) use ($to, $subject, $ccEmails, $bccEmails, $account, $request) {
+                $message->from($account->email, $account->name);
+                $message->to($to);
+                $message->subject($subject);
+
+                if (!empty($ccEmails)) $message->cc($ccEmails);
+                if (!empty($bccEmails)) $message->bcc($bccEmails);
+
+                if ($request->hasFile('attachments')) {
+                    foreach ($request->file('attachments') as $file) {
+                        $message->attach($file->getRealPath(), [
+                            'as' => $file->getClientOriginalName(),
+                            'mime' => $file->getMimeType(),
+                        ]);
+                    }
+                }
+            });
+
+            Alert::success('Berhasil', 'Email berhasil dikirim ke ' . $to);
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Gagal mengirim email: ' . $e->getMessage());
+        }
+
+        return redirect()->route('back.crm.email.inbox', ['account_id' => $account->id]);
+    }
+
+    // ==========================================
+    // DELETE EMAIL
+    // ==========================================
+
+    public function emailDelete(Request $request)
+    {
+        $account = EmailAccount::findOrFail($request->account_id);
+        $uid = $request->uid;
+        $folder = $request->get('folder', 'INBOX');
+
+        // Delete from local DB
+        EmailMessage::where('email_account_id', $account->id)
+            ->where('uid', $uid)
+            ->where('folder', $folder)
+            ->delete();
+
+        // Try to delete from IMAP server too
+        try {
+            $client = $this->getImapClient($account);
+            $client->connect();
+
+            $imapFolder = $client->getFolder($folder);
+            if ($imapFolder) {
+                $message = $imapFolder->messages()->getMessageByUid((int) $uid);
+                if ($message) {
+                    $message->delete(true);
+                }
+            }
+
+            $client->disconnect();
+        } catch (\Exception $e) {
+            // IMAP delete failed, but local is already deleted — OK
+        }
+
+        Alert::success('Berhasil', 'Email berhasil dihapus.');
+        return redirect()->route('back.crm.email.inbox', ['account_id' => $account->id, 'folder' => $folder]);
+    }
+}

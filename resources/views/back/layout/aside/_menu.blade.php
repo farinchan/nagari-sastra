@@ -334,6 +334,36 @@
 
         @role('super-admin')
             <div class="menu-item pt-5">
+                <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">CRM</span></div>
+            </div>
+
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion @if(request()->routeIs('back.crm.email.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-sms fs-2"><span class="path1"></span><span class="path2"></span></i>
+                    </span>
+                    <span class="menu-title">Email</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.inbox') || request()->routeIs('back.crm.email.show') || request()->routeIs('back.crm.email.compose')) active @endif" href="{{ route('back.crm.email.inbox') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Inbox</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.accounts')) active @endif" href="{{ route('back.crm.email.accounts') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Akun Email</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endrole
+
+        @role('super-admin')
+            <div class="menu-item pt-5">
                 <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Administrator</span>
                 </div>
             </div>

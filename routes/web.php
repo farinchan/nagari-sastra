@@ -32,6 +32,7 @@ use App\Http\Controllers\Back\MessageController as BackMessageController;
 use App\Http\Controllers\Back\SettingController as BackSettingController;
 use App\Http\Controllers\Back\IncomingMailController as BackIncomingMailController;
 use App\Http\Controllers\Back\OutgoingMailController as BackOutgoingMailController;
+use App\Http\Controllers\Back\CrmController as BackCrmController;
 
 
 
@@ -376,5 +377,22 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/edit/{id}', [BackOutgoingMailController::class, 'edit'])->name('edit');
         Route::put('/edit/{id}', [BackOutgoingMailController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [BackOutgoingMailController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('crm')->name('crm.')->group(function () {
+        // Email Accounts
+        Route::get('/email/accounts', [BackCrmController::class, 'emailAccountIndex'])->name('email.accounts');
+        Route::post('/email/accounts/store', [BackCrmController::class, 'emailAccountStore'])->name('email.accounts.store');
+        Route::put('/email/accounts/{id}/update', [BackCrmController::class, 'emailAccountUpdate'])->name('email.accounts.update');
+        Route::delete('/email/accounts/{id}/destroy', [BackCrmController::class, 'emailAccountDestroy'])->name('email.accounts.destroy');
+        Route::post('/email/accounts/test', [BackCrmController::class, 'emailAccountTest'])->name('email.accounts.test');
+
+        // Email Inbox
+        Route::get('/email/inbox', [BackCrmController::class, 'emailInbox'])->name('email.inbox');
+        Route::get('/email/show/{uid}', [BackCrmController::class, 'emailShow'])->name('email.show');
+        Route::get('/email/compose', [BackCrmController::class, 'emailCompose'])->name('email.compose');
+        Route::post('/email/send', [BackCrmController::class, 'emailSend'])->name('email.send');
+        Route::post('/email/delete', [BackCrmController::class, 'emailDelete'])->name('email.delete');
+        Route::post('/email/sync', [BackCrmController::class, 'emailSync'])->name('email.sync');
     });
 });
