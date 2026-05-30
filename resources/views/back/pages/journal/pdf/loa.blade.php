@@ -90,16 +90,6 @@
                 <td>:</td>
                 <td><strong>{{ $title }}</strong></td>
             </tr>
-            <tr>
-                <td class="detail-label">Journal</td>
-                <td>:</td>
-                <td><strong>{{ $journal }}</strong></td>
-            </tr>
-            <tr>
-                <td class="detail-label">Edition</td>
-                <td>:</td>
-                <td><strong>{{ $edition }}</strong></td>
-            </tr>
         </table>
 
         <p>
