@@ -778,27 +778,40 @@ class CrmController extends Controller
                 ->get();
         }
 
-        return view('back.pages.crm.telegram.chats', compact('bots', 'selectedBot', 'chats'));
+        // Split-panel: load active chat when chat_id is provided
+        $activeChat = null;
+        if ($request->has('chat_id') && $request->chat_id) {
+            $activeChat = TelegramChat::with(['bot', 'messages' => fn($q) => $q->latest()->limit(100)])
+                ->find($request->chat_id);
+        }
+
+        return view('back.pages.crm.telegram.chats', compact('bots', 'selectedBot', 'chats', 'activeChat'));
     }
 
     public function telegramChatShow(Request $request, $id)
     {
-        $chat = TelegramChat::with(['bot', 'messages' => fn($q) => $q->latest()->limit(100)])
-            ->findOrFail($id);
-
-        return view('back.pages.crm.telegram.chat-show', compact('chat'));
+        $chat = TelegramChat::findOrFail($id);
+        // Redirect to split-panel view
+        return redirect()->route('back.crm.telegram.chats', ['bot_id' => $chat->telegram_bot_id, 'chat_id' => $id]);
     }
 
     public function telegramSendMessage(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'chat_id' => 'required',
-            'text' => 'required|string',
+            'text' => 'nullable|string',
             'bot_id' => 'required',
+            'photo' => 'nullable|file|mimes:jpeg,png,gif,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
             Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        // Must have text or photo
+        if (!$request->text && !$request->hasFile('photo')) {
+            Alert::error('Gagal', 'Kirim pesan teks atau gambar.');
             return redirect()->back();
         }
 
@@ -808,31 +821,101 @@ class CrmController extends Controller
             ->firstOrFail();
 
         try {
-            $result = $bot->sendRequest('sendMessage', [
-                'chat_id' => $request->chat_id,
-                'text' => $request->text,
-            ]);
+            if ($request->hasFile('photo')) {
+                // Validate real image
+                $file = $request->file('photo');
+                if (!@getimagesize($file->getRealPath())) {
+                    Alert::error('Gagal', 'File bukan gambar yang valid.');
+                    return redirect()->back();
+                }
 
-            if (isset($result['ok']) && $result['ok']) {
-                TelegramMessage::create([
-                    'telegram_bot_id' => $bot->id,
-                    'telegram_chat_id' => $chat->id,
-                    'message_id' => $result['result']['message_id'] ?? null,
-                    'direction' => 'out',
+                // Send photo via Telegram API
+                $params = ['chat_id' => $request->chat_id];
+                if ($request->text) {
+                    $params['caption'] = $request->text;
+                }
+
+                $result = $bot->sendMultipart('sendPhoto', $params, $file, 'photo');
+
+                if (isset($result['ok']) && $result['ok']) {
+                    TelegramMessage::create([
+                        'telegram_bot_id' => $bot->id,
+                        'telegram_chat_id' => $chat->id,
+                        'message_id' => $result['result']['message_id'] ?? null,
+                        'direction' => 'out',
+                        'text' => $request->text,
+                        'type' => 'photo',
+                        'file_id' => $result['result']['photo'][0]['file_id'] ?? null,
+                        'sent_at' => now(),
+                    ]);
+
+                    Alert::success('Berhasil', 'Gambar berhasil dikirim.');
+                } else {
+                    Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim gambar.');
+                }
+            } else {
+                // Text only
+                $result = $bot->sendRequest('sendMessage', [
+                    'chat_id' => $request->chat_id,
                     'text' => $request->text,
-                    'type' => 'text',
-                    'sent_at' => now(),
                 ]);
 
-                Alert::success('Berhasil', 'Pesan berhasil dikirim.');
-            } else {
-                Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim pesan.');
+                if (isset($result['ok']) && $result['ok']) {
+                    TelegramMessage::create([
+                        'telegram_bot_id' => $bot->id,
+                        'telegram_chat_id' => $chat->id,
+                        'message_id' => $result['result']['message_id'] ?? null,
+                        'direction' => 'out',
+                        'text' => $request->text,
+                        'type' => 'text',
+                        'sent_at' => now(),
+                    ]);
+
+                    Alert::success('Berhasil', 'Pesan berhasil dikirim.');
+                } else {
+                    Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim pesan.');
+                }
             }
         } catch (\Exception $e) {
-            Alert::error('Gagal', 'Gagal mengirim pesan: ' . $e->getMessage());
+            Alert::error('Gagal', 'Gagal mengirim: ' . $e->getMessage());
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * Proxy Telegram file downloads — resolves file_id to actual file and streams it.
+     */
+    public function telegramFileProxy($botId, $fileId)
+    {
+        $bot = TelegramBot::findOrFail($botId);
+
+        // Get file path from Telegram
+        $result = $bot->sendRequest('getFile', ['file_id' => $fileId]);
+
+        if (!isset($result['ok']) || !$result['ok'] || !isset($result['result']['file_path'])) {
+            abort(404, 'File tidak ditemukan di Telegram.');
+        }
+
+        $filePath = $result['result']['file_path'];
+        $fileUrl = 'https://api.telegram.org/file/bot' . $bot->token . '/' . $filePath;
+
+        try {
+            $response = Http::timeout(15)->get($fileUrl);
+
+            if ($response->successful()) {
+                $contentType = $response->header('Content-Type') ?: 'application/octet-stream';
+
+                return response($response->body(), 200, [
+                    'Content-Type' => $contentType,
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
+
+        abort(404, 'Gagal mengambil file.');
     }
 
     // ==========================================
@@ -1347,7 +1430,7 @@ class CrmController extends Controller
         $widgets = \App\Models\WebchatWidget::all();
         $selectedWidget = null;
 
-        $query = \App\Models\WebchatConversation::with('widget')
+        $query = \App\Models\WebchatConversation::with(['widget', 'messages' => fn($q) => $q->latest()->limit(1)])
             ->withCount(['messages as unread_count' => function ($q) {
                 $q->where('sender', 'visitor')->where('is_read', false);
             }]);
@@ -1359,22 +1442,28 @@ class CrmController extends Controller
             }
         }
 
-        $conversations = $query->orderBy('last_message_at', 'desc')->paginate(20);
+        $conversations = $query->orderBy('last_message_at', 'desc')->paginate(50);
 
-        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget'));
+        // Split-panel: load active conversation when chat_id is provided
+        $activeConversation = null;
+        if ($request->has('chat_id') && $request->chat_id) {
+            $activeConversation = \App\Models\WebchatConversation::with(['messagesAsc', 'widget'])->find($request->chat_id);
+            if ($activeConversation) {
+                // Mark visitor messages as read
+                $activeConversation->messages()
+                    ->where('sender', 'visitor')
+                    ->where('is_read', false)
+                    ->update(['is_read' => true]);
+            }
+        }
+
+        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget', 'activeConversation'));
     }
 
     public function webchatShow($id)
     {
-        $conversation = \App\Models\WebchatConversation::with(['messagesAsc', 'widget'])->findOrFail($id);
-
-        // Mark all visitor messages as read
-        $conversation->messages()
-            ->where('sender', 'visitor')
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
-
-        return view('back.pages.crm.webchat.show', compact('conversation'));
+        // Redirect to split-panel view
+        return redirect()->route('back.crm.webchat.index', ['chat_id' => $id]);
     }
 
     public function webchatReply(Request $request, $id)

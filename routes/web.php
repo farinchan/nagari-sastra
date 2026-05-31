@@ -427,6 +427,7 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/telegram/chats', [BackCrmController::class, 'telegramChats'])->name('telegram.chats');
         Route::get('/telegram/chats/{id}', [BackCrmController::class, 'telegramChatShow'])->name('telegram.chats.show');
         Route::post('/telegram/send-message', [BackCrmController::class, 'telegramSendMessage'])->name('telegram.send-message');
+        Route::get('/telegram/file/{botId}/{fileId}', [BackCrmController::class, 'telegramFileProxy'])->name('telegram.file-proxy');
 
         // Webchat
         Route::get('/webchat', [BackCrmController::class, 'webchatIndex'])->name('webchat.index');

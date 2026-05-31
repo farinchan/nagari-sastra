@@ -44,4 +44,31 @@ class TelegramBot extends Model
             return ['ok' => false, 'description' => $e->getMessage()];
         }
     }
+
+    /**
+     * Send a multipart request (for file uploads like sendPhoto, sendDocument).
+     */
+    public function sendMultipart($method, $params = [], $file = null, $fileField = 'photo')
+    {
+        try {
+            $request = Http::asMultipart();
+
+            foreach ($params as $key => $value) {
+                $request = $request->attach($key, $value);
+            }
+
+            if ($file) {
+                $request = $request->attach(
+                    $fileField,
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                );
+            }
+
+            $response = $request->post($this->getApiUrl() . '/' . $method);
+            return $response->json();
+        } catch (\Exception $e) {
+            return ['ok' => false, 'description' => $e->getMessage()];
+        }
+    }
 }
