@@ -186,6 +186,7 @@ var pv=document.getElementById('_wc_pv');
 var pvimg=document.getElementById('_wc_pvimg');
 var pvx=document.getElementById('_wc_pvx');
 var selFile=null;
+var _wcAudio=(function(){try{var a=new Audio(API.replace('/api/webchat','/back/audio/notification.wav'));a.volume=0.6;return a;}catch(e){return null;}}());
 
 fab.addEventListener('click',function(){
   opn=!opn;
@@ -285,9 +286,11 @@ function poll(){
     rq(API+'/fetch',{session_id:sid,token:TK,last_id:lid})
     .then(function(d){
       if(d.success&&d.messages.length>0){
+        var hasNew=false;
         d.messages.forEach(function(m){
-          if(m.id>lid){aMsg(m);lid=m.id;if(m.sender==='admin'&&!opn){ur++;uBdg();}}
+          if(m.id>lid){aMsg(m);lid=m.id;if(m.sender==='admin'){hasNew=true;if(!opn){ur++;uBdg();}}}
         });sB();
+        if(hasNew&&_wcAudio){try{_wcAudio.currentTime=0;_wcAudio.play().catch(function(){});}catch(e){}}
       }
     });
   },4000);
