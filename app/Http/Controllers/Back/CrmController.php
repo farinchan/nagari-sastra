@@ -1326,4 +1326,241 @@ class CrmController extends Controller
         Alert::success('Berhasil', 'Campaign berhasil dihapus.');
         return redirect()->back();
     }
+
+    // ==========================================
+    // WEBCHAT MANAGEMENT
+    // ==========================================
+
+    public function webchatIndex(Request $request)
+    {
+        $widgets = \App\Models\WebchatWidget::all();
+        $selectedWidget = null;
+
+        $query = \App\Models\WebchatConversation::with('widget')
+            ->withCount(['messages as unread_count' => function ($q) {
+                $q->where('sender', 'visitor')->where('is_read', false);
+            }]);
+
+        if ($request->has('widget_id') && $request->widget_id) {
+            $selectedWidget = \App\Models\WebchatWidget::find($request->widget_id);
+            if ($selectedWidget) {
+                $query->where('webchat_widget_id', $selectedWidget->id);
+            }
+        }
+
+        $conversations = $query->orderBy('last_message_at', 'desc')->paginate(20);
+
+        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget'));
+    }
+
+    public function webchatShow($id)
+    {
+        $conversation = \App\Models\WebchatConversation::with(['messagesAsc', 'widget'])->findOrFail($id);
+
+        // Mark all visitor messages as read
+        $conversation->messages()
+            ->where('sender', 'visitor')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return view('back.pages.crm.webchat.show', compact('conversation'));
+    }
+
+    public function webchatReply(Request $request, $id)
+    {
+        $request->validate([
+            'message' => 'required|string|max:2000',
+        ]);
+
+        $conversation = \App\Models\WebchatConversation::findOrFail($id);
+
+        \App\Models\WebchatMessage::create([
+            'webchat_conversation_id' => $conversation->id,
+            'sender' => 'admin',
+            'admin_user_id' => Auth::id(),
+            'message' => $request->message,
+            'is_read' => false,
+        ]);
+
+        $conversation->update([
+            'last_message_at' => now(),
+            'status' => 'active',
+        ]);
+
+        Alert::success('Berhasil', 'Pesan berhasil dikirim.');
+        return redirect()->back();
+    }
+
+    public function webchatClose($id)
+    {
+        $conversation = \App\Models\WebchatConversation::findOrFail($id);
+        $conversation->update(['status' => 'closed']);
+
+        Alert::success('Berhasil', 'Percakapan telah ditutup.');
+        return redirect()->route('back.crm.webchat.index');
+    }
+
+    public function webchatDestroy($id)
+    {
+        $conversation = \App\Models\WebchatConversation::findOrFail($id);
+        $conversation->delete();
+
+        Alert::success('Berhasil', 'Percakapan berhasil dihapus.');
+        return redirect()->route('back.crm.webchat.index');
+    }
+
+    public function webchatFetchNew(Request $request, $id)
+    {
+        $conversation = \App\Models\WebchatConversation::findOrFail($id);
+
+        $lastId = $request->input('last_id', 0);
+        $messages = $conversation->messagesAsc()
+            ->where('id', '>', $lastId)
+            ->get()
+            ->map(function ($msg) {
+                return [
+                    'id' => $msg->id,
+                    'sender' => $msg->sender,
+                    'message' => $msg->message,
+                    'image' => $msg->image ? asset('storage/' . $msg->image) : null,
+                    'time' => $msg->created_at->format('H:i'),
+                    'date' => $msg->created_at->format('d M Y'),
+                    'admin_name' => $msg->adminUser ? $msg->adminUser->name : null,
+                ];
+            });
+
+        // Mark visitor messages as read
+        $conversation->messages()
+            ->where('sender', 'visitor')
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'success' => true,
+            'messages' => $messages,
+        ]);
+    }
+
+    public function webchatReplyAjax(Request $request, $id)
+    {
+        $request->validate([
+            'message' => 'nullable|string|max:2000',
+            'image' => 'nullable|image|mimes:jpeg,png,gif,webp|max:5120',
+        ]);
+
+        $conversation = \App\Models\WebchatConversation::findOrFail($id);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+
+            // Verify real MIME type from content
+            $realMime = $file->getMimeType();
+            $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!in_array($realMime, $allowed)) {
+                return response()->json(['success' => false, 'error' => 'Invalid image type'], 422);
+            }
+
+            // Verify it's a real image
+            if (@getimagesize($file->getPathname()) === false) {
+                return response()->json(['success' => false, 'error' => 'Corrupted image file'], 422);
+            }
+
+            // Random filename
+            $ext = $file->guessExtension() ?: 'jpg';
+            $filename = bin2hex(random_bytes(16)) . '.' . $ext;
+            $imagePath = $file->storeAs('webchat', $filename, 'public');
+        }
+
+        $message = \App\Models\WebchatMessage::create([
+            'webchat_conversation_id' => $conversation->id,
+            'sender' => 'admin',
+            'admin_user_id' => Auth::id(),
+            'message' => $request->input('message', ''),
+            'image' => $imagePath,
+            'is_read' => false,
+        ]);
+
+        $conversation->update([
+            'last_message_at' => now(),
+            'status' => 'active',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => [
+                'id' => $message->id,
+                'sender' => $message->sender,
+                'message' => $message->message,
+                'image' => $message->image ? asset('storage/' . $message->image) : null,
+                'time' => $message->created_at->format('H:i'),
+                'date' => $message->created_at->format('d M Y'),
+                'admin_name' => Auth::user()->name,
+            ],
+        ]);
+    }
+
+    // ==========================================
+    // WEBCHAT WIDGET CRUD
+    // ==========================================
+
+    public function webchatWidgetIndex()
+    {
+        $widgets = \App\Models\WebchatWidget::withCount('conversations')->orderBy('created_at', 'desc')->get();
+        return view('back.pages.crm.webchat.widgets', compact('widgets'));
+    }
+
+    public function webchatWidgetStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'header_title' => 'required|string|max:255',
+            'header_subtitle' => 'nullable|string|max:255',
+            'greeting_message' => 'nullable|string|max:1000',
+            'primary_color' => 'nullable|string|max:20',
+            'secondary_color' => 'nullable|string|max:20',
+            'allowed_domains' => 'nullable|string|max:1000',
+        ]);
+
+        \App\Models\WebchatWidget::create($request->only([
+            'name', 'header_title', 'header_subtitle', 'greeting_message',
+            'primary_color', 'secondary_color', 'allowed_domains',
+        ]));
+
+        Alert::success('Berhasil', 'Widget webchat berhasil dibuat.');
+        return redirect()->back();
+    }
+
+    public function webchatWidgetUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'header_title' => 'required|string|max:255',
+            'header_subtitle' => 'nullable|string|max:255',
+            'greeting_message' => 'nullable|string|max:1000',
+            'primary_color' => 'nullable|string|max:20',
+            'secondary_color' => 'nullable|string|max:20',
+            'allowed_domains' => 'nullable|string|max:1000',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $widget = \App\Models\WebchatWidget::findOrFail($id);
+        $widget->update($request->only([
+            'name', 'header_title', 'header_subtitle', 'greeting_message',
+            'primary_color', 'secondary_color', 'allowed_domains', 'is_active',
+        ]));
+
+        Alert::success('Berhasil', 'Widget webchat berhasil diperbarui.');
+        return redirect()->back();
+    }
+
+    public function webchatWidgetDestroy($id)
+    {
+        $widget = \App\Models\WebchatWidget::findOrFail($id);
+        $widget->delete();
+
+        Alert::success('Berhasil', 'Widget webchat berhasil dihapus.');
+        return redirect()->back();
+    }
 }
+

@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
+class WebchatWidget extends Model
+{
+    protected $fillable = [
+        'token',
+        'name',
+        'allowed_domains',
+        'primary_color',
+        'secondary_color',
+        'greeting_message',
+        'header_title',
+        'header_subtitle',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    protected static function booted()
+    {
+        static::creating(function ($widget) {
+            if (empty($widget->token)) {
+                $widget->token = 'wgt_' . Str::random(24);
+            }
+            if (is_null($widget->greeting_message)) {
+                $widget->greeting_message = 'Halo! 👋 Selamat datang. Ada yang bisa kami bantu?';
+            }
+        });
+    }
+
+    public function conversations()
+    {
+        return $this->hasMany(WebchatConversation::class);
+    }
+
+    public function getAllowedDomainsArrayAttribute()
+    {
+        if (!$this->allowed_domains) return [];
+        return array_map('trim', explode(',', $this->allowed_domains));
+    }
+}

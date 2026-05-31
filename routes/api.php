@@ -47,5 +47,14 @@ Route::prefix('whatsapp-api')->name('api.whatsapp.')->group(function () {
     Route::post('/send-image', [App\Http\Controllers\Api\WhatsappController::class, 'sendImage'])->name('send-image');
 });
 
+// Webchat Widget API (public, no auth)
+Route::prefix('webchat')->name('webchat.')->group(function () {
+    Route::get('/embed.js', [App\Http\Controllers\Api\WebchatController::class, 'embedScript'])->name('embed');
+    Route::post('/start', [App\Http\Controllers\Api\WebchatController::class, 'startConversation'])->name('start')->middleware('throttle:30,1');
+    Route::post('/send', [App\Http\Controllers\Api\WebchatController::class, 'sendMessage'])->name('send')->middleware('throttle:30,1');
+    Route::post('/upload', [App\Http\Controllers\Api\WebchatController::class, 'uploadImage'])->name('upload')->middleware('throttle:10,1');
+    Route::post('/fetch', [App\Http\Controllers\Api\WebchatController::class, 'fetchMessages'])->name('fetch')->middleware('throttle:60,1');
+});
+
 // Telegram Webhook (public, no auth)
 Route::post('/telegram/webhook/{id}', [App\Http\Controllers\Back\CrmController::class, 'telegramWebhook'])->name('telegram.webhook');

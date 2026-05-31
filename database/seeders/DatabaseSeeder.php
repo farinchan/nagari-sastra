@@ -20,28 +20,29 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-       Role::create(['name' => 'super-admin']);
+        Role::create(['name' => 'super-admin']);
         Role::create(['name' => 'keuangan']);
         Role::create(['name' => 'editor']);
         Role::create(['name' => 'humas']);
+        Role::create(['name' => 'marketing']);
 
-       User::create([
+        User::create([
             'name' => 'Fajri - Developer',
             'email' => 'fajri@gariskode.com',
             'password' => bcrypt('password'),
         ])->assignRole('super-admin');
 
-            SettingWebsite::create([
-                'name' => 'Nagari Sastra - Publication, research, and Education',
-                'logo' => 'logo.png',
-                'favicon' => 'favicon.png',
-                'email' => 'info@nagarisastra.org',
-                'phone' => '089613390766',
-                'address' => 'West Sumatra - Indonesia.',
-                'latitude' => '-0.32177371869479526',
-                'longitude' => '100.39795359131934',
-                'about' => '<p><strong>Nagari Sastra - Publication, research, and Education</strong> adalah portal publikasi Independen yang berfokus pada penyebaran penelitian ilmiah, artikel akademik, dan sumber daya pendidikan. Kami berkomitmen untuk menyediakan platform yang mendukung pengembangan ilmu pengetahuan dan pendidikan di Indonesia.</p><p>Portal ini bertujuan untuk menjadi sumber terpercaya bagi para peneliti, akademisi, dan pelajar dalam mencari informasi ilmiah yang berkualitas. Dengan berbagai fitur unggulan, kami berharap dapat memberikan kontribusi positif bagi komunitas akademik dan masyarakat luas.</p>',
-            ]);
+        SettingWebsite::create([
+            'name' => 'Nagari Sastra - Publication, research, and Education',
+            'logo' => 'logo.png',
+            'favicon' => 'favicon.png',
+            'email' => 'info@nagarisastra.org',
+            'phone' => '089613390766',
+            'address' => 'West Sumatra - Indonesia.',
+            'latitude' => '-0.32177371869479526',
+            'longitude' => '100.39795359131934',
+            'about' => '<p><strong>Nagari Sastra - Publication, research, and Education</strong> adalah portal publikasi Independen yang berfokus pada penyebaran penelitian ilmiah, artikel akademik, dan sumber daya pendidikan. Kami berkomitmen untuk menyediakan platform yang mendukung pengembangan ilmu pengetahuan dan pendidikan di Indonesia.</p><p>Portal ini bertujuan untuk menjadi sumber terpercaya bagi para peneliti, akademisi, dan pelajar dalam mencari informasi ilmiah yang berkualitas. Dengan berbagai fitur unggulan, kami berharap dapat memberikan kontribusi positif bagi komunitas akademik dan masyarakat luas.</p>',
+        ]);
 
         SettingBanner::create([
             'title' => 'Nagari Sastra - Publication, research, and Education',
@@ -61,8 +62,6 @@ class DatabaseSeeder extends Seeder
             'slug' => 'opini',
             'description' => 'Kategori opini adalah kategori yang berisi artikel atau tulisan yang berisi pandangan, pendapat, atau analisis dari penulis mengenai suatu topik atau isu tertentu.',
         ]);
-
-
 
         News::create([
             'title' => 'Peluncuran Program Penelitian Baru di Nagari Sastra',
@@ -89,7 +88,6 @@ class DatabaseSeeder extends Seeder
             'meta_description' => 'Workshop penulisan artikel ilmiah untuk pemula diadakan oleh Nagari Sastra.',
             'meta_keywords' => 'workshop, artikel ilmiah, penulisan, nagari sastra',
         ]);
-
 
     }
 }

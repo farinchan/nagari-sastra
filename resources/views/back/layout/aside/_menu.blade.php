@@ -402,6 +402,30 @@
                     </div>
                 </div>
             </div>
+
+            <div data-kt-menu-trigger="click" class="menu-item menu-accordion @if(request()->routeIs('back.crm.webchat.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-message-programming fs-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
+                    </span>
+                    <span class="menu-title">Webchat</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.webchat.index') || request()->routeIs('back.crm.webchat.show')) active @endif" href="{{ route('back.crm.webchat.index') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Percakapan</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.webchat.widgets')) active @endif" href="{{ route('back.crm.webchat.widgets') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Kelola Widget</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         @endrole
 
         @role('super-admin')

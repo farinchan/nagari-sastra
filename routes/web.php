@@ -427,6 +427,19 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/telegram/chats', [BackCrmController::class, 'telegramChats'])->name('telegram.chats');
         Route::get('/telegram/chats/{id}', [BackCrmController::class, 'telegramChatShow'])->name('telegram.chats.show');
         Route::post('/telegram/send-message', [BackCrmController::class, 'telegramSendMessage'])->name('telegram.send-message');
+
+        // Webchat
+        Route::get('/webchat', [BackCrmController::class, 'webchatIndex'])->name('webchat.index');
+        Route::get('/webchat/widgets', [BackCrmController::class, 'webchatWidgetIndex'])->name('webchat.widgets');
+        Route::post('/webchat/widgets/store', [BackCrmController::class, 'webchatWidgetStore'])->name('webchat.widgets.store');
+        Route::put('/webchat/widgets/{id}/update', [BackCrmController::class, 'webchatWidgetUpdate'])->name('webchat.widgets.update');
+        Route::delete('/webchat/widgets/{id}/destroy', [BackCrmController::class, 'webchatWidgetDestroy'])->name('webchat.widgets.destroy');
+        Route::get('/webchat/{id}', [BackCrmController::class, 'webchatShow'])->name('webchat.show');
+        Route::post('/webchat/{id}/reply', [BackCrmController::class, 'webchatReply'])->name('webchat.reply');
+        Route::post('/webchat/{id}/close', [BackCrmController::class, 'webchatClose'])->name('webchat.close');
+        Route::delete('/webchat/{id}/destroy', [BackCrmController::class, 'webchatDestroy'])->name('webchat.destroy');
+        Route::get('/webchat/{id}/fetch', [BackCrmController::class, 'webchatFetchNew'])->name('webchat.fetch');
+        Route::post('/webchat/{id}/reply-ajax', [BackCrmController::class, 'webchatReplyAjax'])->name('webchat.reply-ajax');
     });
 });
 
