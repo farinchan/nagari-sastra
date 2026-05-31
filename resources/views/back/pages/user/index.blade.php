@@ -107,18 +107,26 @@
                                         </div>
                                     </td>
                                     <td class="d-flex align-items-center">
-                                        <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
+                                        <div class="symbol symbol-circle symbol-50px overflow-hidden me-3 position-relative">
                                             <a href="#">
                                                 <div class="symbol-label">
                                                     <img src="{{ $user->getPhoto() }}" alt="{{ $user->name }}"
                                                         width="50px" />
                                                 </div>
                                             </a>
+                                            @if($user->isOnline())
+                                                <span class="position-absolute bottom-0 end-0 rounded-circle bg-success border border-2 border-white" style="width: 12px; height: 12px;" title="Online"></span>
+                                            @else
+                                                <span class="position-absolute bottom-0 end-0 rounded-circle bg-secondary border border-2 border-white" style="width: 12px; height: 12px;" title="{{ $user->lastSeenFormatted() }}"></span>
+                                            @endif
                                         </div>
                                         <div class="d-flex flex-column">
                                             <a href="#"
                                                 class="text-gray-800 text-hover-primary mb-1">{{ $user->name }}</a>
                                             <span>{{ $user->email ?? '-' }}</span>
+                                            <span class="fs-9 {{ $user->isOnline() ? 'text-success' : 'text-muted' }}">
+                                                {{ $user->lastSeenFormatted() }}
+                                            </span>
                                         </div>
                                     </td>
                                     <td>

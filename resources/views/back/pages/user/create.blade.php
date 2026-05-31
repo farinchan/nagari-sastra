@@ -88,9 +88,16 @@
                             </div>
                             <div class="form-check mt-3">
                                 <input class="form-check-input" type="checkbox" name="role_humas" value="1"
-                                    @if (old('role_humas') == 1) checked @endif id="flexCheckAgen" />
-                                <label class="form-check-label" for="flexCheckAgen">
+                                    @if (old('role_humas') == 1) checked @endif id="flexCheckHumas" />
+                                <label class="form-check-label" for="flexCheckHumas">
                                     Humas
+                                </label>
+                            </div>
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" name="role_marketing" value="1"
+                                    @if (old('role_marketing') == 1) checked @endif id="flexCheckMarketing" />
+                                <label class="form-check-label" for="flexCheckMarketing">
+                                    Marketing
                                 </label>
                             </div>
 

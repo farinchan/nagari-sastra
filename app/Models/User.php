@@ -29,6 +29,7 @@ class User extends Authenticatable
         'phone',
         'email',
         'password',
+        'last_seen_at',
     ];
 
     /**
@@ -51,7 +52,32 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_seen_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Check if user is currently online (active within last 5 minutes).
+     */
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at && $this->last_seen_at->greaterThan(now()->subMinutes(5));
+    }
+
+    /**
+     * Get formatted last seen text.
+     */
+    public function lastSeenFormatted(): string
+    {
+        if (!$this->last_seen_at) {
+            return 'Belum pernah login';
+        }
+
+        if ($this->isOnline()) {
+            return 'Online';
+        }
+
+        return $this->last_seen_at->diffForHumans();
     }
 
     public function events()

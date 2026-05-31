@@ -120,6 +120,9 @@ class UserController extends Controller
         if ($request->role_humas) {
             $user->assignRole('humas');
         }
+        if ($request->role_marketing) {
+            $user->assignRole('marketing');
+        }
 
         if ($request->permissions) {
             foreach ($request->permissions as $permission) {
@@ -135,8 +138,20 @@ class UserController extends Controller
     {
         $data = [
             'title' => 'Edit Pengguna',
-            'menu' => 'Pengguna',
-            'sub_menu' => '',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard')
+                ],
+                [
+                    'name' => 'Pengguna',
+                    'link' => route('back.master.user.index')
+                ],
+                [
+                    'name' => 'Edit Pengguna',
+                    'link' => route('back.master.user.edit', $id)
+                ]
+            ],
             'user' => User::find($id)
         ];
 
@@ -218,6 +233,11 @@ class UserController extends Controller
             $user->assignRole('humas');
         } else {
             $user->removeRole('humas');
+        }
+        if ($request->role_marketing) {
+            $user->assignRole('marketing');
+        } else {
+            $user->removeRole('marketing');
         }
 
         $user->permissions()->detach();
