@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Config;
 use Webklex\IMAP\Facades\Client as ImapClient;
 use Carbon\Carbon;
+use App\Events\NewCrmMessage;
 
 class CrmController extends Controller
 {
@@ -930,6 +931,16 @@ class CrmController extends Controller
             'reply_to_message_id' => $message['reply_to_message']['message_id'] ?? null,
             'sent_at' => isset($message['date']) ? Carbon::createFromTimestamp($message['date']) : now(),
         ]);
+
+        // Broadcast notification to admins
+        $senderName = trim(($chatData['first_name'] ?? '') . ' ' . ($chatData['last_name'] ?? '')) ?: ($chatData['username'] ?? 'Telegram User');
+        $msgPreview = $text ?: '[' . ucfirst($type) . ']';
+        event(new NewCrmMessage(
+            'telegram',
+            $senderName,
+            $msgPreview,
+            route('back.crm.telegram.chat.show', ['bot_id' => $bot->id, 'chat_id' => $chat->id])
+        ));
 
         // Handle /start command
         if (isset($message['text']) && $message['text'] === '/start' && $bot->welcome_message) {

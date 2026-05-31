@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\WebchatWidget;
 use App\Models\WebchatConversation;
 use App\Models\WebchatMessage;
-use App\Models\WebchatWidget;
+use App\Events\NewCrmMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -418,6 +419,15 @@ JSWIDGET;
             'status' => 'active',
         ]);
 
+        // Broadcast notification to admins
+        $visitorName = $conversation->visitor_name ?: 'Visitor';
+        event(new NewCrmMessage(
+            'webchat',
+            $visitorName,
+            $request->input('message', '') ?: 'Mengirim pesan',
+            route('back.crm.webchat.show', $conversation->id)
+        ));
+
         return response()->json([
             'success' => true,
             'message' => [
@@ -522,6 +532,15 @@ JSWIDGET;
             'last_message_at' => now(),
             'status' => 'active',
         ]);
+
+        // Broadcast notification to admins
+        $visitorName = $conversation->visitor_name ?: 'Visitor';
+        event(new NewCrmMessage(
+            'webchat',
+            $visitorName,
+            $request->input('message', '') ?: '📷 Mengirim gambar',
+            route('back.crm.webchat.show', $conversation->id)
+        ));
 
         return response()->json([
             'success' => true,

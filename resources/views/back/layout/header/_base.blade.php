@@ -38,6 +38,35 @@
                 <div class="d-flex align-items-center">
                     @include('back/partials/theme-mode/_main')
                 </div>
+
+                {{-- Notification Bell --}}
+                @if(auth()->check() && (auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('marketing')))
+                <div class="d-flex align-items-center ms-1">
+                    <div class="position-relative">
+                        <button type="button" class="btn btn-sm btn-icon btn-icon-muted btn-active-icon-primary" id="crmNotifBtn"
+                            data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" data-kt-menu-overflow="true">
+                            <i class="ki-duotone ki-notification-bing fs-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge badge-circle badge-sm bg-danger d-none" id="crmNotifBadge">0</span>
+                        </button>
+                        <div class="menu menu-sub menu-sub-dropdown menu-column w-350px" data-kt-menu="true" id="crmNotifMenu">
+                            <div class="d-flex flex-column bgi-no-repeat rounded-top" style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 16px;">
+                                <h4 class="text-white fw-semibold mb-1 fs-6">Notifikasi CRM</h4>
+                                <span class="text-white text-opacity-75 fs-8" id="crmNotifCount">Tidak ada notifikasi baru</span>
+                            </div>
+                            <div id="crmNotifList" style="max-height: 320px; overflow-y: auto;">
+                                <div class="text-center text-muted py-8 fs-7" id="crmNotifEmpty">
+                                    <i class="ki-duotone ki-notification-bing fs-2x text-gray-300 d-block mb-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                                    Belum ada notifikasi
+                                </div>
+                            </div>
+                            <div class="border-top text-center py-3">
+                                <a href="{{ route('back.crm.webchat.index') }}" class="text-primary fs-8 fw-semibold">Lihat Semua Pesan</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="d-flex align-items-center">
                     <div class="d-flex align-items-center ps-5">
                         <div class="d-flex">

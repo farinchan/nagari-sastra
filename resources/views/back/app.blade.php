@@ -118,6 +118,213 @@
 
     @yield('scripts')
     <!--end::Custom Javascript-->
+
+    {{-- CRM Real-time Notifications (Reverb + Echo) --}}
+    @if(auth()->check() && (auth()->user()->hasRole('super-admin') || auth()->user()->hasRole('marketing')))
+    <style>
+        #crmToastBox{position:fixed;bottom:24px;right:24px;z-index:999999;display:flex;flex-direction:column-reverse;gap:10px;pointer-events:none;max-width:380px;width:100%}
+        .crm-toast{pointer-events:auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15),0 0 0 1px rgba(0,0,0,.04);padding:0;overflow:hidden;animation:crmToastIn .4s cubic-bezier(.22,1,.36,1);cursor:pointer;transition:opacity .3s,transform .3s}
+        .crm-toast.out{opacity:0;transform:translateX(120%)}
+        .crm-toast-bar{height:3px;width:100%;animation:crmBar 8s linear forwards}
+        .crm-toast-body{display:flex;align-items:flex-start;gap:12px;padding:14px 16px}
+        .crm-toast-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .crm-toast-icon.tg{background:rgba(6,182,212,.12)}
+        .crm-toast-icon.wc{background:rgba(99,102,241,.12)}
+        .crm-toast-content{flex:1;overflow:hidden;min-width:0}
+        .crm-toast-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+        .crm-toast-name{font-weight:600;font-size:13px;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .crm-toast-label{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;flex-shrink:0;margin-left:8px}
+        .crm-toast-label.tg{background:rgba(6,182,212,.12);color:#0891b2}
+        .crm-toast-label.wc{background:rgba(99,102,241,.12);color:#6366f1}
+        .crm-toast-msg{font-size:12.5px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+        .crm-toast-time{font-size:11px;color:#9ca3af;margin-top:2px}
+        .crm-toast-close{position:absolute;top:8px;right:10px;background:none;border:none;cursor:pointer;padding:2px;opacity:.35;transition:opacity .15s;font-size:16px;line-height:1;color:#6b7280}
+        .crm-toast-close:hover{opacity:.8}
+        @keyframes crmToastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+        @keyframes crmBar{from{width:100%}to{width:0}}
+        @media(max-width:480px){#crmToastBox{right:12px;left:12px;max-width:100%}}
+    </style>
+    <div id="crmToastBox"></div>
+    <audio id="crmNotifAudio" preload="auto" src="{{ asset('back/audio/notification.wav') }}"></audio>
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.4.0/dist/web/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.16.1/dist/echo.iife.js"></script>
+    <script>
+    (function(){
+        var notifCount = 0;
+        var maxItems = 20;
+        var badge = document.getElementById('crmNotifBadge');
+        var list = document.getElementById('crmNotifList');
+        var empty = document.getElementById('crmNotifEmpty');
+        var countEl = document.getElementById('crmNotifCount');
+        var audio = document.getElementById('crmNotifAudio');
+        var toastBox = document.getElementById('crmToastBox');
+
+        // Initialize Echo with Reverb
+        window.Echo = new Echo({
+            broadcaster: 'reverb',
+            key: '{{ config("reverb.apps.apps.0.key", env("REVERB_APP_KEY")) }}',
+            wsHost: '{{ config("reverb.servers.reverb.host", env("REVERB_HOST", "localhost")) }}',
+            wsPort: '{{ config("reverb.servers.reverb.port", env("REVERB_PORT", 8080)) }}',
+            wssPort: '{{ config("reverb.servers.reverb.port", env("REVERB_PORT", 8080)) }}',
+            forceTLS: {{ config("reverb.servers.reverb.options.tls.local_cert") ? 'true' : 'false' }},
+            enabledTransports: ['ws', 'wss'],
+            authEndpoint: '/broadcasting/auth',
+            auth: {
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            }
+        });
+
+        function updateBadge() {
+            if (notifCount > 0) {
+                badge.textContent = notifCount > 9 ? '9+' : notifCount;
+                badge.classList.remove('d-none');
+                countEl.textContent = notifCount + ' notifikasi baru';
+            } else {
+                badge.classList.add('d-none');
+                countEl.textContent = 'Tidak ada notifikasi baru';
+            }
+        }
+
+        // ---- Floating toast ----
+        function showToast(data) {
+            var isTg = data.source === 'telegram';
+            var label = isTg ? 'Telegram' : 'Webchat';
+            var cls = isTg ? 'tg' : 'wc';
+            var barColor = isTg ? '#06b6d4' : '#6366f1';
+
+            var iconSvg = isTg
+                ? '<i class="ki-duotone ki-send fs-2" style="color:#0891b2"><span class="path1"></span><span class="path2"></span></i>'
+                : '<i class="ki-duotone ki-message-programming fs-2" style="color:#6366f1"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>';
+
+            var toast = document.createElement('div');
+            toast.className = 'crm-toast';
+            toast.innerHTML =
+                '<div class="crm-toast-bar" style="background:' + barColor + '"></div>' +
+                '<button type="button" class="crm-toast-close">&times;</button>' +
+                '<div class="crm-toast-body">' +
+                    '<div class="crm-toast-icon ' + cls + '">' + iconSvg + '</div>' +
+                    '<div class="crm-toast-content">' +
+                        '<div class="crm-toast-head">' +
+                            '<span class="crm-toast-name">' + _esc(data.senderName) + '</span>' +
+                            '<span class="crm-toast-label ' + cls + '">' + label + '</span>' +
+                        '</div>' +
+                        '<div class="crm-toast-msg">' + _esc(data.message) + '</div>' +
+                        '<div class="crm-toast-time">' + data.time + ' · Baru saja</div>' +
+                    '</div>' +
+                '</div>';
+
+            function dismiss() {
+                toast.classList.add('out');
+                setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 350);
+            }
+
+            toast.querySelector('.crm-toast-close').addEventListener('click', function(e) {
+                e.stopPropagation();
+                dismiss();
+            });
+
+            toast.addEventListener('click', function() {
+                window.location.href = data.url;
+            });
+
+            toastBox.appendChild(toast);
+
+            // Keep max 4 toasts
+            while (toastBox.children.length > 4) {
+                toastBox.removeChild(toastBox.firstChild);
+            }
+
+            // Auto dismiss after 8s
+            setTimeout(dismiss, 8000);
+        }
+
+        // ---- Dropdown list ----
+        function addNotif(data) {
+            if (empty) empty.style.display = 'none';
+
+            var icon = data.source === 'telegram'
+                ? '<i class="ki-duotone ki-send fs-2 text-info"><span class="path1"></span><span class="path2"></span></i>'
+                : '<i class="ki-duotone ki-message-programming fs-2 text-primary"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>';
+
+            var label = data.source === 'telegram' ? 'Telegram' : 'Webchat';
+
+            var item = document.createElement('a');
+            item.href = data.url;
+            item.className = 'd-flex align-items-start gap-3 px-4 py-3 border-bottom border-gray-100 text-decoration-none bg-hover-light-primary';
+            item.innerHTML =
+                '<div class="symbol symbol-35px mt-1">' +
+                    '<div class="symbol-label bg-light-' + (data.source === 'telegram' ? 'info' : 'primary') + '">' + icon + '</div>' +
+                '</div>' +
+                '<div class="flex-grow-1 overflow-hidden">' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                        '<span class="fw-semibold text-gray-800 fs-7 text-truncate">' + _esc(data.senderName) + '</span>' +
+                        '<span class="badge badge-light-' + (data.source === 'telegram' ? 'info' : 'primary') + ' fs-9">' + label + '</span>' +
+                    '</div>' +
+                    '<div class="text-muted fs-8 text-truncate mt-1">' + _esc(data.message) + '</div>' +
+                    '<div class="text-gray-400 fs-9 mt-1">' + data.time + '</div>' +
+                '</div>';
+
+            item.addEventListener('click', function() {
+                notifCount = Math.max(0, notifCount - 1);
+                updateBadge();
+            });
+
+            list.insertBefore(item, list.firstChild);
+
+            while (list.children.length > maxItems + 1) {
+                list.removeChild(list.lastChild);
+            }
+
+            notifCount++;
+            updateBadge();
+
+            // Floating toast
+            showToast(data);
+
+            // Play audio
+            try {
+                audio.currentTime = 0;
+                audio.play().catch(function(){});
+            } catch(e) {}
+
+            // Browser notification
+            if (Notification.permission === 'granted') {
+                new Notification(label + ': ' + data.senderName, { body: data.message, icon: '{{ Storage::url("setting/logo.png") }}' });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+        }
+
+        function _esc(s) {
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        // Listen on private channel
+        window.Echo.private('crm.notifications')
+            .listen('.new.message', function(data) {
+                addNotif(data);
+            });
+
+        // Request browser notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Reset badge when dropdown opened
+        var btn = document.getElementById('crmNotifBtn');
+        if (btn) {
+            btn.addEventListener('click', function() {
+                setTimeout(function() { notifCount = 0; updateBadge(); }, 3000);
+            });
+        }
+    })();
+    </script>
+    @endif
+
     <!--end::Javascript-->
 </body>
 <!--end::Body-->
