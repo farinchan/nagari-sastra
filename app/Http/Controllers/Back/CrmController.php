@@ -12,6 +12,9 @@ use App\Models\EmailMessage;
 use App\Models\TelegramBot;
 use App\Models\TelegramChat;
 use App\Models\TelegramMessage;
+use App\Models\WhatsappAccount;
+use App\Models\WhatsappChat;
+use App\Models\WhatsappMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
@@ -1348,6 +1351,455 @@ class CrmController extends Controller
 
         Alert::success('Berhasil', 'Campaign berhasil dihapus.');
         return redirect()->back();
+    }
+
+    // ==========================================
+    // WHATSAPP OFFICIAL (META CLOUD API)
+    // ==========================================
+
+    public function waAccountIndex()
+    {
+        $accounts = WhatsappAccount::orderBy('created_at', 'desc')->get();
+        return view('back.pages.crm.whatsapp.accounts', compact('accounts'));
+    }
+
+    public function waAccountStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:255',
+            'phone_number_id' => 'required|string|max:255',
+            'waba_id' => 'nullable|string|max:255',
+            'access_token' => 'required|string',
+            'verify_token' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        WhatsappAccount::create([
+            'name' => $request->name,
+            'phone_number' => $request->phone_number,
+            'phone_number_id' => $request->phone_number_id,
+            'waba_id' => $request->waba_id,
+            'access_token' => $request->access_token,
+            'verify_token' => $request->verify_token,
+            'is_active' => $request->has('is_active') ? true : false,
+        ]);
+
+        Alert::success('Berhasil', 'Akun WhatsApp berhasil ditambahkan.');
+        return redirect()->back();
+    }
+
+    public function waAccountUpdate(Request $request, $id)
+    {
+        $account = WhatsappAccount::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:255',
+            'phone_number_id' => 'required|string|max:255',
+            'waba_id' => 'nullable|string|max:255',
+            'access_token' => 'required|string',
+            'verify_token' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $account->name = $request->name;
+        $account->phone_number = $request->phone_number;
+        $account->phone_number_id = $request->phone_number_id;
+        $account->waba_id = $request->waba_id;
+        $account->access_token = $request->access_token;
+        $account->verify_token = $request->verify_token;
+        $account->is_active = $request->has('is_active') ? true : false;
+        $account->save();
+
+        Alert::success('Berhasil', 'Akun WhatsApp berhasil diperbarui.');
+        return redirect()->back();
+    }
+
+    public function waAccountDestroy($id)
+    {
+        $account = WhatsappAccount::findOrFail($id);
+        // Cascade will handle chats and messages via FK
+        $account->delete();
+
+        Alert::success('Berhasil', 'Akun WhatsApp berhasil dihapus.');
+        return redirect()->back();
+    }
+
+    public function waChats(Request $request)
+    {
+        $accounts = WhatsappAccount::active()->orderBy('name')->get();
+
+        $selectedAccount = null;
+        if ($request->has('account_id')) {
+            $selectedAccount = WhatsappAccount::find($request->account_id);
+        }
+        if (!$selectedAccount) {
+            $selectedAccount = $accounts->first();
+        }
+
+        $chats = collect();
+        if ($selectedAccount) {
+            $chats = WhatsappChat::where('whatsapp_account_id', $selectedAccount->id)
+                ->with(['messages' => fn($q) => $q->latest()->limit(1)])
+                ->orderByDesc('last_message_at')
+                ->get();
+        }
+
+        // Split-panel: load active chat when chat_id is provided
+        $activeChat = null;
+        $messages = collect();
+        if ($request->has('chat_id') && $request->chat_id) {
+            $activeChat = WhatsappChat::with(['whatsappAccount', 'messagesAsc'])
+                ->find($request->chat_id);
+
+            if ($activeChat) {
+                $messages = $activeChat->messagesAsc;
+
+                // Reset unread count
+                if ($activeChat->unread_count > 0) {
+                    $activeChat->update(['unread_count' => 0]);
+                }
+            }
+        }
+
+        return view('back.pages.crm.whatsapp.chats', compact(
+            'accounts', 'selectedAccount', 'chats', 'activeChat', 'messages'
+        ));
+    }
+
+    public function waChatShow(Request $request, $id)
+    {
+        $chat = WhatsappChat::findOrFail($id);
+        return redirect()->route('back.crm.whatsapp.chats', [
+            'account_id' => $chat->whatsapp_account_id,
+            'chat_id' => $id,
+        ]);
+    }
+
+    public function waSendMessage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'chat_id' => 'required',
+            'message' => 'nullable|string',
+            'image' => 'nullable|image|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        $chat = WhatsappChat::findOrFail($request->chat_id);
+        $account = $chat->whatsappAccount;
+
+        if (!$request->message && !$request->hasFile('image')) {
+            Alert::error('Gagal', 'Kirim pesan teks atau gambar.');
+            return redirect()->back();
+        }
+
+        try {
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+
+                // Upload media to Meta
+                $uploadResult = $account->uploadMedia(
+                    $file->getRealPath(),
+                    $file->getMimeType()
+                );
+
+                $mediaId = $uploadResult['id'] ?? null;
+                if (!$mediaId) {
+                    Alert::error('Gagal', 'Gagal mengunggah media ke WhatsApp.');
+                    return redirect()->back();
+                }
+
+                // Send media message
+                $result = $account->sendMedia($chat->wa_id, 'image', $mediaId, $request->message);
+
+                $waMessageId = $result['messages'][0]['id'] ?? null;
+
+                WhatsappMessage::create([
+                    'whatsapp_chat_id' => $chat->id,
+                    'whatsapp_account_id' => $account->id,
+                    'wa_message_id' => $waMessageId,
+                    'direction' => 'out',
+                    'type' => 'image',
+                    'body' => $request->message,
+                    'media_id' => $mediaId,
+                    'media_mime' => $file->getMimeType(),
+                    'caption' => $request->message,
+                    'status' => 'sent',
+                    'sent_at' => now(),
+                ]);
+
+                Alert::success('Berhasil', 'Gambar berhasil dikirim.');
+            } else {
+                // Text only
+                $result = $account->sendMessage($chat->wa_id, $request->message);
+
+                $waMessageId = $result['messages'][0]['id'] ?? null;
+
+                WhatsappMessage::create([
+                    'whatsapp_chat_id' => $chat->id,
+                    'whatsapp_account_id' => $account->id,
+                    'wa_message_id' => $waMessageId,
+                    'direction' => 'out',
+                    'type' => 'text',
+                    'body' => $request->message,
+                    'status' => 'sent',
+                    'sent_at' => now(),
+                ]);
+
+                Alert::success('Berhasil', 'Pesan berhasil dikirim.');
+            }
+
+            // Update chat last_message_at
+            $chat->update(['last_message_at' => now()]);
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Gagal mengirim: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    public function waSendTemplate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'chat_id' => 'required',
+            'template_name' => 'required|string',
+            'language' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        $chat = WhatsappChat::findOrFail($request->chat_id);
+        $account = $chat->whatsappAccount;
+        $language = $request->input('language', 'id');
+
+        try {
+            $result = $account->sendTemplate($chat->wa_id, $request->template_name, $language);
+
+            $waMessageId = $result['messages'][0]['id'] ?? null;
+
+            WhatsappMessage::create([
+                'whatsapp_chat_id' => $chat->id,
+                'whatsapp_account_id' => $account->id,
+                'wa_message_id' => $waMessageId,
+                'direction' => 'out',
+                'type' => 'template',
+                'body' => $request->template_name,
+                'status' => 'sent',
+                'sent_at' => now(),
+            ]);
+
+            $chat->update(['last_message_at' => now()]);
+
+            Alert::success('Berhasil', 'Template berhasil dikirim.');
+        } catch (\Exception $e) {
+            Alert::error('Gagal', 'Gagal mengirim template: ' . $e->getMessage());
+        }
+
+        return redirect()->back();
+    }
+
+    /**
+     * Proxy WhatsApp media downloads — resolves media_id to actual file and streams it.
+     */
+    public function waMediaProxy($accountId, $mediaId)
+    {
+        $account = WhatsappAccount::findOrFail($accountId);
+
+        $media = $account->getMediaUrl($mediaId);
+
+        if (!$media) {
+            abort(404, 'Media tidak ditemukan di WhatsApp.');
+        }
+
+        return response($media['body'], 200, [
+            'Content-Type' => $media['content_type'],
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    /**
+     * WhatsApp Official Webhook (Meta Cloud API).
+     * GET  = webhook verification
+     * POST = incoming messages & status updates
+     */
+    public function waWebhook(Request $request, $id)
+    {
+        $account = WhatsappAccount::find($id);
+        if (!$account) {
+            return response('OK', 200);
+        }
+
+        // GET = Webhook verification
+        if ($request->isMethod('get')) {
+            $mode = $request->query('hub_mode');
+            $token = $request->query('hub_verify_token');
+            $challenge = $request->query('hub_challenge');
+
+            if ($mode === 'subscribe' && $token === $account->verify_token) {
+                return response($challenge, 200)->header('Content-Type', 'text/plain');
+            }
+
+            return response('Forbidden', 403);
+        }
+
+        // POST = Incoming webhook payload
+        Log::info('WhatsApp Webhook [Account: ' . $account->name . ']', $request->all());
+
+        $payload = $request->all();
+
+        $entry = $payload['entry'][0] ?? null;
+        if (!$entry) {
+            return response('OK', 200);
+        }
+
+        $changes = $entry['changes'][0] ?? null;
+        if (!$changes) {
+            return response('OK', 200);
+        }
+
+        $value = $changes['value'] ?? [];
+
+        // Handle incoming messages
+        $incomingMessages = $value['messages'] ?? [];
+        $contacts = $value['contacts'] ?? [];
+
+        foreach ($incomingMessages as $msg) {
+            $waId = $msg['from'] ?? null;
+            if (!$waId) continue;
+
+            // Get contact profile name
+            $profileName = null;
+            foreach ($contacts as $contact) {
+                if (($contact['wa_id'] ?? null) === $waId) {
+                    $profileName = $contact['profile']['name'] ?? null;
+                    break;
+                }
+            }
+
+            // Find or create chat
+            $chat = WhatsappChat::updateOrCreate(
+                [
+                    'whatsapp_account_id' => $account->id,
+                    'wa_id' => $waId,
+                ],
+                [
+                    'name' => $profileName,
+                    'phone' => $waId,
+                    'last_message_at' => now(),
+                ]
+            );
+
+            // Increment unread count
+            $chat->increment('unread_count');
+
+            // Determine message type and content
+            $type = $msg['type'] ?? 'text';
+            $body = null;
+            $mediaId = null;
+            $mediaMime = null;
+            $fileName = null;
+            $caption = null;
+
+            switch ($type) {
+                case 'text':
+                    $body = $msg['text']['body'] ?? null;
+                    break;
+                case 'image':
+                    $mediaId = $msg['image']['id'] ?? null;
+                    $mediaMime = $msg['image']['mime_type'] ?? null;
+                    $caption = $msg['image']['caption'] ?? null;
+                    $body = $caption;
+                    break;
+                case 'document':
+                    $mediaId = $msg['document']['id'] ?? null;
+                    $mediaMime = $msg['document']['mime_type'] ?? null;
+                    $fileName = $msg['document']['filename'] ?? null;
+                    $caption = $msg['document']['caption'] ?? null;
+                    $body = $caption;
+                    break;
+                case 'video':
+                    $mediaId = $msg['video']['id'] ?? null;
+                    $mediaMime = $msg['video']['mime_type'] ?? null;
+                    $caption = $msg['video']['caption'] ?? null;
+                    $body = $caption;
+                    break;
+                case 'audio':
+                    $mediaId = $msg['audio']['id'] ?? null;
+                    $mediaMime = $msg['audio']['mime_type'] ?? null;
+                    break;
+                case 'sticker':
+                    $mediaId = $msg['sticker']['id'] ?? null;
+                    $mediaMime = $msg['sticker']['mime_type'] ?? null;
+                    break;
+                case 'location':
+                    $lat = $msg['location']['latitude'] ?? '';
+                    $lng = $msg['location']['longitude'] ?? '';
+                    $body = 'Lat: ' . $lat . ', Lng: ' . $lng;
+                    break;
+                case 'reaction':
+                    $body = $msg['reaction']['emoji'] ?? null;
+                    break;
+                default:
+                    $body = '[' . ucfirst($type) . ']';
+                    break;
+            }
+
+            // Save incoming message
+            WhatsappMessage::create([
+                'whatsapp_chat_id' => $chat->id,
+                'whatsapp_account_id' => $account->id,
+                'wa_message_id' => $msg['id'] ?? null,
+                'direction' => 'in',
+                'type' => $type,
+                'body' => $body,
+                'media_id' => $mediaId,
+                'media_mime' => $mediaMime,
+                'file_name' => $fileName,
+                'caption' => $caption,
+                'status' => 'sent',
+                'sent_at' => isset($msg['timestamp']) ? Carbon::createFromTimestamp($msg['timestamp']) : now(),
+            ]);
+
+            // Broadcast notification to admins
+            $senderName = $profileName ?: $waId;
+            $msgPreview = $body ?: '[' . ucfirst($type) . ']';
+            event(new NewCrmMessage(
+                'whatsapp',
+                $senderName,
+                $msgPreview,
+                route('back.crm.whatsapp.chats', ['account_id' => $account->id, 'chat_id' => $chat->id])
+            ));
+        }
+
+        // Handle status updates
+        $statuses = $value['statuses'] ?? [];
+        foreach ($statuses as $statusUpdate) {
+            $waMessageId = $statusUpdate['id'] ?? null;
+            $newStatus = $statusUpdate['status'] ?? null;
+
+            if ($waMessageId && $newStatus) {
+                WhatsappMessage::where('wa_message_id', $waMessageId)
+                    ->update(['status' => $newStatus]);
+            }
+        }
+
+        return response('OK', 200);
     }
 
     // ==========================================

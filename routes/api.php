@@ -58,3 +58,6 @@ Route::prefix('webchat')->name('webchat.')->group(function () {
 
 // Telegram Webhook (public, no auth)
 Route::post('/telegram/webhook/{id}', [App\Http\Controllers\Back\CrmController::class, 'telegramWebhook'])->name('telegram.webhook');
+
+// WhatsApp Official Webhook (Meta Cloud API)
+Route::match(['get', 'post'], '/whatsapp/webhook/{id}', [App\Http\Controllers\Back\CrmController::class, 'waWebhook'])->name('whatsapp.webhook');

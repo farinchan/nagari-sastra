@@ -429,6 +429,17 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/telegram/send-message', [BackCrmController::class, 'telegramSendMessage'])->name('telegram.send-message');
         Route::get('/telegram/file/{botId}/{fileId}', [BackCrmController::class, 'telegramFileProxy'])->name('telegram.file-proxy');
 
+        // WhatsApp Official
+        Route::get('/whatsapp/accounts', [BackCrmController::class, 'waAccountIndex'])->name('whatsapp.accounts');
+        Route::post('/whatsapp/accounts', [BackCrmController::class, 'waAccountStore'])->name('whatsapp.accounts.store');
+        Route::put('/whatsapp/accounts/{id}', [BackCrmController::class, 'waAccountUpdate'])->name('whatsapp.accounts.update');
+        Route::delete('/whatsapp/accounts/{id}', [BackCrmController::class, 'waAccountDestroy'])->name('whatsapp.accounts.destroy');
+        Route::get('/whatsapp/chats', [BackCrmController::class, 'waChats'])->name('whatsapp.chats');
+        Route::get('/whatsapp/chats/{id}', [BackCrmController::class, 'waChatShow'])->name('whatsapp.chats.show');
+        Route::post('/whatsapp/send-message', [BackCrmController::class, 'waSendMessage'])->name('whatsapp.send-message');
+        Route::post('/whatsapp/send-template', [BackCrmController::class, 'waSendTemplate'])->name('whatsapp.send-template');
+        Route::get('/whatsapp/media/{accountId}/{mediaId}', [BackCrmController::class, 'waMediaProxy'])->name('whatsapp.media-proxy');
+
         // Webchat
         Route::get('/webchat', [BackCrmController::class, 'webchatIndex'])->name('webchat.index');
         Route::get('/webchat/widgets', [BackCrmController::class, 'webchatWidgetIndex'])->name('webchat.widgets');
