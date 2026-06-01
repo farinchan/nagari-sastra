@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('reviewer_id')->nullable();
             $table->string('editor_id')->nullable();
             $table->rememberToken();
+            $table->timestamp('last_seen_at')->nullable();
             $table->timestamps();
         });
 

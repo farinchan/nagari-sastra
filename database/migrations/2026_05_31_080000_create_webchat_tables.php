@@ -26,7 +26,7 @@ return new class extends Migration
         Schema::create('webchat_messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('webchat_conversation_id')->constrained()->onDelete('cascade');
-            $table->enum('sender', ['visitor', 'admin'])->default('visitor');
+            $table->enum('sender', ['visitor', 'admin', 'system'])->default('visitor');
             $table->foreignId('admin_user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->text('message');
             $table->string('image')->nullable();

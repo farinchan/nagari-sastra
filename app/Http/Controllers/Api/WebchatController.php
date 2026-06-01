@@ -83,6 +83,9 @@ class WebchatController extends Controller
         $css .= '#_wc_root ._wc_t{font-size:10px!important;color:#9ca3af!important;margin:3px 4px 0!important;padding:0!important;display:block!important;line-height:1.2!important;font-family:inherit!important;border:none!important;background:none!important;text-decoration:none!important}';
         $css .= '#_wc_root ._wc_m.v ._wc_t{text-align:right!important}';
         $css .= '#_wc_root ._wc_m.a ._wc_t{text-align:left!important}';
+        $css .= '#_wc_root ._wc_m.sys{justify-content:center!important}';
+        $css .= '#_wc_root ._wc_m.sys ._wc_m_w{max-width:90%!important;text-align:center!important}';
+        $css .= '#_wc_root ._wc_m.sys ._wc_b{background:#f3f4f6!important;color:#6b7280!important;border:none!important;border-radius:8px!important;font-size:12px!important;padding:8px 14px!important;font-style:italic!important}';
 
         // Footer input
         $css .= '#_wc_root ._wc_ft{padding:10px 14px!important;border-top:1px solid #e5e7eb!important;display:flex!important;gap:8px!important;align-items:flex-end!important;background:#fff!important;flex-shrink:0!important;margin:0!important;border-bottom:none!important;border-left:none!important;border-right:none!important;box-sizing:border-box!important;float:none!important}';
@@ -266,12 +269,13 @@ function clrFile(){selFile=null;fi.value='';pv.classList.remove('show');pvimg.sr
 function aMsg(m){
   if(document.querySelector('[data-wcid="'+m.id+'"]'))return;
   var d=document.createElement('div');
-  d.className='_wc_m '+(m.sender==='visitor'?'v':'a');
+  var cls=m.sender==='visitor'?'v':(m.sender==='system'?'sys':'a');
+  d.className='_wc_m '+cls;
   d.setAttribute('data-wcid',m.id);
   var inner='';
   if(m.image)inner+='<a href="'+m.image+'" target="_blank" rel="noopener"><img class="_wc_img" src="'+m.image+'" alt=""/></a>';
   if(m.message)inner+='<span class="_wc_b">'+esc(m.message).replace(/\\n/g,'<br>')+'</span>';
-  inner+='<span class="_wc_t">'+m.time+'</span>';
+  if(m.sender!=='system')inner+='<span class="_wc_t">'+m.time+'</span>';
   d.innerHTML='<div class="_wc_m_w">'+inner+'</div>';
   body.appendChild(d);if(m.id>lid)lid=m.id;
 }
@@ -291,6 +295,15 @@ function poll(){
           if(m.id>lid){aMsg(m);lid=m.id;if(m.sender==='admin'){hasNew=true;if(!opn){ur++;uBdg();}}}
         });sB();
         if(hasNew&&_wcAudio){try{_wcAudio.currentTime=0;_wcAudio.play().catch(function(){});}catch(e){}}
+      }
+      if(d.status==='closed'){
+        clearInterval(pll);pll=null;
+        ft.style.setProperty('display','none','important');
+        setTimeout(function(){
+          localStorage.removeItem(SK);sid=null;lid=0;on=false;ur=0;uBdg();
+          body.innerHTML='';body.style.setProperty('display','none','important');
+          nm.value='';em.value='';pre.style.setProperty('display','flex','important');
+        },5000);
       }
     });
   },4000);
@@ -484,6 +497,7 @@ JSWIDGET;
         return response()->json([
             'success' => true,
             'messages' => $messages,
+            'status' => $conversation->status,
         ]);
     }
 

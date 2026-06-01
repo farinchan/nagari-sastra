@@ -28,15 +28,20 @@
                                 </select>
                             </div>
                             @endif
+                            <div class="d-flex gap-1 mt-3 px-1">
+                                <a href="{{ route('back.crm.webchat.index', array_merge(request()->only('widget_id'), [])) }}" class="btn btn-sm {{ !$selectedStatus ? 'btn-primary' : 'btn-light' }} flex-fill">Semua</a>
+                                <a href="{{ route('back.crm.webchat.index', array_merge(request()->only('widget_id'), ['status' => 'active'])) }}" class="btn btn-sm {{ $selectedStatus === 'active' ? 'btn-success' : 'btn-light' }} flex-fill">Aktif</a>
+                                <a href="{{ route('back.crm.webchat.index', array_merge(request()->only('widget_id'), ['status' => 'closed'])) }}" class="btn btn-sm {{ $selectedStatus === 'closed' ? 'btn-secondary' : 'btn-light' }} flex-fill">Diakhiri</a>
+                            </div>
                         </div>
                         {{-- Chat List --}}
                         <div style="overflow-y: auto; flex: 1;">
                             @forelse($conversations as $conv)
-                                <a href="{{ route('back.crm.webchat.index', ['widget_id' => request('widget_id'), 'chat_id' => $conv->id]) }}"
-                                   class="d-flex align-items-center px-5 py-3 border-bottom border-gray-100 text-dark text-hover-primary wc-chat-row {{ isset($activeConversation) && $activeConversation->id == $conv->id ? 'bg-light-primary' : '' }}"
+                                <a href="{{ route('back.crm.webchat.index', array_merge(request()->only(['widget_id', 'status']), ['chat_id' => $conv->id])) }}"
+                                   class="d-flex align-items-center px-5 py-3 border-bottom border-gray-100 text-dark text-hover-primary wc-chat-row {{ isset($activeConversation) && $activeConversation->id == $conv->id ? 'bg-light-primary' : '' }} {{ $conv->status === 'closed' ? 'wc-closed' : '' }}"
                                    style="transition: background 0.15s;">
                                     <div class="symbol symbol-40px me-3">
-                                        <div class="symbol-label {{ $conv->unread_count > 0 ? 'bg-primary text-white' : 'bg-light-primary text-primary' }} fw-bold fs-6">
+                                        <div class="symbol-label {{ $conv->status === 'closed' ? 'bg-light-secondary text-gray-500' : ($conv->unread_count > 0 ? 'bg-primary text-white' : 'bg-light-primary text-primary') }} fw-bold fs-6">
                                             @php
                                                 $name = $conv->display_name;
                                                 $initials = '';
@@ -50,9 +55,11 @@
                                     </div>
                                     <div class="d-flex flex-column flex-grow-1 overflow-hidden">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <span class="fw-semibold text-gray-800 fs-7 text-truncate">{{ $conv->display_name }}</span>
+                                            <span class="fw-semibold {{ $conv->status === 'closed' ? 'text-gray-500' : 'text-gray-800' }} fs-7 text-truncate">{{ $conv->display_name }}</span>
                                             <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-2">
-                                                @if($conv->unread_count > 0)
+                                                @if($conv->status === 'closed')
+                                                    <span class="badge badge-light-secondary fs-9">Diakhiri</span>
+                                                @elseif($conv->unread_count > 0)
                                                     <span class="badge badge-primary badge-circle badge-sm">{{ $conv->unread_count }}</span>
                                                 @endif
                                             </div>
@@ -148,6 +155,12 @@
                                                 <div class="text-muted fs-9 mt-1 ms-1">{{ $msg->created_at->format('d M H:i') }}</div>
                                             </div>
                                         </div>
+                                    @elseif($msg->sender === 'system')
+                                        <div class="d-flex justify-content-center mb-4">
+                                            <div class="bg-light rounded-3 px-4 py-2">
+                                                <span class="text-muted fs-8 fst-italic">{{ $msg->message }}</span>
+                                            </div>
+                                        </div>
                                     @else
                                         <div class="d-flex justify-content-end mb-4">
                                             <div style="max-width: 70%;">
@@ -221,6 +234,7 @@
     <style>
         .wc-chat-row:hover { background-color: var(--bs-gray-100) !important; }
         .wc-chat-row.bg-light-primary { background-color: #f1f3ff !important; }
+        .wc-chat-row.wc-closed { opacity: 0.65; }
         .wc-left { width: 360px; min-width: 360px; }
         @media (max-width: 768px) {
             .wc-split { height: calc(100vh - 120px) !important; }
@@ -304,7 +318,12 @@ document.getElementById('replyMessage').addEventListener('keydown', function(e) 
 
 document.getElementById('widgetFilter')?.addEventListener('change', function() {
     var v = this.value;
-    window.location.href = v ? '{{ route("back.crm.webchat.index") }}?widget_id='+v : '{{ route("back.crm.webchat.index") }}';
+    var status = '{{ $selectedStatus }}';
+    var url = '{{ route("back.crm.webchat.index") }}';
+    var params = [];
+    if (v) params.push('widget_id='+v);
+    if (status) params.push('status='+status);
+    window.location.href = params.length ? url+'?'+params.join('&') : url;
 });
 </script>
 @endsection

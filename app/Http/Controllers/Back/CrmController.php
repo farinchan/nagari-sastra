@@ -1442,6 +1442,12 @@ class CrmController extends Controller
             }
         }
 
+        // Status filter
+        $selectedStatus = $request->input('status', '');
+        if ($selectedStatus && in_array($selectedStatus, ['active', 'closed'])) {
+            $query->where('status', $selectedStatus);
+        }
+
         $conversations = $query->orderBy('last_message_at', 'desc')->paginate(50);
 
         // Split-panel: load active conversation when chat_id is provided
@@ -1457,7 +1463,7 @@ class CrmController extends Controller
             }
         }
 
-        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget', 'activeConversation'));
+        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget', 'activeConversation', 'selectedStatus'));
     }
 
     public function webchatShow($id)
@@ -1494,7 +1500,19 @@ class CrmController extends Controller
     public function webchatClose($id)
     {
         $conversation = \App\Models\WebchatConversation::findOrFail($id);
-        $conversation->update(['status' => 'closed']);
+
+        // Insert system message so visitor sees the closure
+        \App\Models\WebchatMessage::create([
+            'webchat_conversation_id' => $conversation->id,
+            'sender' => 'system',
+            'message' => 'Percakapan telah diakhiri oleh admin. Terima kasih telah menghubungi kami.',
+            'is_read' => false,
+        ]);
+
+        $conversation->update([
+            'status' => 'closed',
+            'last_message_at' => now(),
+        ]);
 
         Alert::success('Berhasil', 'Percakapan telah ditutup.');
         return redirect()->route('back.crm.webchat.index');
