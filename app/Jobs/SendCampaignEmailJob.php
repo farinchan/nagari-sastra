@@ -28,7 +28,6 @@ class SendCampaignEmailJob implements ShouldQueue
     public function __construct(int $campaignId)
     {
         $this->campaignId = $campaignId;
-        $this->onQueue('emails');
     }
 
     public function handle(): void

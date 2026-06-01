@@ -43,8 +43,6 @@ class SendComposeEmailJob implements ShouldQueue
         $this->ccEmails = $ccEmails;
         $this->bccEmails = $bccEmails;
         $this->attachmentPaths = $attachmentPaths;
-
-        $this->onQueue('emails');
     }
 
     public function handle(): void
