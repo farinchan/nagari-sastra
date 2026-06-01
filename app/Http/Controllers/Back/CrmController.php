@@ -525,49 +525,34 @@ class CrmController extends Controller
         }
 
         $account = EmailAccount::findOrFail($request->account_id);
-        $smtpConfig = $account->getSmtpConfig();
 
-        try {
-            Config::set('mail.default', 'smtp');
-            Config::set('mail.mailers.smtp.host', $smtpConfig['host']);
-            Config::set('mail.mailers.smtp.port', $smtpConfig['port']);
-            Config::set('mail.mailers.smtp.encryption', $smtpConfig['encryption'] === 'none' ? null : $smtpConfig['encryption']);
-            Config::set('mail.mailers.smtp.username', $smtpConfig['username']);
-            Config::set('mail.mailers.smtp.password', $smtpConfig['password']);
-            Config::set('mail.from.address', $account->email);
-            Config::set('mail.from.name', $account->name);
+        $ccEmails = $request->filled('cc') ? array_filter(array_map('trim', explode(',', $request->cc))) : [];
+        $bccEmails = $request->filled('bcc') ? array_filter(array_map('trim', explode(',', $request->bcc))) : [];
 
-            app('mail.manager')->purge('smtp');
-
-            $to = $request->to;
-            $subject = $request->subject;
-            $body = $request->body;
-            $ccEmails = $request->filled('cc') ? array_filter(array_map('trim', explode(',', $request->cc))) : [];
-            $bccEmails = $request->filled('bcc') ? array_filter(array_map('trim', explode(',', $request->bcc))) : [];
-
-            Mail::html($body, function ($message) use ($to, $subject, $ccEmails, $bccEmails, $account, $request) {
-                $message->from($account->email, $account->name);
-                $message->to($to);
-                $message->subject($subject);
-
-                if (!empty($ccEmails)) $message->cc($ccEmails);
-                if (!empty($bccEmails)) $message->bcc($bccEmails);
-
-                if ($request->hasFile('attachments')) {
-                    foreach ($request->file('attachments') as $file) {
-                        $message->attach($file->getRealPath(), [
-                            'as' => $file->getClientOriginalName(),
-                            'mime' => $file->getMimeType(),
-                        ]);
-                    }
-                }
-            });
-
-            Alert::success('Berhasil', 'Email berhasil dikirim ke ' . $to);
-        } catch (\Exception $e) {
-            Alert::error('Gagal', 'Gagal mengirim email: ' . $e->getMessage());
+        // Store attachments as temp files for the queue
+        $attachmentPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $tempPath = $file->store('temp-attachments', 'local');
+                $attachmentPaths[] = [
+                    'path' => storage_path('app/' . $tempPath),
+                    'name' => $file->getClientOriginalName(),
+                    'mime' => $file->getMimeType(),
+                ];
+            }
         }
 
+        \App\Jobs\SendComposeEmailJob::dispatch(
+            $account->id,
+            $request->to,
+            $request->subject,
+            $request->body,
+            $ccEmails,
+            $bccEmails,
+            $attachmentPaths
+        );
+
+        Alert::success('Berhasil', 'Email sedang dikirim di background ke ' . $request->to);
         return redirect()->route('back.crm.email.inbox', ['account_id' => $account->id]);
     }
 
@@ -1331,8 +1316,6 @@ class CrmController extends Controller
 
     public function emailCampaignSend(Request $request)
     {
-        set_time_limit(0);
-
         $campaign = EmailCampaign::with(['emailAccount', 'group'])->findOrFail($request->campaign_id);
 
         if ($campaign->status !== 'draft') {
@@ -1350,65 +1333,11 @@ class CrmController extends Controller
             'status' => 'sending',
         ]);
 
-        $account = $campaign->emailAccount;
-        $smtpConfig = $account->getSmtpConfig();
-        $sentCount = 0;
-        $failedCount = 0;
-
-        foreach ($contacts as $contact) {
-            try {
-                Config::set('mail.default', 'smtp');
-                Config::set('mail.mailers.smtp.host', $smtpConfig['host']);
-                Config::set('mail.mailers.smtp.port', $smtpConfig['port']);
-                Config::set('mail.mailers.smtp.encryption', $smtpConfig['encryption'] === 'none' ? null : $smtpConfig['encryption']);
-                Config::set('mail.mailers.smtp.username', $smtpConfig['username']);
-                Config::set('mail.mailers.smtp.password', $smtpConfig['password']);
-                Config::set('mail.from.address', $account->email);
-                Config::set('mail.from.name', $account->name);
-
-                app('mail.manager')->purge('smtp');
-
-                $body = $campaign->body_html;
-                $subject = $campaign->subject;
-
-                Mail::html($body, function ($message) use ($contact, $subject, $account) {
-                    $message->from($account->email, $account->name);
-                    $message->to($contact->email, $contact->name);
-                    $message->subject($subject);
-                });
-
-                EmailCampaignLog::create([
-                    'email_campaign_id' => $campaign->id,
-                    'email_contact_id' => $contact->id,
-                    'status' => 'sent',
-                    'sent_at' => now(),
-                ]);
-
-                $sentCount++;
-            } catch (\Exception $e) {
-                EmailCampaignLog::create([
-                    'email_campaign_id' => $campaign->id,
-                    'email_contact_id' => $contact->id,
-                    'status' => 'failed',
-                    'error_message' => $e->getMessage(),
-                ]);
-
-                $failedCount++;
-            }
-        }
-
-        $campaign->update([
-            'sent_count' => $sentCount,
-            'failed_count' => $failedCount,
-            'status' => 'sent',
-            'sent_at' => now(),
-        ]);
+        \App\Jobs\SendCampaignEmailJob::dispatch($campaign->id);
 
         return response()->json([
             'success' => true,
-            'message' => "Campaign berhasil dikirim. Terkirim: {$sentCount}, Gagal: {$failedCount}",
-            'sent_count' => $sentCount,
-            'failed_count' => $failedCount,
+            'message' => "Campaign sedang dikirim di background ke {$contacts->count()} kontak.",
         ]);
     }
 
