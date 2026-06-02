@@ -9,6 +9,7 @@ use App\Models\EmailCampaignLog;
 use App\Models\EmailContact;
 use App\Models\EmailGroup;
 use App\Models\EmailMessage;
+use App\Models\ChaterySession;
 use App\Models\TelegramBot;
 use App\Models\TelegramChat;
 use App\Models\TelegramMessage;
@@ -1351,6 +1352,255 @@ class CrmController extends Controller
 
         Alert::success('Berhasil', 'Campaign berhasil dihapus.');
         return redirect()->back();
+    }
+
+    // ==========================================
+    // WHATSAPP UNOFFICIAL (CHATERY)
+    // ==========================================
+
+    public function chateryIndex()
+    {
+        $sessions = ChaterySession::orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+
+        foreach ($sessions as $session) {
+            try {
+                $status = $session->checkStatus();
+                $session->_live_status = $status;
+            } catch (\Exception $e) {
+                $session->_live_status = null;
+            }
+        }
+
+        return view('back.pages.crm.chatery.index', compact('sessions'));
+    }
+
+    public function chateryStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'session_id' => 'required|alpha_dash',
+            'api_url' => 'required|url',
+            'api_key' => 'nullable|string',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        if ($request->has('is_default') && $request->is_default) {
+            ChaterySession::where('is_default', true)->update(['is_default' => false]);
+        }
+
+        ChaterySession::create([
+            'name' => $request->name,
+            'session_id' => $request->session_id,
+            'api_url' => $request->api_url,
+            'api_key' => $request->api_key,
+            'phone_number' => $request->phone_number,
+            'is_active' => $request->has('is_active') ? true : true,
+            'is_default' => $request->has('is_default') ? true : false,
+        ]);
+
+        Alert::success('Berhasil', 'Session Chatery berhasil ditambahkan.');
+        return redirect()->back();
+    }
+
+    public function chateryUpdate(Request $request, $id)
+    {
+        $session = ChaterySession::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'session_id' => 'required|alpha_dash',
+            'api_url' => 'required|url',
+            'api_key' => 'nullable|string',
+            'is_default' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        if ($request->has('is_default') && $request->is_default) {
+            ChaterySession::where('is_default', true)->where('id', '!=', $id)->update(['is_default' => false]);
+        }
+
+        $session->name = $request->name;
+        $session->session_id = $request->session_id;
+        $session->api_url = $request->api_url;
+        $session->phone_number = $request->phone_number;
+        $session->is_active = $request->has('is_active') ? true : false;
+        $session->is_default = $request->has('is_default') ? true : false;
+
+        // Don't update api_key if empty (keep current)
+        if ($request->filled('api_key')) {
+            $session->api_key = $request->api_key;
+        }
+
+        $session->save();
+
+        Alert::success('Berhasil', 'Session Chatery berhasil diperbarui.');
+        return redirect()->back();
+    }
+
+    public function chateryDestroy($id)
+    {
+        $session = ChaterySession::findOrFail($id);
+        $session->delete();
+
+        Alert::success('Berhasil', 'Session Chatery berhasil dihapus.');
+        return redirect()->back();
+    }
+
+    public function chateryConnect($id)
+    {
+        $session = ChaterySession::findOrFail($id);
+
+        try {
+            $result = $session->connectSession();
+
+            // Check if API call actually succeeded
+            if (isset($result['success']) && $result['success'] === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'Gagal menghubungkan ke server Chatery.',
+                    'data' => $result,
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permintaan koneksi berhasil dikirim. Scan QR code untuk menghubungkan.',
+                'qr_url' => $session->getQrImageUrl(),
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghubungkan: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function chateryDisconnect($id)
+    {
+        $session = ChaterySession::findOrFail($id);
+
+        try {
+            $result = $session->disconnectSession();
+            $session->update(['is_connected' => false]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Session berhasil diputuskan.',
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memutuskan: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function chateryCheckStatus($id)
+    {
+        $session = ChaterySession::findOrFail($id);
+
+        try {
+            $status = $session->checkStatus();
+
+            // Update is_connected based on response
+            $isConnected = false;
+            if (isset($status['data']['status']) && $status['data']['status'] === 'connected') {
+                $isConnected = true;
+            } elseif (isset($status['status']) && $status['status'] === 'connected') {
+                $isConnected = true;
+            }
+            $session->update(['is_connected' => $isConnected]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $status,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memeriksa status: ' . $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ==========================================
+    // CHATERY CHATS (via Chatery API - AJAX)
+    // ==========================================
+
+    /**
+     * Render the chat shell view (no API calls, just layout).
+     */
+    public function chateryChats()
+    {
+        $sessions = ChaterySession::active()->orderBy('is_default', 'desc')->orderBy('name')->get();
+        return view('back.pages.crm.chatery.chats', compact('sessions'));
+    }
+
+    /**
+     * AJAX: Fetch chats list from Chatery API.
+     */
+    public function chateryApiChats(Request $request)
+    {
+        $session = ChaterySession::findOrFail($request->input('session_id'));
+
+        $result = $session->getChats(
+            $request->input('limit', 50),
+            $request->input('offset', 0)
+        );
+
+        return response()->json($result);
+    }
+
+    /**
+     * AJAX: Fetch messages for a chat from Chatery API.
+     */
+    public function chateryApiMessages(Request $request)
+    {
+        $session = ChaterySession::findOrFail($request->input('session_id'));
+
+        $result = $session->getChatMessages(
+            $request->input('chat_id'),
+            $request->input('limit', 50),
+            $request->input('cursor')
+        );
+
+        return response()->json($result);
+    }
+
+    /**
+     * AJAX: Send text message via Chatery API.
+     */
+    public function chaterySendChatMessage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required',
+            'chat_id' => 'required|string',
+            'message' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $session = ChaterySession::findOrFail($request->session_id);
+
+        try {
+            $result = $session->sendText($request->chat_id, $request->message);
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     // ==========================================

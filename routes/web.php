@@ -332,22 +332,7 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::put('/banner/{id}/update', [BackSettingController::class, 'bannerUpdate'])->name('banner-update');
     });
 
-    Route::prefix('whatsapp')->name('whatsapp.')->group(function () {
-        Route::get('/setting', [App\Http\Controllers\Back\WhatsappController::class, 'setting'])->name('setting');
 
-        Route::prefix('message')->name('message.')->group(function () {
-            Route::get('/', function () {
-                return redirect()->route('back.whatsapp.message.sendMessage');
-            })->name('index');
-            Route::get('/send-message', [App\Http\Controllers\Back\WhatsappController::class, 'sendMessage'])->name('sendMessage');
-            Route::get('/send-image', [App\Http\Controllers\Back\WhatsappController::class, 'sendImage'])->name('sendImage');
-            Route::post('/send-image-process', [App\Http\Controllers\Back\WhatsappController::class, 'sendImageProcess'])->name('sendImageProcess');
-            Route::get('/send-bulk-message', [App\Http\Controllers\Back\WhatsappController::class, 'sendBulkMessage'])->name('sendBulkMessage');
-            Route::post('/send-bulk-message-process', [App\Http\Controllers\Back\WhatsappController::class, 'sendBulkMessageProcess'])->name('sendBulkMessageProcess');
-
-            Route::post('/send-multi-message-process', [App\Http\Controllers\Back\WhatsappController::class, 'sendMultipleMessageProcess'])->name('sendMultipleMessageProcess');
-        });
-    });
 
     // Route::prefix('email')->name('email.')->group(function () {
     //     Route::post('/send-mail', [EmailController::class, 'sendEmail'])->name('send-mail');
@@ -428,6 +413,19 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/telegram/chats/{id}', [BackCrmController::class, 'telegramChatShow'])->name('telegram.chats.show');
         Route::post('/telegram/send-message', [BackCrmController::class, 'telegramSendMessage'])->name('telegram.send-message');
         Route::get('/telegram/file/{botId}/{fileId}', [BackCrmController::class, 'telegramFileProxy'])->name('telegram.file-proxy');
+
+        // WhatsApp Unofficial (Chatery)
+        Route::get('/chatery', [BackCrmController::class, 'chateryIndex'])->name('chatery.index');
+        Route::post('/chatery', [BackCrmController::class, 'chateryStore'])->name('chatery.store');
+        Route::get('/chatery/chats', [BackCrmController::class, 'chateryChats'])->name('chatery.chats');
+        Route::post('/chatery/chats/send', [BackCrmController::class, 'chaterySendChatMessage'])->name('chatery.chats.send');
+        Route::get('/chatery/api/chats', [BackCrmController::class, 'chateryApiChats'])->name('chatery.api.chats');
+        Route::get('/chatery/api/messages', [BackCrmController::class, 'chateryApiMessages'])->name('chatery.api.messages');
+        Route::put('/chatery/{id}', [BackCrmController::class, 'chateryUpdate'])->name('chatery.update');
+        Route::delete('/chatery/{id}', [BackCrmController::class, 'chateryDestroy'])->name('chatery.destroy');
+        Route::post('/chatery/{id}/connect', [BackCrmController::class, 'chateryConnect'])->name('chatery.connect');
+        Route::post('/chatery/{id}/disconnect', [BackCrmController::class, 'chateryDisconnect'])->name('chatery.disconnect');
+        Route::get('/chatery/{id}/status', [BackCrmController::class, 'chateryCheckStatus'])->name('chatery.status');
 
         // WhatsApp Official
         Route::get('/whatsapp/accounts', [BackCrmController::class, 'waAccountIndex'])->name('whatsapp.accounts');

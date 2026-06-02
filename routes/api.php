@@ -38,14 +38,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 });
 
 
-Route::prefix('whatsapp-api')->name('api.whatsapp.')->group(function () {
-    Route::get('/get-all-sessions', [App\Http\Controllers\Api\WhatsappController::class, 'getAllSessions'])->name('get-all-sessions');
-    Route::get('/get-my-session', [App\Http\Controllers\Api\WhatsappController::class, 'getMySession'])->name('get-my-session');
-    Route::post('/delete-session', [App\Http\Controllers\Api\WhatsappController::class, 'deleteSession'])->name('delete-session');
-    Route::post('/send-message', [App\Http\Controllers\Api\WhatsappController::class, 'sendMessage'])->name('send-message');
-    Route::post('/send-bulk-message', [App\Http\Controllers\Api\WhatsappController::class, 'sendBulkMessage'])->name('send-bulk-message');
-    Route::post('/send-image', [App\Http\Controllers\Api\WhatsappController::class, 'sendImage'])->name('send-image');
-});
 
 // Webchat Widget API (public, no auth)
 Route::prefix('webchat')->name('webchat.')->group(function () {
@@ -61,3 +53,4 @@ Route::post('/telegram/webhook/{id}', [App\Http\Controllers\Back\CrmController::
 
 // WhatsApp Official Webhook (Meta Cloud API)
 Route::match(['get', 'post'], '/whatsapp/webhook/{id}', [App\Http\Controllers\Back\CrmController::class, 'waWebhook'])->name('whatsapp.webhook');
+

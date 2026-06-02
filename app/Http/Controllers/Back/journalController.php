@@ -28,6 +28,7 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use RealRashid\SweetAlert\Facades\Alert;
 use ZipArchive;
+use App\Models\ChaterySession;
 
 class journalController extends Controller
 {
@@ -1069,10 +1070,10 @@ class journalController extends Controller
                 if ($response2->status() === 200) {
                     $data2 = $response2->json();
 
-                    $response_wa = Http::post(env('WHATSAPP_API_URL').'/send-message', [
-                        'session' => env('WHATSAPP_API_SESSION'),
-                        'to' => whatsappNumber($data2['phone']),
-                        'text' => 'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
+                    $chaterySession = ChaterySession::getDefault();
+                    if ($chaterySession) {
+                        $chaterySession->sendMessage(whatsappNumber($data2['phone']),
+                            'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
                             'Invoice untuk untuk pembayaran artikel Anda dengan *SUBMISSION ID: '.$submission->ojs_submission_id."* telah terbit. Berikut adalah detail invoice Anda:\n\n".
                             'INVOICE: '.($paymentInvoice->invoice_number ?? '0000').'/JRNL/UINSMDD/'.($paymentInvoice->created_at->format('Y') ?? Carbon::now()->format('Y'))."\n".
                             'Jumlah: Rp '.number_format($paymentInvoice->payment_amount, 0, ',', '.')."\n".
@@ -1094,13 +1095,8 @@ class journalController extends Controller
                             "Editorial Rumah Jurnal\n\n".
 
                             "_generate by system_\n".
-                            url('/'),
-
-                    ]);
-                    if ($response_wa->status() === 200) {
-                        Log::info('WhatsApp message sent successfully to '.$data2['phone']);
-                    } else {
-                        Log::error('Error sending WhatsApp message: '.$response_wa->body());
+                            url('/')
+                        );
                     }
                 } else {
                     Log::error('Error PaymentInvoiceObserver Response 2: '.$response2->body());
@@ -1149,10 +1145,10 @@ class journalController extends Controller
                 if ($response2->status() === 200) {
                     $path = 'arsip/loa/'.'LoA-'.$submission->ojs_submission_id.'-'.$submission->id.'-'.$submission->authors[0]['id'].'.pdf';
                     $data2 = $response2->json();
-                    $response_wa = Http::post(env('WHATSAPP_API_URL').'/send-message', [
-                        'session' => env('WHATSAPP_API_SESSION'),
-                        'to' => whatsappNumber($data2['phone']),
-                        'text' => 'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
+                    $chaterySession = ChaterySession::getDefault();
+                    if ($chaterySession) {
+                        $chaterySession->sendMessage(whatsappNumber($data2['phone']),
+                            'Halo Bapak/Ibu '.($data2['fullName'] ?? '-')."\n\n".
                             'Selamat! Kami dengan senang hati memberitahukan bahwa artikel Anda dengan *SUBMISSION ID: '.$submission->ojs_submission_id."* telah diterima untuk publikasi di jurnal kami. Berikut adalah detailnya:\n\n".
                             'Judul Artikel: '.($submission->fullTitle ?? '-')."\n".
                             'Penulis: '.($submission->authorsString ?? '-')."\n".
@@ -1164,12 +1160,8 @@ class journalController extends Controller
                             "Salam,\n".
                             "Editorial Rumah Jurnal\n\n".
                             "_generate by system_\n".
-                            url('/'),
-                    ]);
-                    if ($response_wa->status() === 200) {
-                        Log::info('WhatsApp message sent successfully to '.$data2['phone']);
-                    } else {
-                        Log::error('Error sending WhatsApp message: '.$response_wa->body());
+                            url('/')
+                        );
                     }
                 } else {
                     Log::error('Error LoaObserver Response 2: '.$response2->body());

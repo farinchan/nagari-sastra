@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\ChaterySession;
 
 class EventController extends Controller
 {
@@ -264,10 +265,10 @@ class EventController extends Controller
         $eventUser->save();
 
         if ($eventUser->phone && $eventUser->phone != '-') {
-            $response_wa = Http::post(env('WHATSAPP_API_URL')  . "/send-message", [
-                'session' => env('WHATSAPP_API_SESSION'),
-                'to' => whatsappNumber($eventUser->phone),
-                'text' => "Halo Bapak/Ibu " . $eventUser->name . ",\n\n" .
+            $chaterySession = ChaterySession::getDefault();
+            if ($chaterySession) {
+                $chaterySession->sendMessage(whatsappNumber($eventUser->phone),
+                    "Halo Bapak/Ibu " . $eventUser->name . ",\n\n" .
                     "Selamat! Anda telah ditambahkan ke event *" . ($eventUser->event->type ?? '') . "* " . ($eventUser->event->status ?? '') .  " sebagai peserta.\n\n" .
                     "Berikut detail acara:\n" .
                     "• Nama Event: " . ($eventUser->event->name ?? '-') . "\n" .
@@ -276,11 +277,8 @@ class EventController extends Controller
                     "Pastikan Anda hadir dan catat jadwalnya!\n" .
                     "Terima kasih telah bergabung.\n\n" .
                     "_generate by system\n" .
-                    url('/'),
-            ]);
-
-            if ($response_wa->status() != 200) {
-                Log::error('Failed to send WhatsApp messages: ' . $response_wa->body());
+                    url('/')
+                );
             }
         }
 
@@ -417,13 +415,9 @@ class EventController extends Controller
             }
         }
 
-        $response = Http::post(env('WHATSAPP_API_URL')  . "/send-bulk-message", [
-            'session' => env('WHATSAPP_API_SESSION'), // Use the session name from your environment variable
-            'delay' => 2000,
-            'data' => $data_wa
-        ]);
-        if ($response->status() != 200) {
-            Log::error('Failed to send WhatsApp messages: ' . $response->body());
+        $chaterySession = ChaterySession::getDefault();
+        if ($chaterySession) {
+            $chaterySession->sendBulkMessage($data_wa, 2000);
         }
 
         $message = "Import selesai. {$importedCount} reviewer berhasil diimport";
@@ -551,14 +545,9 @@ class EventController extends Controller
             }
         }
 
-        $response = Http::post(env('WHATSAPP_API_URL')  . "/send-bulk-message", [
-            'session' => env('WHATSAPP_API_SESSION'), // Use the session name from your environment variable
-            'delay' => 2000,
-            'data' => $data_wa
-        ]);
-
-        if ($response->status() != 200) {
-            Log::error('Failed to send WhatsApp messages: ' . $response->body());
+        $chaterySession = ChaterySession::getDefault();
+        if ($chaterySession) {
+            $chaterySession->sendBulkMessage($data_wa, 2000);
         }
 
         $message = "Import selesai. {$importedCount} editor berhasil diimport";
@@ -883,15 +872,9 @@ class EventController extends Controller
             }
         }
 
-        $response = Http::post(env('WHATSAPP_API_URL')  . "/send-bulk-message", [
-            'session' => env('WHATSAPP_API_SESSION'), // Use the session name from your environment variable
-            'delay' => $request->delay,
-            'data' => $data
-        ]);
-
-        if ($response->status() != 200) {
-            Alert::error('Error', 'Failed to send bulk message: ' . $response->json()['message'] ?? 'Unknown error');
-            return redirect()->back()->with('error', 'Failed to send bulk message: ' . $response->json()['message'] ?? 'Unknown error');
+        $chaterySession = ChaterySession::getDefault();
+        if ($chaterySession) {
+            $response = $chaterySession->sendBulkMessage($data, $request->delay);
         }
 
         Alert::success('Sukses', 'Notifikasi berhasil dikirim');
