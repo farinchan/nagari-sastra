@@ -421,6 +421,16 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/chatery/chats/send', [BackCrmController::class, 'chaterySendChatMessage'])->name('chatery.chats.send');
         Route::get('/chatery/api/chats', [BackCrmController::class, 'chateryApiChats'])->name('chatery.api.chats');
         Route::get('/chatery/api/messages', [BackCrmController::class, 'chateryApiMessages'])->name('chatery.api.messages');
+        Route::get('/chatery/bulk', [BackCrmController::class, 'chateryBulk'])->name('chatery.bulk');
+        Route::post('/chatery/bulk/send', [BackCrmController::class, 'chateryBulkSend'])->name('chatery.bulk.send');
+        Route::get('/chatery/groups', [BackCrmController::class, 'chateryGroups'])->name('chatery.groups');
+        Route::post('/chatery/groups', [BackCrmController::class, 'chateryGroupStore'])->name('chatery.groups.store');
+        Route::put('/chatery/groups/{id}', [BackCrmController::class, 'chateryGroupUpdate'])->name('chatery.groups.update');
+        Route::delete('/chatery/groups/{id}', [BackCrmController::class, 'chateryGroupDestroy'])->name('chatery.groups.destroy');
+        Route::get('/chatery/groups/{id}/contacts', [BackCrmController::class, 'chateryGroupContacts'])->name('chatery.groups.contacts');
+        Route::get('/chatery/groups/{id}/phones', [BackCrmController::class, 'chateryGroupPhones'])->name('chatery.groups.phones');
+        Route::post('/chatery/contacts', [BackCrmController::class, 'chateryContactStore'])->name('chatery.contacts.store');
+        Route::delete('/chatery/contacts/{id}', [BackCrmController::class, 'chateryContactDestroy'])->name('chatery.contacts.destroy');
         Route::put('/chatery/{id}', [BackCrmController::class, 'chateryUpdate'])->name('chatery.update');
         Route::delete('/chatery/{id}', [BackCrmController::class, 'chateryDestroy'])->name('chatery.destroy');
         Route::post('/chatery/{id}/connect', [BackCrmController::class, 'chateryConnect'])->name('chatery.connect');

@@ -34,83 +34,95 @@
             </div>
 
             {{-- Sessions Table --}}
-            <div class="card">
-                <div class="card-header border-0 pt-6">
+            <div class="card card-flush">
+                <div class="card-header align-items-center py-5 gap-2 gap-md-5">
                     <div class="card-title">
-                        <h3 class="card-label fw-bold text-gray-800">Daftar Session Chatery</h3>
+                        <i class="ki-duotone ki-message-notif fs-2 me-2 text-success"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                        Daftar Session Chatery
                     </div>
                 </div>
-                <div class="card-body py-4">
-                    <div class="table-responsive">
-                        <table class="table align-middle table-row-dashed fs-6 gy-5">
+                <div class="card-body pt-0">
+                    <div class="table-responsive" style="overflow: visible;">
+                        <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
                             <thead>
-                                <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                    <th class="min-w-50px">No</th>
-                                    <th class="min-w-150px">Nama</th>
-                                    <th class="min-w-125px">Session ID</th>
-                                    <th class="min-w-150px">API URL</th>
-                                    <th class="min-w-100px">No. HP</th>
-                                    <th class="min-w-80px text-center">Default</th>
-                                    <th class="min-w-80px text-center">Status</th>
-                                    <th class="min-w-150px text-center">Aksi</th>
+                                <tr class="fw-bold text-muted">
+                                    <th class="min-w-30px">#</th>
+                                    <th class="min-w-150px">Session</th>
+                                    <th class="min-w-120px">No. HP</th>
+                                    <th class="min-w-80px">Default</th>
+                                    <th class="min-w-80px">Status</th>
+                                    <th class="min-w-200px text-end">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="text-gray-600 fw-semibold">
+                            <tbody>
                                 @forelse($sessions as $index => $session)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
                                         <td>
-                                            <span class="fw-bold">{{ $session->name }}</span>
+                                            <div class="fw-semibold">{{ $session->name }}</div>
+                                            <div class="text-muted fs-8"><code>{{ $session->session_id }}</code></div>
+                                            <div class="text-muted fs-9 text-truncate" style="max-width: 200px;" title="{{ $session->api_url }}">{{ $session->api_url }}</div>
                                         </td>
-                                        <td><code>{{ $session->session_id }}</code></td>
-                                        <td><small>{{ $session->api_url }}</small></td>
-                                        <td>{{ $session->phone_number ?? '-' }}</td>
-                                        <td class="text-center">
+                                        <td>
+                                            <span class="text-success">{{ $session->phone_number ?? '-' }}</span>
+                                        </td>
+                                        <td>
                                             @if($session->is_default)
                                                 <span class="badge badge-light-success">Default</span>
                                             @else
                                                 <span class="badge badge-light-secondary">-</span>
                                             @endif
                                         </td>
-                                        <td class="text-center" id="status-badge-{{ $session->id }}">
+                                        <td id="status-badge-{{ $session->id }}">
                                             @if($session->is_connected)
                                                 <span class="badge badge-light-success">Connected</span>
                                             @else
                                                 <span class="badge badge-light-danger">Disconnected</span>
                                             @endif
                                         </td>
-                                        <td class="text-center">
-                                            <div class="d-flex justify-content-center gap-2">
-                                                <button type="button" class="btn btn-sm btn-light-info btn-check-status"
-                                                    data-id="{{ $session->id }}" title="Cek Status">
-                                                    <i class="ki-duotone ki-wifi fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                                        <td class="text-end">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-light btn-flex btn-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Aksi <i class="ki-duotone ki-down fs-5 ms-1"></i>
                                                 </button>
-                                                <button type="button" class="btn btn-sm btn-light-success btn-connect"
-                                                    data-id="{{ $session->id }}" title="Connect">
-                                                    <i class="ki-duotone ki-rocket fs-4"><span class="path1"></span><span class="path2"></span></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-light-warning btn-disconnect"
-                                                    data-id="{{ $session->id }}" title="Disconnect">
-                                                    <i class="ki-duotone ki-disconnect fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-light-primary"
-                                                    data-bs-toggle="modal" data-bs-target="#editSessionModal-{{ $session->id }}" title="Edit">
-                                                    <i class="ki-duotone ki-pencil fs-4"><span class="path1"></span><span class="path2"></span></i>
-                                                </button>
-                                                <form action="{{ route('back.crm.chatery.destroy', $session->id) }}" method="POST" class="d-inline"
-                                                    onsubmit="return confirm('Yakin ingin menghapus session ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-light-danger" title="Hapus">
-                                                        <i class="ki-duotone ki-trash fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                                    </button>
-                                                </form>
+                                                <div class="dropdown-menu dropdown-menu-end menu-sub menu-sub-dropdown menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-175px py-4">
+                                                    <div class="menu-item px-3">
+                                                        <a href="#" class="menu-link px-3 btn-check-status" data-id="{{ $session->id }}">
+                                                            <i class="ki-duotone ki-wifi fs-4 me-2 text-info"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i> Cek Status
+                                                        </a>
+                                                    </div>
+                                                    <div class="menu-item px-3">
+                                                        <a href="#" class="menu-link px-3 btn-connect" data-id="{{ $session->id }}">
+                                                            <i class="ki-duotone ki-rocket fs-4 me-2 text-success"><span class="path1"></span><span class="path2"></span></i> Connect
+                                                        </a>
+                                                    </div>
+                                                    <div class="menu-item px-3">
+                                                        <a href="#" class="menu-link px-3 btn-disconnect" data-id="{{ $session->id }}">
+                                                            <i class="ki-duotone ki-disconnect fs-4 me-2 text-warning"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Disconnect
+                                                        </a>
+                                                    </div>
+                                                    <div class="separator my-2"></div>
+                                                    <div class="menu-item px-3">
+                                                        <a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#editSessionModal-{{ $session->id }}">
+                                                            <i class="ki-duotone ki-pencil fs-4 me-2 text-primary"><span class="path1"></span><span class="path2"></span></i> Edit
+                                                        </a>
+                                                    </div>
+                                                    <div class="menu-item px-3">
+                                                        <a href="#" class="menu-link px-3 btn-delete-session" data-id="{{ $session->id }}" data-name="{{ $session->name }}">
+                                                            <i class="ki-duotone ki-trash fs-4 me-2 text-danger"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Hapus
+                                                        </a>
+                                                    </div>
+                                                </div>
                                             </div>
+                                            <form id="deleteSessionForm-{{ $session->id }}" action="{{ route('back.crm.chatery.destroy', $session->id) }}" method="POST" class="d-none">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-10">
+                                        <td colspan="6" class="text-center text-muted py-10">
                                             Belum ada session. Klik "Tambah Session" untuk memulai.
                                         </td>
                                     </tr>
@@ -256,7 +268,8 @@
 <script>
     // Check Status
     document.querySelectorAll('.btn-check-status').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             const id = this.dataset.id;
             const badge = document.getElementById('status-badge-' + id);
             badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
@@ -284,7 +297,8 @@
     // Connect
     let currentConnectId = null;
     document.querySelectorAll('.btn-connect').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             currentConnectId = this.dataset.id;
             const qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
             document.getElementById('qr-loading').style.display = 'block';
@@ -351,7 +365,8 @@
 
     // Disconnect
     document.querySelectorAll('.btn-disconnect').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
             if (!confirm('Yakin ingin memutuskan session ini?')) return;
             const id = this.dataset.id;
 
@@ -373,6 +388,15 @@
                 }
             })
             .catch(err => alert('Error: ' + err.message));
+        });
+    });
+    // Delete
+    document.querySelectorAll('.btn-delete-session').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Yakin ingin menghapus session "' + this.dataset.name + '"?')) {
+                document.getElementById('deleteSessionForm-' + this.dataset.id).submit();
+            }
         });
     });
 </script>

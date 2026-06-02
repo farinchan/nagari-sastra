@@ -443,6 +443,18 @@
                         </a>
                     </div>
                     <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.chatery.bulk')) active @endif" href="{{ route('back.crm.chatery.bulk') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Bulk Message</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.chatery.groups')) active @endif" href="{{ route('back.crm.chatery.groups') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Grup Kontak</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
                         <a class="menu-link @if(request()->routeIs('back.crm.chatery.index')) active @endif" href="{{ route('back.crm.chatery.index') }}">
                             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                             <span class="menu-title">Kelola Session</span>

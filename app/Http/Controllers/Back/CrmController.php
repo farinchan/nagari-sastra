@@ -10,6 +10,8 @@ use App\Models\EmailContact;
 use App\Models\EmailGroup;
 use App\Models\EmailMessage;
 use App\Models\ChaterySession;
+use App\Models\ChateryContactGroup;
+use App\Models\ChateryContact;
 use App\Models\TelegramBot;
 use App\Models\TelegramChat;
 use App\Models\TelegramMessage;
@@ -1601,6 +1603,214 @@ class CrmController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    // ==========================================
+    // CHATERY BULK MESSAGE
+    // ==========================================
+
+    /**
+     * Show the bulk message form.
+     */
+    public function chateryBulk()
+    {
+        $sessions = ChaterySession::active()->orderBy('is_default', 'desc')->orderBy('name')->get();
+        $groups = ChateryContactGroup::withCount('contacts')->orderBy('name')->get();
+        return view('back.pages.crm.chatery.bulk', compact('sessions', 'groups'));
+    }
+
+    /**
+     * AJAX: Send bulk messages (text + optional image).
+     */
+    public function chateryBulkSend(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'session_id' => 'required',
+            'phones' => 'required|string',
+            'message' => 'required|string|max:5000',
+            'image' => 'nullable|image|mimes:jpeg,png,gif,webp|max:5120',
+            'delay' => 'nullable|integer|min:500|max:10000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $session = ChaterySession::findOrFail($request->session_id);
+
+        // Parse phone numbers
+        $phones = array_filter(
+            array_map('trim', preg_split('/[\n,;]+/', $request->phones)),
+            fn($p) => preg_match('/^\d{10,15}$/', $p)
+        );
+
+        if (empty($phones)) {
+            return response()->json(['success' => false, 'message' => 'Tidak ada nomor telepon yang valid.'], 422);
+        }
+
+        // Handle image upload
+        $imageUrl = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $path = $file->store('chatery_bulk', 'public');
+            $imageUrl = asset('storage/' . $path);
+        }
+
+        $delay = $request->input('delay', 1000);
+        $results = [];
+
+        set_time_limit(max(60, count($phones) * 5));
+
+        foreach ($phones as $phone) {
+            try {
+                if ($imageUrl) {
+                    $res = $session->sendImage($phone, $imageUrl, $request->message);
+                } else {
+                    $res = $session->sendMessage($phone, $request->message);
+                }
+
+                $results[] = [
+                    'to' => $phone,
+                    'success' => ($res['success'] ?? false) !== false,
+                    'message' => $res['message'] ?? 'Terkirim',
+                ];
+            } catch (\Exception $e) {
+                $results[] = [
+                    'to' => $phone,
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ];
+            }
+
+            // Delay between sends (microseconds)
+            if ($delay > 0) {
+                usleep($delay * 1000);
+            }
+        }
+
+        $successCount = count(array_filter($results, fn($r) => $r['success']));
+
+        return response()->json([
+            'success' => true,
+            'total' => count($results),
+            'sent' => $successCount,
+            'failed' => count($results) - $successCount,
+            'results' => $results,
+        ]);
+    }
+    // ==========================================
+    // CHATERY CONTACT GROUPS
+    // ==========================================
+
+    public function chateryGroups()
+    {
+        $groups = ChateryContactGroup::withCount('contacts')->orderBy('name')->get();
+        return view('back.pages.crm.chatery.groups', compact('groups'));
+    }
+
+    public function chateryGroupStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        ChateryContactGroup::create($request->only('name', 'description'));
+        Alert::success('Berhasil', 'Grup kontak berhasil ditambahkan.');
+        return redirect()->route('back.crm.chatery.groups');
+    }
+
+    public function chateryGroupUpdate(Request $request, $id)
+    {
+        $group = ChateryContactGroup::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back();
+        }
+
+        $group->update($request->only('name', 'description'));
+        Alert::success('Berhasil', 'Grup kontak berhasil diperbarui.');
+        return redirect()->route('back.crm.chatery.groups');
+    }
+
+    public function chateryGroupDestroy($id)
+    {
+        $group = ChateryContactGroup::findOrFail($id);
+        $group->delete();
+        Alert::success('Berhasil', 'Grup kontak berhasil dihapus.');
+        return redirect()->route('back.crm.chatery.groups');
+    }
+
+    /**
+     * AJAX: Get contacts for a group.
+     */
+    public function chateryGroupContacts($id)
+    {
+        $group = ChateryContactGroup::with('contacts')->findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'group' => ['id' => $group->id, 'name' => $group->name],
+            'contacts' => $group->contacts->map(fn($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'phone' => $c->phone,
+            ]),
+        ]);
+    }
+
+    /**
+     * AJAX: Get phone numbers for a group (used by bulk message).
+     */
+    public function chateryGroupPhones($id)
+    {
+        $group = ChateryContactGroup::with('contacts')->findOrFail($id);
+        $phones = $group->contacts->pluck('phone')->toArray();
+        return response()->json(['success' => true, 'phones' => $phones]);
+    }
+
+    /**
+     * AJAX: Add contact to a group.
+     */
+    public function chateryContactStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'group_id' => 'required|exists:chatery_contact_groups,id',
+            'name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $contact = ChateryContact::create([
+            'chatery_contact_group_id' => $request->group_id,
+            'name' => $request->name,
+            'phone' => preg_replace('/[^0-9]/', '', $request->phone),
+        ]);
+
+        return response()->json(['success' => true, 'contact' => $contact]);
+    }
+
+    /**
+     * AJAX: Delete a contact.
+     */
+    public function chateryContactDestroy($id)
+    {
+        $contact = ChateryContact::findOrFail($id);
+        $contact->delete();
+        return response()->json(['success' => true]);
     }
 
     // ==========================================
