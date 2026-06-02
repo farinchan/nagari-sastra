@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\WebchatWidget;
 use App\Models\WebchatConversation;
 use App\Models\WebchatMessage;
+use App\Models\ChaterySession;
+use App\Models\User;
 use App\Events\NewCrmMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class WebchatController extends Controller
 {
@@ -444,6 +448,9 @@ JSWIDGET;
             route('back.crm.webchat.show', $conversation->id)
         ));
 
+        // Notify offline admins via WhatsApp + auto-reply to visitor
+        $this->notifyOfflineAdmins($conversation, $request->input('message', ''));
+
         return response()->json([
             'success' => true,
             'message' => [
@@ -559,6 +566,9 @@ JSWIDGET;
             route('back.crm.webchat.show', $conversation->id)
         ));
 
+        // Notify offline admins via WhatsApp + auto-reply to visitor
+        $this->notifyOfflineAdmins($conversation, $request->input('message', '') ?: '📷 Mengirim gambar');
+
         return response()->json([
             'success' => true,
             'message' => [
@@ -570,5 +580,85 @@ JSWIDGET;
                 'date' => $message->created_at->format('d M Y'),
             ],
         ]);
+    }
+
+    // ==========================================
+    // NOTIFY OFFLINE ADMINS VIA WHATSAPP
+    // ==========================================
+
+    /**
+     * Check if any super-admin/marketing is online.
+     * If not, send WhatsApp notification and auto-reply to visitor.
+     * Cooldown: 2 minutes per conversation to prevent spam.
+     */
+    private function notifyOfflineAdmins(WebchatConversation $conversation, string $messagePreview)
+    {
+        try {
+            // Cooldown check - prevent spamming WA notifications (2 min per conversation)
+            $cacheKey = 'webchat_wa_notify_' . $conversation->id;
+            if (Cache::has($cacheKey)) {
+                return;
+            }
+
+            // Get all users with super-admin or marketing role
+            $admins = User::role(['super-admin', 'marketing'])->get();
+
+            if ($admins->isEmpty()) {
+                return;
+            }
+
+            // Check if any admin is online
+            $anyOnline = $admins->contains(fn($u) => $u->isOnline());
+
+            if ($anyOnline) {
+                return; // Someone is online, no need for WA notification
+            }
+
+            // No admin online - send WA notification
+            $chaterySession = ChaterySession::getDefault();
+            if (!$chaterySession) {
+                Log::warning('Webchat: Tidak bisa kirim notifikasi WA - tidak ada default Chatery session');
+                return;
+            }
+
+            // Build notification message
+            $visitorName = $conversation->visitor_name ?: 'Visitor';
+            $visitorEmail = $conversation->visitor_email ? "\nEmail: {$conversation->visitor_email}" : '';
+            $link = route('back.crm.webchat.show', $conversation->id);
+            $preview = Str::limit($messagePreview, 100);
+
+            $waMessage = "*Pesan Webchat Baru - Nagari Sastra*\n"
+                . "━━━━━━━━━━━━━━\n"
+                . "Dari: *{$visitorName}*{$visitorEmail}\n"
+                . "Pesan: {$preview}\n"
+                . "━━━━━━━━━━━━━━\n"
+                . "Balas di: {$link}\n\n"
+                . "⚠️ Tidak ada admin yang sedang online.";
+
+            // Send to all admins with phone number
+            $offlineAdmins = $admins->filter(fn($u) => !empty($u->phone));
+            foreach ($offlineAdmins as $admin) {
+                try {
+                    $chaterySession->sendMessage($admin->phone, $waMessage);
+                    Log::info("Webchat: WA notifikasi terkirim ke {$admin->name} ({$admin->phone})");
+                } catch (\Exception $e) {
+                    Log::error("Webchat: Gagal kirim WA ke {$admin->name}: " . $e->getMessage());
+                }
+            }
+
+            // Auto-reply to visitor: "please wait"
+            WebchatMessage::create([
+                'webchat_conversation_id' => $conversation->id,
+                'sender' => 'system',
+                'message' => 'Terima kasih atas pesan Anda. Saat ini tim kami sedang tidak online. Pesan Anda sudah kami terima dan akan segera dibalas. Mohon menunggu. 🙏',
+                'is_read' => false,
+            ]);
+
+            // Set cooldown (2 minutes)
+            Cache::put($cacheKey, true, now()->addMinutes(2));
+
+        } catch (\Exception $e) {
+            Log::error('Webchat notifyOfflineAdmins error: ' . $e->getMessage());
+        }
     }
 }
