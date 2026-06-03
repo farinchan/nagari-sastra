@@ -9,7 +9,6 @@ use App\Models\EventAttendance;
 use App\Models\EventAttendanceUser;
 use App\Models\EventUser;
 use App\Models\Reviewer;
-use App\Models\Editor;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
@@ -432,39 +431,22 @@ class EventController extends Controller
     public function participantImportEditorModal($id)
     {
         try {
-            // Log untuk debugging
             Log::info('participantImportEditorModal called with id: ' . $id);
 
-            // Get unique editors - simple version first
-            $editors = Editor::with('user')
-                ->select('id', 'editor_id', 'name', 'email', 'phone', 'affiliation')
-                ->orderByDesc('id')
-                ->get()
-                ->unique('editor_id')
-                ->values();
+            $editors = User::role('editor')->get();
 
             Log::info('Found editors count: ' . $editors->count());
 
             $result = [
-                'editors' => $editors->map(function ($editor) {
+                'editors' => $editors->map(function ($user) {
                     return [
-                        'id' => $editor->id,
-                        'editor_id' => $editor->editor_id,
-                        'name' => $editor->name ?? 'Unknown Editor',
-                        'email' => $editor->user->email ?? $editor->email ?? 'No Email',
-                        'phone' => $editor->user->phone ?? $editor->phone ?? '-',
-                        'affiliation' => $editor->affiliation ?? '-',
-                        'journals' => $editor->journal = Editor::where('editor_id', $editor->editor_id)->with('issue.journal')
-                            ->get()
-                            ->map(function ($item) {
-                                $journal_data = $item->issue->journal;
-                                return (object) [
-                                    'id' => $journal_data->id,
-                                    'name' => $journal_data->name,
-                                    'title' => $journal_data->title,
-                                    'url_path' => $journal_data->url_path,
-                                ];
-                            })->unique('id')->values(),
+                        'id' => $user->id,
+                        'editor_id' => $user->id,
+                        'name' => $user->name ?? 'Unknown Editor',
+                        'email' => $user->email ?? 'No Email',
+                        'phone' => $user->phone ?? '-',
+                        'affiliation' => '-',
+                        'journals' => [],
                     ];
                 })
             ];
@@ -484,7 +466,7 @@ class EventController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'editor_ids' => 'required|array',
-            'editor_ids.*' => 'exists:editors,id'
+            'editor_ids.*' => 'exists:users,id'
         ], [
             'required' => 'Pilih minimal satu editor',
             'array' => 'Data editor tidak valid',
@@ -501,15 +483,15 @@ class EventController extends Controller
 
         $data_wa = [];
         foreach ($request->editor_ids as $editorId) {
-            $editor = Editor::with('user')->orderByDesc('id')->where('id', $editorId)->first();
+            $user = User::role('editor')->find($editorId);
 
-            if (!$editor) {
+            if (!$user) {
                 continue;
             }
 
             // Check if editor already exists as participant
             $existingParticipant = EventUser::where('event_id', $id)
-                ->where('email', $editor->email)
+                ->where('email', $user->email)
                 ->first();
 
             if ($existingParticipant) {
@@ -517,13 +499,13 @@ class EventController extends Controller
                 continue;
             }
 
-            // Create new event participant from editor
+            // Create new event participant from user
             $eventUser = new EventUser();
-            $eventUser->user_id = User::where('editor_id', $editor->editor_id)->value('id') ?? null;
+            $eventUser->user_id = $user->id;
             $eventUser->event_id = $id;
-            $eventUser->name = $editor->name;
-            $eventUser->email = $editor->user->email ?? $editor->email ?? 'No Email';
-            $eventUser->phone = $editor->user->phone ?? $editor->phone ?? '-';
+            $eventUser->name = $user->name;
+            $eventUser->email = $user->email;
+            $eventUser->phone = $user->phone ?? '-';
             $eventUser->save();
 
             $importedCount++;

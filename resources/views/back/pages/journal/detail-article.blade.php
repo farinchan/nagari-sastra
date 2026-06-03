@@ -74,10 +74,10 @@
                                                         {{ $editor->name }}
                                                     </span>
                                                     <br>
-                                                    {{ $editor->affiliation }}
+                                                    {{ $editor->email }}
                                                 </li>
                                             @empty
-                                                <li style="list-style: none" class="text-muted">Reviewer belum ditambahkan
+                                                <li style="list-style: none" class="text-muted">Editor belum ditambahkan
                                                 </li>
                                             @endforelse
                                         </ul>

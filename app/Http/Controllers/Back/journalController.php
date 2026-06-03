@@ -6,7 +6,7 @@ use App\Exports\articleIssueExport;
 use App\Http\Controllers\Controller;
 use App\Mail\InvoiceMail;
 use App\Mail\LoaMail;
-use App\Models\Editor;
+use App\Models\User;
 use App\Models\Issue;
 use App\Models\Journal;
 use App\Models\PaymentAccount;
@@ -227,7 +227,7 @@ class journalController extends Controller
             'journal_path' => $journal_path,
             'journal' => $journal,
             'issue' => $issue,
-            'editors' => Editor::where('issue_id', $issue_id)->get(),
+            'editors' => User::role('editor')->get(),
             'reviewers' => Reviewer::where('issue_id', $issue_id)->get(),
             'submissions' => $issue->submissions,
         ];
@@ -289,7 +289,7 @@ class journalController extends Controller
             foreach ($request->editor as $editor) {
                 SubmissionEditor::create([
                     'submission_id' => $submission->id,
-                    'editor_id' => $editor,
+                    'user_id' => $editor,
                 ]);
             }
         }

@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Editor;
 use App\Models\Issue;
 use App\Models\Journal;
 use App\Models\Reviewer;
 use App\Models\Submission;
+use App\Models\SubmissionEditor;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -464,40 +465,22 @@ class JournalController extends Controller
 
     public function editorList(Request $request)
     {
-        $jurnal = Journal::where('url_path', $request->url_path)->first();
-
-        if (!$jurnal) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error',
-                'error' => 'Journal not found'
-            ], 404);
-        }
-
         try {
-            $response = Http::retry(3, 100)->timeout(120)->withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/users', [
-                'roleIds' => '16,17',
-                'orderBy' => 'id',
-                'count' => 100,
-                'apiToken' => $jurnal->api_key
-            ]);
+            $editors = User::role('editor')->get()->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'fullName' => $user->name,
+                    'email' => $user->email,
+                    'userName' => $user->username,
+                    'phone' => $user->phone,
+                ];
+            });
 
-            if ($response->status() === 200) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Success',
-                    'data' => $response->json()["items"] ?? []
-                ], 200);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error',
-                    'error' => $response->json()["errorMessage"] ?? "something went wrong"
-                ], $response->status());
-            }
+            return response()->json([
+                'success' => true,
+                'message' => 'Success',
+                'data' => $editors->values()->all()
+            ], 200);
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
@@ -512,74 +495,53 @@ class JournalController extends Controller
         $jurnal_path = $request->jurnal_path;
         $issue_id = $request->issue_id;
         $editor_id = $request->editor_id;
+        $submission_id = $request->submission_id;
 
-        if (!$jurnal_path || !$editor_id) {
+        if (!$editor_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error',
-                'jurnal_path' => $jurnal_path,
-                'editor_id' => $editor_id,
-                'error' => 'jurnal_path, editor_id is required'
+                'error' => 'editor_id is required'
             ], 400);
         }
 
-        $jurnal = Journal::where('url_path', $jurnal_path)->first();
+        $user = User::role('editor')->find($editor_id);
 
-        if (!$jurnal) {
+        if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Error',
-                'error' => 'Journal not found'
-            ], 404);
-        }
-
-        $issue = Issue::where('id', $issue_id)->where('journal_id', $jurnal->id)->first();
-
-        if (!$issue) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error',
-                'error' => 'Issue not found'
+                'error' => 'Editor (user) not found'
             ], 404);
         }
 
         try {
-            $response = Http::retry(3, 100)->timeout(120)->withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/users/' . $editor_id, [
-                'apiToken' => $jurnal->api_key
-            ]);
-
-            if ($response->status() === 200) {
-
-                $reviewer = Editor::updateOrCreate(
+            if ($submission_id) {
+                $submissionEditor = SubmissionEditor::updateOrCreate(
                     [
-                        'editor_id' => $editor_id,
-                        'issue_id' => $issue->id,
-                    ],
-                    [
-                        'name' => $response->json()["fullName"],
-                        'username' => $response->json()["userName"],
-                        'email' => $response->json()["email"],
-                        'phone' => $response->json()["phone"],
-                        'affiliation' => $response->json()["affiliation"]['en_US'] ?? null,
-                        'groups' => $response->json()["groups"],
+                        'submission_id' => $submission_id,
+                        'user_id' => $user->id,
                     ]
                 );
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Editor data has been updated',
-                    'data' => $reviewer
+                    'message' => 'Editor has been assigned to submission',
+                    'data' => $submissionEditor
                 ], 200);
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error',
-                    'error' => $response->json()["errorMessage"] ?? "something went wrong"
-                ], $response->status());
             }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Editor data retrieved',
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'phone' => $user->phone,
+                ]
+            ], 200);
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
@@ -593,87 +555,45 @@ class JournalController extends Controller
 
     public function editorListCache(Request $request)
     {
-        $journals = Journal::get();
-
-        if (!$journals) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error',
-                'error' => 'Journal not found'
-            ], 404);
-        }
-
-
-        foreach ($journals as $journal) {
-            try {
-                $this->editorCache($request, $journal->url_path);
-            } catch (\Throwable $th) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Error',
-                    'error' => $th->getMessage()
-                ], 500);
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Success refresh editor list',
-        ], 200);
-    }
-
-    private function editorCache(Request $request, $url_path)
-    {
-        $jurnal = Journal::where('url_path', $url_path)->first();
-        // cache()->forget($url_path . '_reviewer_list_cache');
-
         try {
-            $cacheKey =  $url_path . '_editor_list_cache';
+            $cacheKey = 'editor_list_cache';
             $cachedData = cache()->get($cacheKey);
 
             if ($cachedData) {
-                return $cachedData;
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Success (from cache)',
+                    'data' => $cachedData
+                ], 200);
             }
 
-            $response = Http::retry(3, 100)->timeout(120)->withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/users', [
-                'roleIds' => '16,17',
-                'orderBy' => 'id',
-                'count' => 100,
-                'apiToken' => $jurnal->api_key
-            ]);
-
-            if ($response->status() === 200) {
-                $data = [
-                    'journal' => $jurnal->title,
-                    'url_path' => $jurnal->url_path,
-                    'message' => 'Success get editor list',
-                    'editor' => collect($response->json()["items"] ?? [])->map(function ($item) {
-                        return [
-                            'id' => $item['id'] ?? null,
-                            'fullName' => $item['fullName'] ?? null,
-                            'email' => $item['email'] ?? null,
-                            'userName' => $item['userName'] ?? null,
-                            'affiliation' => $item['affiliation']['en_US'] ?? null,
-                        ];
-                    })->all(),
-                ];
-
-                cache()->put($cacheKey, $data, now()->addMinutes(120));
-
-
-                return $data;
-            } else {
+            $editors = User::role('editor')->get()->map(function ($user) {
                 return [
-                    'message' => 'Error: ' . $response->status(),
+                    'id' => $user->id,
+                    'fullName' => $user->name,
+                    'email' => $user->email,
+                    'userName' => $user->username,
                 ];
-            }
-        } catch (\Throwable $th) {
-            return [
-                'message' => 'Error: ' . $th->getMessage(),
+            })->all();
+
+            $data = [
+                'message' => 'Success get editor list',
+                'editor' => $editors,
             ];
+
+            cache()->put($cacheKey, $data, now()->addMinutes(120));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Success refresh editor list',
+                'data' => $data
+            ], 200);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error',
+                'error' => $th->getMessage()
+            ], 500);
         }
     }
 
@@ -764,19 +684,9 @@ class JournalController extends Controller
 
     public function editorGet(Request $request)
     {
-        $path = $request->path;
         $editor_id = $request->editor_id;
-        $jurnal = Journal::where("url_path", $path)->first();
 
-        if (!$jurnal) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error',
-                'error' => 'Journal not found'
-            ], 404);
-        }
-
-        $cacheKey = $path . '_editor_' . $editor_id . '_cache';
+        $cacheKey = 'editor_' . $editor_id . '_cache';
         $cachedData = cache()->get($cacheKey);
 
         if ($cachedData) {
@@ -788,28 +698,31 @@ class JournalController extends Controller
         }
 
         try {
-            $response = Http::retry(3, 100)->timeout(120)->withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/users/' . $editor_id, [
-                'apiToken' => $jurnal->api_key
-            ]);
+            $user = User::role('editor')->find($editor_id);
 
-            if ($response->status() === 200) {
-                $data = $response->json();
-                cache()->put($cacheKey, $data, now()->addDays(2));
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Success',
-                    'data' => $data
-                ], 200);
-            } else {
+            if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Error',
-                    'error' => $response->json()["errorMessage"] ?? "something went wrong"
-                ], $response->status());
+                    'error' => 'Editor not found'
+                ], 404);
             }
+
+            $data = [
+                'id' => $user->id,
+                'fullName' => $user->name,
+                'email' => $user->email,
+                'userName' => $user->username,
+                'phone' => $user->phone,
+            ];
+
+            cache()->put($cacheKey, $data, now()->addDays(2));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Success',
+                'data' => $data
+            ], 200);
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,

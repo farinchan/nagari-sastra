@@ -87,6 +87,6 @@ class Submission extends Model
 
     public function editors()
     {
-        return $this->belongsToMany(Editor::class, 'submission_editor');
+        return $this->belongsToMany(User::class, 'submission_editor', 'submission_id', 'user_id');
     }
 }

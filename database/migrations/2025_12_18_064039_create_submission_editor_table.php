@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('submission_editor', function (Blueprint $table) {
             $table->id();
             $table->foreignId('submission_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
-            $table->foreignId('editor_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
         });
     }

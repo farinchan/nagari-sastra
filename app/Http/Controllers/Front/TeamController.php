@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Controller;
-use App\Models\Editor;
 use App\Models\Issue;
 use App\Models\Journal;
 use App\Models\SettingWebsite;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -102,54 +102,41 @@ class TeamController extends Controller
     private function editorCache(Request $request, $url_path)
     {
         $jurnal = Journal::where('url_path', $url_path)->first();
-        // cache()->forget($url_path . '_reviewer_list_cache');
 
         try {
-            $cacheKey =  $url_path . '_editor_list_cache';
+            $cacheKey = $url_path . '_editor_list_cache';
             $cachedData = cache()->get($cacheKey);
 
             if ($cachedData) {
                 return $cachedData;
             }
 
-           $response = Http::withHeaders([
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer ' . $jurnal->api_key
-            ])->get($jurnal->url . '/api/v1/users', [
-                'roleIds' => '16,17',
-                'orderBy' => 'id',
-                'count' => 100,
-                'apiToken' => $jurnal->api_key
-            ]);
-
-            if ($response->status() === 200) {
-                $data = [
-                    'journal' => $jurnal->title,
-                    'url_path' => $jurnal->url_path,
-                    'message' => 'Success get editor list',
-                    'editor' => collect($response->json()["items"] ?? [])->map(function ($item) {
-                        return [
-                            'id' => $item['id'] ?? null,
-                            'fullName' => $item['fullName'] ?? null,
-                            'email' => $item['email'] ?? null,
-                            'userName' => $item['userName'] ?? null,
-                            'affiliation' => $item['affiliation']['en_US'] ?? null,
-                        ];
-                    })->all(),
-                ];
-
-                cache()->put($cacheKey, $data, now()->addMinutes(120));
-
-
-                return $data;
-            } else {
+            $editors = User::role('editor')->get()->map(function ($user) {
                 return [
-                    'message' => 'Error: ' . $response->status(),
+                    'id' => $user->id,
+                    'fullName' => $user->name,
+                    'email' => $user->email,
+                    'userName' => $user->username,
+                    'affiliation' => null,
                 ];
-            }
+            })->all();
+
+            $data = [
+                'journal' => $jurnal->title,
+                'url_path' => $jurnal->url_path,
+                'message' => 'Success get editor list',
+                'editor' => $editors,
+            ];
+
+            cache()->put($cacheKey, $data, now()->addMinutes(120));
+
+            return $data;
         } catch (\Throwable $th) {
             return [
+                'journal' => $jurnal->title ?? '',
+                'url_path' => $url_path,
                 'message' => 'Error: ' . $th->getMessage(),
+                'editor' => [],
             ];
         }
     }

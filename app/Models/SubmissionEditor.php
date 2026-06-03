@@ -33,6 +33,6 @@ class SubmissionEditor extends Model
 
     public function editor()
     {
-        return $this->belongsTo(User::class, 'editor_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

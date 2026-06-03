@@ -2,11 +2,8 @@
 
 namespace App\Http\Controllers\Back;
 
-use App\Exports\EditorAllExport;
 use App\Exports\ReviewerAllExport;
 use App\Http\Controllers\Controller;
-use App\Models\Editor;
-use App\Models\EditorData;
 use App\Models\Journal;
 use App\Models\PaymentAccount;
 use App\Models\Reviewer;
@@ -277,113 +274,4 @@ class MasterdataController extends Controller
         return redirect()->back();
     }
 
-    public function editorIndex()
-    {
-        $data = [
-            'title' => 'Editor',
-            'breadcrumbs' => [
-                [
-                    'name' => 'Editor',
-                    'link' => route('back.master.editor.index')
-                ]
-            ],
-            'editors' => Editor::with(['data'])
-                ->latest()
-                ->get()
-                ->unique('editor_id')
-                ->map(function ($editor) {
-                    $editor->journal = Editor::where('editor_id', $editor->editor_id)
-                        ->with('issue.journal')
-                        ->get()
-                        ->map(function ($item) {
-                            $journal_data = $item->issue->journal;
-                            return (object) [
-                                'id' => $journal_data->id,
-                                'name' => $journal_data->name,
-                                'title' => $journal_data->title,
-                                'url_path' => $journal_data->url_path,
-                            ];
-                        });
-                    return $editor;
-                }),
-        ];
-
-        return view('back.pages.master.editor.index', $data);
-    }
-
-    public function editorExport()
-    {
-       return Excel::download(new EditorAllExport, 'editors.xlsx');
-    }
-
-    public function editorUpdate(Request $request, $id)
-    {
-        $editor = Editor::where('editor_id', $id)->first();
-        if (!$editor) {
-            Alert::error('Gagal', 'Editor tidak ditemukan');
-            return redirect()->back();
-        }
-
-        $validator = Validator::make($request->all(), [
-            'nik' => 'required|string|max:255',
-            'account_bank' => 'nullable|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'npwp' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            Alert::error('Gagal', $validator->errors()->all());
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        EditorData::updateOrCreate(
-            ['editor_id' => $editor->editor_id],
-            [
-                'nik' => $request->nik,
-                'account_bank' => $request->account_bank,
-                'account_number' => $request->account_number,
-                'npwp' => $request->npwp,
-            ]
-        );
-
-        Alert::success('Success', 'Editor has been updated');
-        return redirect()->back();
-    }
-
-    public function editorSyncToUser()
-    {
-        $editor_exists = [];
-        $total_data_synced = 0;
-        $total_data_error = 0;
-        $editors = Editor::with('data')->get()->unique('editor_id');
-        foreach ($editors as $editor) {
-            try {
-                  $user = User::where('editor_id', $editor->editor_id)->first();
-            if ($user) {
-                $editor_exists[] = $editor->name . ' (' . $editor->editor_id . ')';
-            } else {
-                // Create new user
-                $user = new User();
-                $user->name = $editor->name;
-                $user->email = $editor->email;
-                $user->phone = $editor->phone;
-                $user->editor_id = $editor->editor_id;
-                $user->password = bcrypt('rumahjurnal123'); // Set a default password or generate one
-                $user->save();
-                $total_data_synced++;
-            }
-            } catch (\Throwable $th) {
-                $total_data_error++;
-                continue;
-            }
-
-        }
-
-        if (count($editor_exists) > 0) {
-            Alert::info('Info', 'Total user baru yang disinkronisasi: ' . $total_data_synced . '. total data yang sudah memiliki akun user: ' . count($editor_exists) . '. total data error: ' . $total_data_error);
-        } else {
-            Alert::success('Success', 'Semua editor berhasil disinkronisasi ke user');
-        }
-        return redirect()->back();
-    }
 }
