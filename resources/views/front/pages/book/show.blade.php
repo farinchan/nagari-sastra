@@ -3,7 +3,7 @@
     <title>{{ $meta['title'] }}</title>
     <meta name="description" content="{{ $meta['description'] }}">
     <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="{{ $book->authorString ?: $book->author }}">
+    <meta name="author" content="{{ $book->author }}">
 
     @php
         $citationAbstract = trim(strip_tags($book->description ?? ''));
@@ -61,7 +61,7 @@
 
     <!-- Dublin Core Metadata -->
     <meta name="DC.title" content="{{ $book->title }}">
-    <meta name="DC.creator" content="{{ $book->authorString ?: $book->author ?: 'Unknown' }}">
+    <meta name="DC.creator" content="{{ $book->author ?: 'Unknown' }}">
     <meta name="DC.subject"
         content="{{ collect($book->keywords)->map(function ($keyword) {
                 if (is_array($keyword)) {
@@ -91,7 +91,7 @@
             'name' => $book->title,
             'author' => [
                 '@type' => 'Person',
-                'name' => $book->authorString ?: $book->author ?: 'Unknown',
+                'name' => $book->author ?: 'Unknown',
             ],
             'publisher' => [
                 '@type' => 'Organization',
@@ -144,7 +144,7 @@
             'ctx_ver' => 'Z39.88-2004',
             'rft_val_fmt' => 'info:ofi/fmt:kev:mtx:book',
             'rft.title' => $book->title,
-            'rft.au' => $book->authorString ?: $book->author,
+            'rft.au' => $book->author,
             'rft.pub' => $book->publisher,
             'rft.date' => $book->publish_year,
             'rft.isbn' => $book->isbn,
@@ -186,7 +186,7 @@
 
                                     <h2 class="h4-lg mb-2">{{ $book->title }}</h2>
                                     <p class="p-md grey-color mb-3">
-                                        by <strong>{{ $book->authorString ?: $book->author ?: '-' }}</strong>
+                                        by <strong>{{ $book->author ?: '-' }}</strong>
                                     </p>
 
                                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -502,7 +502,7 @@
                                             $apaAuthorText = $apaAuthorText->implode(', ');
                                         }
                                     } else {
-                                        $citationAuthorText = $book->authorString ?: $book->author ?: 'Unknown Author';
+                                        $citationAuthorText = $book->author ?: 'Unknown Author';
                                         $citationAuthorTextUpper = Str::upper($citationAuthorText);
                                         $apaAuthorText = $citationAuthorText;
                                     }

@@ -41,7 +41,7 @@ class HomeController extends Controller
             'count_journal' => \App\Models\Journal::count(),
             
             // Latest Books
-            'list_book' => \App\Models\Book::where('status', 'published')->latest()->take(10)->get(),
+            'list_book' => \App\Models\Book::where('status', 'published')->with(['category', 'bookAuthors'])->latest()->take(8)->get(),
         ];
         return view('front.pages.home.index', $data);
     }

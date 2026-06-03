@@ -337,162 +337,124 @@
     <!-- BOOKS SECTION
     ============================================= -->
     <style>
-        .books-scroll-container {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 24px;
-            padding: 15px 5px 30px 5px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-        }
-        .books-scroll-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .books-scroll-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .books-scroll-container::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 10px;
-            transition: background 0.3s;
-        }
-        .books-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #999;
-        }
-        .book-card {
-            width: 260px;
-            min-width: 260px;
-            background: #ffffff;
-            border: 1px solid #eaeaea;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        .book-card-v2 {
+            background: #fff;
+            border-radius: 8px;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: column;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-        .book-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 25px rgba(0,0,0,0.08);
-            border-color: #d1d1d1;
-        }
-        .book-img-wrapper {
-            position: relative;
-            height: 340px;
-            overflow: hidden;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .book-img {
-            width: 100%;
             height: 100%;
+        }
+        .book-card-v2:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .book-card-v2 .book-cover {
+            position: relative;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+        .book-card-v2 .book-cover img {
+            width: 100%;
+            height: 300px;
             object-fit: cover;
+            display: block;
             transition: transform 0.5s ease;
         }
-        .book-card:hover .book-img {
+        .book-card-v2:hover .book-cover img {
             transform: scale(1.05);
         }
-        .book-badge {
+        .book-card-v2 .book-cover .category-tag {
             position: absolute;
             top: 12px;
             left: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
+            background: #fff;
+            color: #333;
+            font-size: 11px;
             font-weight: 600;
-            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
-        .book-price-badge {
+        .book-card-v2 .book-cover .price-tag {
             position: absolute;
             bottom: 12px;
             right: 12px;
-            background: #007bff;
+            background: #2a80b9;
             color: #fff;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 13px;
             font-weight: 700;
+            padding: 5px 14px;
+            border-radius: 6px;
         }
-        .book-price-free {
-            background: #28a745;
+        .book-card-v2 .book-cover .price-tag.free {
+            background: #27ae60;
         }
-        .book-info {
-            padding: 16px;
+        .book-card-v2 .book-body {
+            padding: 18px;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
         }
-        .book-title {
-            font-size: 0.95rem;
+        .book-card-v2 .book-body h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
             font-weight: 700;
-            line-height: 1.4;
+            color: #222;
+            line-height: 1.5;
             margin-bottom: 8px;
-            color: #333;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 40px;
         }
-        .book-author {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-bottom: 12px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .book-card-v2 .book-body h6 a {
+            color: inherit;
+            text-decoration: none;
         }
-        .book-btn {
+        .book-card-v2 .book-body h6 a:hover {
+            color: #2a80b9;
+        }
+        .book-card-v2 .book-body .book-author-name {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 0;
+        }
+        .book-card-v2 .book-body .book-author-name span.flaticon-user {
+            margin-right: 4px;
+            font-size: 12px;
+        }
+        .book-card-v2 .book-footer {
+            padding: 0 18px 18px;
             margin-top: auto;
-            width: 100%;
-            padding: 8px 16px;
-            background: #f1f3f5;
-            color: #495057;
+        }
+        .book-card-v2 .book-footer a {
+            display: block;
             text-align: center;
-            border-radius: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            color: #2a80b9;
+            font-size: 13px;
             font-weight: 600;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            border: 1px solid transparent;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid #eee;
         }
-        .book-card:hover .book-btn {
-            background: #007bff;
-            color: #ffffff;
-        }
-        .book-scroll-nav {
-            display: flex;
-            gap: 10px;
-        }
-        .scroll-nav-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            border: 1px solid #ddd;
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .scroll-nav-btn:hover {
-            background: #007bff;
-            border-color: #007bff;
+        .book-card-v2 .book-footer a:hover {
+            background: #2a80b9;
             color: #fff;
+            border-color: #2a80b9;
         }
     </style>
 
     <section id="books-latest" class="wide-60 division bg-lightgrey">
         <div class="container">
             <!-- SECTION TITLE -->
-            <div class="row align-items-center mb-40">
+            <div class="row mb-40">
                 <div class="col-md-8">
                     <div class="section-title text-left">
                         <div class="section-id grey-color">Koleksi Buku</div>
@@ -501,71 +463,61 @@
                     </div>
                 </div>
                 @if(!$list_book->isEmpty())
-                <div class="col-md-4 text-right d-none d-md-flex align-items-center justify-content-end">
-                    <div class="book-scroll-nav mr-3">
-                        <button id="slide-left-btn" class="scroll-nav-btn"><span class="flaticon-left-arrow"></span></button>
-                        <button id="slide-right-btn" class="scroll-nav-btn"><span class="flaticon-right-arrow"></span></button>
-                    </div>
-                    <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Semua Buku</a>
+                <div class="col-md-4 text-right d-none d-md-flex align-items-end justify-content-end pb-3">
+                    <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Buku</a>
                 </div>
                 @endif
             </div>
 
-            <!-- SCROLLABLE CONTAINER / EMPTY STATE -->
+            <!-- BOOK GRID -->
             @if($list_book->isEmpty())
                 <div class="row">
                     <div class="col-12 text-center py-4">
-                        <div class="no-books-box p-5" style="background: #ffffff; border: 1px dashed #ddd; border-radius: 16px; max-width: 550px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-                            <div class="ico-55 mb-20" style="color: #bbb;"><span class="flaticon-book"></span></div>
+                        <div class="p-5" style="background: #fff; border: 2px dashed #e0e0e0; border-radius: 12px; max-width: 500px; margin: 0 auto;">
+                            <div class="ico-55 mb-20" style="color: #ccc;"><span class="flaticon-book"></span></div>
                             <h5 class="h5-xs" style="color: #444; font-weight: 700; margin-bottom: 10px;">Belum Ada Koleksi Buku</h5>
-                            <p class="p-md grey-color">Saat ini belum ada buku yang diterbitkan. Buku terbaru yang terbit akan tampil di sini.</p>
+                            <p class="p-md grey-color mb-0">Buku terbaru yang terbit akan tampil di sini.</p>
                         </div>
                     </div>
                 </div>
             @else
-                <div class="books-scroll-container" id="books-scroll">
+                <div class="row">
                     @foreach($list_book as $book)
-                        <div class="book-card">
-                            <div class="book-img-wrapper">
-                                <span class="book-badge">{{ $book->category->name ?? 'Buku' }}</span>
-                                <img class="book-img" src="{{ $book->getThumbnail() }}" alt="{{ $book->title }}">
-                                @if($book->price == 0)
-                                    <span class="book-price-badge book-price-free">Gratis</span>
-                                @else
-                                    <span class="book-price-badge">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
-                                @endif
-                            </div>
-                            <div class="book-info">
-                                <h5 class="book-title">{{ $book->title }}</h5>
-                                <p class="book-author">{{ $book->author ?? 'Penulis' }}</p>
-                                <a href="{{ route('book.show', $book->slug) }}" class="book-btn">Detail Buku</a>
+                        <div class="col-sm-6 col-lg-3 mb-4">
+                            <div class="book-card-v2">
+                                <div class="book-cover">
+                                    <a href="{{ route('book.show', $book->slug) }}">
+                                        <img src="{{ $book->getThumbnail() }}" alt="{{ $book->title }}">
+                                    </a>
+                                    <span class="category-tag">{{ $book->category->name ?? 'Buku' }}</span>
+                                    @if($book->price == 0)
+                                        <span class="price-tag free">Gratis</span>
+                                    @else
+                                        <span class="price-tag">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
+                                    @endif
+                                </div>
+                                <div class="book-body">
+                                    <h6><a href="{{ route('book.show', $book->slug) }}">{{ $book->title }}</a></h6>
+                                    <p class="book-author-name"><span class="flaticon-user"></span> {{ $book->author ?? 'Penulis' }}</p>
+                                </div>
+                                <div class="book-footer">
+                                    <a href="{{ route('book.show', $book->slug) }}">Detail Buku →</a>
+                                </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
 
-                <!-- MOBILE ALL BOOKS LINK -->
-                <div class="row d-md-none mt-3">
+                <!-- MOBILE -->
+                <div class="row d-md-none mt-2">
                     <div class="col text-center">
-                        <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Semua Buku</a>
+                        <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Buku</a>
                     </div>
                 </div>
             @endif
         </div>
     </section>
 
-    <script>
-        if (document.getElementById('slide-left-btn')) {
-            document.getElementById('slide-left-btn').addEventListener('click', function() {
-                document.getElementById('books-scroll').scrollBy({ left: -300, behavior: 'smooth' });
-            });
-        }
-        if (document.getElementById('slide-right-btn')) {
-            document.getElementById('slide-right-btn').addEventListener('click', function() {
-                document.getElementById('books-scroll').scrollBy({ left: 300, behavior: 'smooth' });
-            });
-        }
-    </script>
 
     <!-- FEATURES-10
                                        ============================================= -->

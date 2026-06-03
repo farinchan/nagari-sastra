@@ -18,9 +18,11 @@ class BookController extends Controller
         $books = Book::where('status', 'published')
             ->where(function ($query) use ($search) {
                 $query->where('title', 'like', "%$search%")
-                    ->orWhere('authorString', 'like', "%$search%")
-                    ->orWhere('authors', 'like', "%$search%")
-                    ->orWhere('publisher', 'like', "%$search%");
+                    ->orWhere('publisher', 'like', "%$search%")
+                    ->orWhereHas('bookAuthors', function ($q) use ($search) {
+                        $q->where('name', 'like', "%$search%")
+                          ->orWhere('name_with_title', 'like', "%$search%");
+                    });
             })
             ->with('category')
             ->latest()
@@ -55,7 +57,8 @@ class BookController extends Controller
     public function show($slug)
     {
         $setting_web = SettingWebsite::first();
-        $book = Book::where('slug', $slug)
+        $book = Book::with(['category', 'bookAuthors'])
+            ->where('slug', $slug)
             ->where('status', 'published')
             ->firstOrFail();
 
@@ -71,7 +74,7 @@ class BookController extends Controller
             'meta' => [
                 'title' => $book->title . ' | ' . $setting_web->name,
                 'description' => strip_tags($book->description),
-                'keywords' => $setting_web->name . ', ' . $book->title . ', ' . ($book->authorString ?: $book->author) . ', ' . $book->publisher,
+                'keywords' => $setting_web->name . ', ' . $book->title . ', ' . $book->author . ', ' . $book->publisher,
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon
             ],
             'breadcrumbs' => [
@@ -103,7 +106,8 @@ class BookController extends Controller
     public function preview($slug)
     {
         $setting_web = SettingWebsite::first();
-        $book = Book::where('slug', $slug)
+        $book = Book::with(['category', 'bookAuthors'])
+            ->where('slug', $slug)
             ->where('status', 'published')
             ->firstOrFail();
 

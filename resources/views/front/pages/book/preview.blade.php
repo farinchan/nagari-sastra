@@ -174,7 +174,7 @@
     <div class="topbar">
         <div>
             <h1>{{ $book->title }}</h1>
-            <p>{{ $book->authorString ?: $book->author ?: '-' }} | {{ $book->publisher ?: '-' }}</p>
+            <p>{{ $book->author ?: '-' }} | {{ $book->publisher ?: '-' }}</p>
         </div>
         <div class="actions">
             @if ($preview_url)
