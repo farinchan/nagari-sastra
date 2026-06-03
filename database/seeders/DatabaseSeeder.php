@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\News;
 use App\Models\NewsCategory;
+use App\Models\OutgoingMailCategory;
 use App\Models\SettingBanner;
 use App\Models\SettingWebsite;
 use App\Models\User;
@@ -25,6 +26,24 @@ class DatabaseSeeder extends Seeder
         Role::create(['name' => 'editor']);
         Role::create(['name' => 'humas']);
         Role::create(['name' => 'marketing']);
+
+        OutgoingMailCategory::create([
+            'name' => 'Letter of Acceptance (LoA)',
+            'kode' => 'LoA',
+            'description' => 'Kategori Letter of Acceptance (LoA) adalah kategori yang berisi dokumen resmi yang dikeluarkan untuk mengonfirmasi bahwa suatu karya ilmiah, artikel, atau penelitian telah diterima untuk dipublikasikan atau disajikan dalam suatu konferensi, jurnal, atau platform akademik lainnya.',
+        ]);
+
+        OutgoingMailCategory::create([
+            'name' => 'Sertifikat Penulis Buku',
+            'kode' => 'SRT-PB',
+            'description' => 'Kategori sertifikat penulis buku adalah kategori yang berisi dokumen resmi yang diberikan kepada penulis buku sebagai pengakuan atas kontribusi mereka dalam menulis dan menerbitkan sebuah buku. Sertifikat ini biasanya mencantumkan nama penulis, judul buku, tanggal penerbitan, dan informasi relevan lainnya yang menunjukkan bahwa penulis tersebut telah berhasil menyelesaikan proses penulisan dan penerbitan buku.',
+        ]);
+
+        OutgoingMailCategory::create([
+            'name' => 'Sertifikat Reviewer Jurnal',
+            'kode' => 'SRT-RJ',
+            'description' => 'Kategori sertifikat reviewer jurnal adalah kategori yang berisi dokumen resmi yang diberikan kepada reviewer jurnal sebagai pengakuan atas kontribusi mereka dalam meninjau dan mengevaluasi artikel ilmiah yang diajukan untuk diterbitkan. Sertifikat ini biasanya mencantumkan nama reviewer, judul artikel, tanggal peninjauan, dan informasi relevan lainnya yang menunjukkan bahwa reviewer tersebut telah berhasil menyelesaikan proses peninjauan artikel.',
+        ]);
 
         User::create([
             'name' => 'Fajri - Developer',

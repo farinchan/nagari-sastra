@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -11,7 +12,7 @@ return new class extends Migration
         Schema::create('outgoing_mail_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('kode');
+            $table->string('kode')->unique();
             $table->text('description')->nullable();
             $table->timestamps();
         });

@@ -159,9 +159,26 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/', [BackBookController::class, 'index'])->name('index');
         Route::get('/create', [BackBookController::class, 'create'])->name('create');
         Route::post('/create', [BackBookController::class, 'store'])->name('store');
-        Route::get('/edit/{id}', [BackBookController::class, 'edit'])->name('edit');
         Route::put('/edit/{id}', [BackBookController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [BackBookController::class, 'destroy'])->name('destroy');
+
+        // Detail tabs
+        Route::get('/{id}/detail', [BackBookController::class, 'show'])->name('show');
+        Route::get('/{id}/authors', [BackBookController::class, 'authorTab'])->name('authors');
+        Route::get('/{id}/payment', [BackBookController::class, 'paymentTab'])->name('payment');
+
+        // Editor
+        Route::put('/{id}/editor', [BackBookController::class, 'editorUpdate'])->name('editor.update');
+
+        // Authors
+        Route::post('/{id}/author', [BackBookController::class, 'authorStore'])->name('author.store');
+        Route::put('/{id}/author/{authorId}', [BackBookController::class, 'authorUpdate'])->name('author.update');
+        Route::delete('/{id}/author/{authorId}', [BackBookController::class, 'authorDestroy'])->name('author.destroy');
+        Route::get('/{id}/author/{authorId}/certificate', [BackBookController::class, 'authorCertificate'])->name('author.certificate');
+
+        // Invoice
+        Route::post('/{id}/invoice', [BackBookController::class, 'invoiceStore'])->name('invoice.store');
+        Route::get('/invoice/{invoiceId}/download', [BackBookController::class, 'invoiceGenerate'])->name('invoice.download');
     });
 
     Route::prefix('event')->name('event.')->group(function () {

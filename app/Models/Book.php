@@ -30,7 +30,6 @@ class Book extends Model
         'weight' => 'float',
         'price' => 'float',
         'stock' => 'integer',
-        'authors' => 'array',
         'keywords' => 'array',
     ];
 
@@ -43,25 +42,11 @@ class Book extends Model
 
     public function getAuthorAttribute(): ?string
     {
-        if (is_array($this->authors) && count($this->authors) > 0) {
-            return collect($this->authors)
-                ->map(function ($author) {
-                    if (is_array($author)) {
-                        return $author['value'] ?? null;
-                    }
-
-                    if (is_object($author)) {
-                        return $author->value ?? null;
-                    }
-
-                    return $author;
-                })
+        $authors = $this->bookAuthors;
+        if ($authors && $authors->count() > 0) {
+            return $authors->pluck('name_with_title')
                 ->filter()
-                ->implode(', ');
-        }
-
-        if ($this->authorString) {
-            return $this->authorString;
+                ->implode(', ') ?: $authors->pluck('name')->filter()->implode(', ');
         }
 
         return null;
@@ -69,30 +54,9 @@ class Book extends Model
 
     public function getCitationAuthorsAttribute(): array
     {
-        if (is_array($this->authors) && count($this->authors) > 0) {
-            return collect($this->authors)
-                ->map(function ($author) {
-                    if (is_array($author)) {
-                        return $author['value'] ?? null;
-                    }
-
-                    if (is_object($author)) {
-                        return $author->value ?? null;
-                    }
-
-                    return $author;
-                })
-                ->filter()
-                ->values()
-                ->all();
-        }
-
-        if ($this->authorString) {
-            return collect(preg_split('/\s*(?:,|;|&|\band\b)\s*/i', $this->authorString, -1, PREG_SPLIT_NO_EMPTY))
-                ->map(fn ($author) => trim($author))
-                ->filter()
-                ->values()
-                ->all();
+        $authors = $this->bookAuthors;
+        if ($authors && $authors->count() > 0) {
+            return $authors->pluck('name')->filter()->values()->all();
         }
 
         return [];
@@ -129,5 +93,20 @@ class Book extends Model
             return $this->attachment;
         }
         return Storage::url($this->attachment);
+    }
+
+    public function editors()
+    {
+        return $this->belongsToMany(User::class, 'book_editors', 'book_id', 'user_id');
+    }
+
+    public function bookAuthors()
+    {
+        return $this->hasMany(BookAuthor::class)->orderBy('order');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(PaymentInvoice::class);
     }
 }
