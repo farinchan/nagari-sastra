@@ -26,6 +26,12 @@
             border-radius: 4px;
             z-index: 2;
         }
+        .blog-1-post .h5-xs {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
     <!-- HERO-4
                                            ============================================= -->
@@ -227,22 +233,25 @@
 
                                     <!-- BLOG POST IMAGE -->
                                     <div class="blog-post-img rel">
-                                        <div class="hover-overlay">
-                                            <img class="img-fluid" src="{{ $news->getThumbnail() }}"
-                                                alt="blog-post-image" />
-                                            <div class="item-overlay"></div>
-                                        </div>
+                                        <a href="{{ route('news.detail', $news->slug) }}">
+                                            <div class="hover-overlay">
+                                                <img class="img-fluid" src="{{ $news->getThumbnail() }}"
+                                                    alt="blog-post-image" />
+                                                <div class="item-overlay"></div>
+                                            </div>
+                                        </a>
                                     </div>
 
                                     <!-- BLOG POST TEXT -->
                                     <div class="blog-post-txt">
 
                                         <!-- Post Tag -->
-                                        <p class="p-sm post-tag txt-upcase"><a href="#">{{ $news->category->name }}
-                                        </p>
+                                        <p class="p-sm post-tag txt-upcase">{{ $news->category->name }}</p>
 
                                         <!-- Post Title -->
-                                        <h5 class="h5-xs">{{ $news->title }}</h5>
+                                        <h5 class="h5-xs">
+                                            <a href="{{ route('news.detail', $news->slug) }}">{{ $news->title }}</a>
+                                        </h5>
 
                                         <!-- Author Data -->
                                         <div class="post-author">
@@ -252,7 +261,7 @@
 
                                         <!-- Post Link -->
                                         <div class="post-link ico-20">
-                                            <a href="single-post.html"><span class="flaticon-right-arrow"></span></a>
+                                            <a href="{{ route('news.detail', $news->slug) }}"><span class="flaticon-right-arrow"></span></a>
                                         </div>
 
                                     </div> <!-- END BLOG POST TEXT -->
@@ -463,11 +472,14 @@
                                 data-wow-delay="{{ 0.2 + $loop->iteration * 0.2 }}s">
 
                                 <!-- Image -->
-                                <div class="fbox-img radius-04"><img class="img-fluid"
-                                        src="{{ $journal->getJournalThumbnail() }}" alt="features-image"></div>
+                                <div class="fbox-img radius-04">
+                                    <a href="{{ route('journal.detail', $journal->url_path) }}">
+                                        <img class="img-fluid" src="{{ $journal->getJournalThumbnail() }}" alt="features-image">
+                                    </a>
+                                </div>
 
                                 <!-- Text -->
-                                <h5 class="h5-sm">{{ $journal->title }}</h5>
+                                <h5 class="h5-sm"><a href="{{ route('journal.detail', $journal->url_path) }}">{{ $journal->title }}</a></h5>
                                 <p class="p-md grey-color">{{ Str::limit(strip_tags($journal->description), 100) }}</p>
 
                             </div>
