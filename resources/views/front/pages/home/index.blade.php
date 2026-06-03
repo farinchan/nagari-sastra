@@ -13,6 +13,20 @@
     <meta property="og:image" content="{{ Storage::url($meta['favicon']) }}">
 @endsection
 @section('content')
+
+    <style>
+        .book-price-label {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 4px;
+            z-index: 2;
+        }
+    </style>
     <!-- HERO-4
                                            ============================================= -->
     <section id="hero-4" class="hero-section division">
@@ -336,130 +350,16 @@
 
     <!-- BOOKS SECTION
     ============================================= -->
-    <style>
-        .book-card-v2 {
-            background: #fff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        .book-card-v2:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-        .book-card-v2 .book-cover {
-            position: relative;
-            overflow: hidden;
-            background: #f5f5f5;
-        }
-        .book-card-v2 .book-cover img {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
-            display: block;
-            transition: transform 0.5s ease;
-        }
-        .book-card-v2:hover .book-cover img {
-            transform: scale(1.05);
-        }
-        .book-card-v2 .book-cover .category-tag {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: #fff;
-            color: #333;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            letter-spacing: 0.3px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        .book-card-v2 .book-cover .price-tag {
-            position: absolute;
-            bottom: 12px;
-            right: 12px;
-            background: #2a80b9;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 5px 14px;
-            border-radius: 6px;
-        }
-        .book-card-v2 .book-cover .price-tag.free {
-            background: #27ae60;
-        }
-        .book-card-v2 .book-body {
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-        }
-        .book-card-v2 .book-body h6 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            font-weight: 700;
-            color: #222;
-            line-height: 1.5;
-            margin-bottom: 8px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .book-card-v2 .book-body h6 a {
-            color: inherit;
-            text-decoration: none;
-        }
-        .book-card-v2 .book-body h6 a:hover {
-            color: #2a80b9;
-        }
-        .book-card-v2 .book-body .book-author-name {
-            font-size: 13px;
-            color: #888;
-            margin-bottom: 0;
-        }
-        .book-card-v2 .book-body .book-author-name span.flaticon-user {
-            margin-right: 4px;
-            font-size: 12px;
-        }
-        .book-card-v2 .book-footer {
-            padding: 0 18px 18px;
-            margin-top: auto;
-        }
-        .book-card-v2 .book-footer a {
-            display: block;
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            color: #2a80b9;
-            font-size: 13px;
-            font-weight: 600;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            border: 1px solid #eee;
-        }
-        .book-card-v2 .book-footer a:hover {
-            background: #2a80b9;
-            color: #fff;
-            border-color: #2a80b9;
-        }
-    </style>
-
     <section id="books-latest" class="wide-60 division bg-lightgrey">
         <div class="container">
+
             <!-- SECTION TITLE -->
             <div class="row mb-40">
                 <div class="col-md-8">
                     <div class="section-title text-left">
                         <div class="section-id grey-color">Koleksi Buku</div>
                         <h3 class="h3-sm">Buku Terbaru</h3>
-                        <p class="p-lg grey-color">Jelajahi berbagai buku berkualitas dari para penulis.</p>
+                        <p class="p-lg grey-color">Jelajahi berbagai buku berkualitas dari para penulis</p>
                     </div>
                 </div>
                 @if(!$list_book->isEmpty())
@@ -469,13 +369,13 @@
                 @endif
             </div>
 
-            <!-- BOOK GRID -->
+            <!-- BOOKS GRID -->
             @if($list_book->isEmpty())
                 <div class="row">
                     <div class="col-12 text-center py-4">
-                        <div class="p-5" style="background: #fff; border: 2px dashed #e0e0e0; border-radius: 12px; max-width: 500px; margin: 0 auto;">
-                            <div class="ico-55 mb-20" style="color: #ccc;"><span class="flaticon-book"></span></div>
-                            <h5 class="h5-xs" style="color: #444; font-weight: 700; margin-bottom: 10px;">Belum Ada Koleksi Buku</h5>
+                        <div class="bg-white p-5" style="border: 2px dashed #ddd; border-radius: 6px; max-width: 500px; margin: 0 auto;">
+                            <div class="ico-55 mb-20 grey-color"><span class="flaticon-book"></span></div>
+                            <h5 class="h5-xs">Belum Ada Koleksi Buku</h5>
                             <p class="p-md grey-color mb-0">Buku terbaru yang terbit akan tampil di sini.</p>
                         </div>
                     </div>
@@ -483,33 +383,44 @@
             @else
                 <div class="row">
                     @foreach($list_book as $book)
-                        <div class="col-sm-6 col-lg-3 mb-4">
-                            <div class="book-card-v2">
-                                <div class="book-cover">
+                        <div class="col-sm-6 col-lg-3">
+                            <div class="blog-1-post radius-06 wow fadeInUp" data-wow-delay="{{ $loop->index * 0.1 }}s">
+
+                                <!-- IMAGE -->
+                                <div class="blog-post-img" style="position: relative; overflow: hidden;">
                                     <a href="{{ route('book.show', $book->slug) }}">
-                                        <img src="{{ $book->getThumbnail() }}" alt="{{ $book->title }}">
+                                        <img class="img-fluid" src="{{ $book->getThumbnail() }}" alt="{{ $book->title }}"
+                                             style="width: 100%; height: 280px; object-fit: cover;">
                                     </a>
-                                    <span class="category-tag">{{ $book->category->name ?? 'Buku' }}</span>
+                                    <!-- CATEGORY -->
+                                    <div class="post-tag txt-upcase" style="position: absolute; top: 10px; left: 10px; background: #fff; padding: 3px 12px; border-radius: 4px; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                        {{ $book->category->name ?? 'Buku' }}
+                                    </div>
+                                    <!-- PRICE -->
                                     @if($book->price == 0)
-                                        <span class="price-tag free">Gratis</span>
+                                        <span class="book-price-label bg-success">Gratis</span>
                                     @else
-                                        <span class="price-tag">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
+                                        <span class="book-price-label bg-theme">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
                                     @endif
                                 </div>
-                                <div class="book-body">
-                                    <h6><a href="{{ route('book.show', $book->slug) }}">{{ $book->title }}</a></h6>
-                                    <p class="book-author-name"><span class="flaticon-user"></span> {{ $book->author ?? 'Penulis' }}</p>
+
+                                <!-- TEXT -->
+                                <div class="blog-post-txt">
+                                    <h6 class="h6-xs mb-15" style="line-height: 1.4; margin-bottom: 8px;">
+                                        <a href="{{ route('book.show', $book->slug) }}">{{ Str::limit($book->title, 50) }}</a>
+                                    </h6>
+                                    <a href="{{ route('book.show', $book->slug) }}" class="btn btn-tra-grey theme-hover btn-sm btn-block">
+                                        Detail Buku
+                                    </a>
                                 </div>
-                                <div class="book-footer">
-                                    <a href="{{ route('book.show', $book->slug) }}">Detail Buku →</a>
-                                </div>
+
                             </div>
                         </div>
                     @endforeach
                 </div>
 
-                <!-- MOBILE -->
-                <div class="row d-md-none mt-2">
+                <!-- MOBILE LINK -->
+                <div class="row d-md-none mt-3">
                     <div class="col text-center">
                         <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Buku</a>
                     </div>

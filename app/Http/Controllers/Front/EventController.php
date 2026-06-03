@@ -51,12 +51,12 @@ class EventController extends Controller
         $setting_web = SettingWebsite::first();
         $event = Event::where('slug', $slug)->first();
         $data = [
-            'title' => $event->title,
+            'title' => $event->name,
             'meta' => [
-                'title' => $event->title . ' | ' . $setting_web->name,
-                'description' => strip_tags($event->content),
-                'keywords' => $setting_web->name . ', ' . $event->title . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $event->image ?? $setting_web->favicon
+                'title' => $event->name . ' | ' . $setting_web->name,
+                'description' => strip_tags($event->description),
+                'keywords' => $setting_web->name . ', ' . $event->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
+                'favicon' => $event->thumbnail ?? $setting_web->favicon
             ],
             'breadcrumbs' => [
                 [
