@@ -323,7 +323,7 @@ class BookController extends Controller
 
     public function show($id)
     {
-        $book = Book::with(['category', 'editors', 'bookAuthors', 'invoices'])->findOrFail($id);
+        $book = Book::with(['category', 'editors', 'bookAuthors'])->findOrFail($id);
 
         $data = [
             'title' => $book->title,
@@ -341,7 +341,7 @@ class BookController extends Controller
 
     public function authorTab($id)
     {
-        $book = Book::with(['category', 'bookAuthors', 'editors', 'invoices'])->findOrFail($id);
+        $book = Book::with(['category', 'bookAuthors', 'editors'])->findOrFail($id);
 
         $data = [
             'title' => $book->title . ' - Penulis',
@@ -358,7 +358,7 @@ class BookController extends Controller
 
     public function paymentTab($id)
     {
-        $book = Book::with(['category', 'bookAuthors', 'editors', 'invoices'])->findOrFail($id);
+        $book = Book::with(['category', 'bookAuthors', 'editors'])->findOrFail($id);
 
         $data = [
             'title' => $book->title . ' - Pembayaran',
@@ -591,8 +591,9 @@ class BookController extends Controller
             $totalAmount += ($qty * $amount);
         }
 
-        // Check if book already has an invoice
-        $invoice = PaymentInvoice::where('book_id', $book->id)->first();
+        // Check if book already has an invoice (search by item id in JSON)
+        $bookItemId = 'BOOK-' . $book->id;
+        $invoice = PaymentInvoice::where('items', 'like', '%"' . $bookItemId . '%')->first();
 
         if ($invoice) {
             // Update existing invoice
@@ -618,7 +619,6 @@ class BookController extends Controller
             $formattedInvoice = format_nomor($nextNumber, 'INV', 'NSG', Carbon::now()->month, $currentYear);
 
             $invoice = PaymentInvoice::create([
-                'book_id' => $book->id,
                 'invoice' => $formattedInvoice,
                 'invoice_number' => $nextNumber,
                 'items' => $items,

@@ -12,20 +12,10 @@ return new class extends Migration
         Schema::table('books', function (Blueprint $table) {
             $table->dropColumn(['authorString', 'authors']);
         });
-
-        // Add book_id to payment_invoices for book invoices
-        Schema::table('payment_invoices', function (Blueprint $table) {
-            $table->foreignId('book_id')->nullable()->after('id')->constrained('books')->nullOnDelete();
-        });
     }
 
     public function down(): void
     {
-        Schema::table('payment_invoices', function (Blueprint $table) {
-            $table->dropForeign(['book_id']);
-            $table->dropColumn('book_id');
-        });
-
         Schema::table('books', function (Blueprint $table) {
             $table->string('authorString')->nullable()->after('slug');
             $table->json('authors')->nullable()->after('authorString');

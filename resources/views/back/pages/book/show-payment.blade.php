@@ -4,7 +4,7 @@
         @include('back.pages.book.show-header')
 
         @php
-            $invoice = $book->invoices->first();
+            $invoice = \App\Models\PaymentInvoice::where('items', 'like', '%"BOOK-' . $book->id . '%')->first();
             $items = $invoice ? ($invoice->items ?? []) : [];
         @endphp
 

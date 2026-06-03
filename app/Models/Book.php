@@ -105,8 +105,4 @@ class Book extends Model
         return $this->hasMany(BookAuthor::class)->orderBy('order');
     }
 
-    public function invoices()
-    {
-        return $this->hasMany(PaymentInvoice::class);
-    }
 }
