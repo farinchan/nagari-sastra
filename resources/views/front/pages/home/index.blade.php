@@ -496,7 +496,6 @@
     </section> <!-- END FEATURES-10 -->
 
 
-
     <!-- CONTENT-6
                                            ============================================= -->
     <section id="content-6" class="wide-60 content-section division">
@@ -556,6 +555,7 @@
 
     <!-- TESTIMONIALS-3
                                    ============================================= -->
+    @if($list_testimonial->count() > 0)
     <section id="reviews-3" class="wide-100 reviews-section division">
         <div class="container">
 
@@ -586,238 +586,32 @@
                 <div class="col-md-12">
                     <div class="owl-carousel owl-theme reviews-wrapper">
 
+                        @foreach($list_testimonial as $testimonial)
+                            <!-- TESTIMONIAL #{{ $loop->iteration }} -->
+                            <div class="review-3 radius-04">
+                                <div class="review-3-txt">
 
-                        <!-- TESTIMONIAL #1 -->
-                        <div class="review-3 radius-04">
+                                    <!-- Text -->
+                                    <p class="p-md grey-color">{{ $testimonial->content }}</p>
 
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
+                                    <!-- App Rating -->
+                                    <div class="app-rating ico-20 yellow-color">
+                                        @for($i = 1; $i <= 5; $i++)
+                                            @if($i <= $testimonial->rating)
+                                                <span class="flaticon-star"></span>
+                                            @else
+                                                <span class="flaticon-star-1"></span>
+                                            @endif
+                                        @endfor
+                                    </div>
 
-                                <!-- Text -->
-                                <p class="p-md grey-color">Etiam sapien sem at sagittis congue an augue massa varius
-                                    egestas undo suscipit magna tempus undo aliquet
-                                </p>
+                                    <!-- Testimonial Author -->
+                                    <h6 class="h6-sm deepgrey-color">- {{ $testimonial->name }}</h6>
+                                    <p class="p-sm">{{ $testimonial->position }}{{ $testimonial->company ? ', ' . $testimonial->company : '' }}</p>
 
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
                                 </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- Scott Boxer</h6>
-                                <p class="p-sm">Manager</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #1 -->
-
-
-                        <!-- TESTIMONIAL #2 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">At sagittis congue augue undo egestas magna ipsum vitae purus
-                                    and ipsum primis suscipit
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star-half-empty"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- Wendy T.</h6>
-                                <p class="p-sm">Manager</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #2 -->
-
-
-                        <!-- TESTIMONIAL #3 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">Mauris donec ociis magnis and sapien etiam sapien congue undo
-                                    augue pretium and ligula augue a lectus aenean magna
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- pebz13</h6>
-                                <p class="p-sm">House Wife</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #3 -->
-
-
-                        <!-- TESTIMONIAL #4 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">An augue in cubilia laoreet magna and suscipit egestas magna
-                                    ipsum
-                                    purus ipsum and suscipit
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star-1"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- Scott Boxer</h6>
-                                <p class="p-sm">Manager</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #4 -->
-
-
-                        <!-- TESTIMONIAL #5 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">Mauris donec magnis sapien undo etiam sapien and congue augue
-                                    egestas ultrice a vitae purus velna integer tempor congue
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star-half-empty"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- John Sweet</h6>
-                                <p class="p-sm">Manager</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #5 -->
-
-
-                        <!-- TESTIMONIAL #6 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">An augue cubilia laoreet undo magna a suscipit undo egestas
-                                    magna ipsum ligula vitae purus ipsum primis cubilia blandit
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- Leslie D.</h6>
-                                <p class="p-sm">Manager</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #6 -->
-
-
-                        <!-- TESTIMONIAL #7 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">Augue egestas volutpat and egestas augue in cubilia laoreet
-                                    magna undo suscipit luctus
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star-half-empty"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- Marisol19</h6>
-                                <p class="p-sm">Internet Surfer</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #7 -->
-
-
-                        <!-- TESTIMONIAL #8 -->
-                        <div class="review-3 radius-04">
-
-                            <!-- Testimonial Text -->
-                            <div class="review-3-txt">
-
-                                <!-- Text -->
-                                <p class="p-md grey-color">Aliquam augue suscipit luctus neque purus ipsum neque dolor
-                                    primis libero tempus at blandit posuere varius magna
-                                </p>
-
-                                <!-- App Rating -->
-                                <div class="app-rating ico-20 yellow-color">
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star"></span>
-                                    <span class="flaticon-star-half-empty"></span>
-                                </div>
-
-                                <!-- Testimonial Author -->
-                                <h6 class="h6-sm deepgrey-color">- AJ</h6>
-                                <p class="p-sm">Programmer</p>
-
-                            </div>
-
-                        </div> <!-- END TESTIMONIAL #8 -->
+                            </div> <!-- END TESTIMONIAL #{{ $loop->iteration }} -->
+                        @endforeach
 
 
                     </div>
@@ -827,6 +621,7 @@
 
         </div> <!-- End container -->
     </section> <!-- END TESTIMONIALS-3 -->
+    @endif
 
 
 

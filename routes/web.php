@@ -35,6 +35,7 @@ use App\Http\Controllers\Back\SettingController as BackSettingController;
 use App\Http\Controllers\Back\IncomingMailController as BackIncomingMailController;
 use App\Http\Controllers\Back\OutgoingMailController as BackOutgoingMailController;
 use App\Http\Controllers\Back\CrmController as BackCrmController;
+use App\Http\Controllers\Back\TestimonialController as BackTestimonialController;
 
 
 
@@ -237,6 +238,13 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
     Route::prefix('welcomeSpeech')->name('welcomeSpeech.')->group(function () {
         Route::get('/', [BackWelcomeSpeechController::class, 'index'])->name('index');
         Route::put('/edit', [BackWelcomeSpeechController::class, 'update'])->name('update');
+    });
+
+    Route::prefix('testimonial')->name('testimonial.')->group(function () {
+        Route::get('/', [BackTestimonialController::class, 'index'])->name('index');
+        Route::post('/', [BackTestimonialController::class, 'store'])->name('store');
+        Route::put('/edit/{id}', [BackTestimonialController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [BackTestimonialController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('menu')->name('menu.')->group(function () {

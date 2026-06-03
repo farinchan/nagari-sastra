@@ -42,6 +42,9 @@ class HomeController extends Controller
 
             // Latest Books
             'list_book' => \App\Models\Book::where('status', 'published')->with(['category', 'bookAuthors'])->latest()->take(8)->get(),
+
+            // Testimonials
+            'list_testimonial' => \App\Models\Testimonial::active()->ordered()->take(6)->get(),
         ];
         return view('front.pages.home.index', $data);
     }

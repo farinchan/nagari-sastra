@@ -28,8 +28,7 @@
                 <div class="col-lg-4">
                     <div class="cta-6-btn text-right">
                         <div class="btns-group">
-                            <a href="faqs.html" class="btn btn-md btn-tra-white white-hover">Whatsapp</a>
-                            <a href="pricing.html" class="btn btn-md btn-theme tra-white-hover">Contact</a>
+                            <a href="{{ route('contact.index') }}" class="btn btn-md btn-theme tra-white-hover">Contact</a>
                         </div>
                     </div>
                 </div>
