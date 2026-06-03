@@ -118,5 +118,5 @@
             </div>
         </div>
     </section>
-
+@include('front.partials.newsletter')
 @endsection

@@ -182,6 +182,7 @@
                             </div> <!-- End wsmegamenu -->
                         </li> <!-- END MEGAMENU -->
 
+                        <li class="nl-simple" aria-haspopup="true"><a href="{{ route('event.index') }}">Event</a></li>
 
                         <!-- SIMPLE NAVIGATION LINK -->
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('payment.index') }}">Pembayaran</a></li>

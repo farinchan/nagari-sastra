@@ -67,7 +67,7 @@
                                     <!-- Date -->
                                     <p class="post-date mb-10">
                                         <span class="flaticon-clock mr-1"></span>
-                                        {{ $event->datetime ? \Carbon\Carbon::parse($event->datetime)->format('d M Y, H:i') : '-' }}
+                                        {{ $event->datetime ?: '-' }}
                                     </p>
 
                                     <h6 class="h6-xs" style="line-height: 1.4; margin-bottom: 8px;">

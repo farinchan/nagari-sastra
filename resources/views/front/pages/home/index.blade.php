@@ -44,7 +44,7 @@
                         <div class="section-id grey-color">Tentang Kami</div>
 
                         <!-- Title -->
-                        <h2 class="h2-xl deepgrey-color">Publikasikan Karya Ilmiah dan Penelitian</h2>
+                        <h2 class="h2-xl deepgrey-color">Penerbitan, Publikasi & Teknologi</h2>
 
                     </div>
                 </div>
@@ -53,9 +53,9 @@
                 <div class="col-lg-5">
                     <div class="hero-4-txt pc-25">
                         <p class="p-lg grey-color">
-                            Nagari Sastra Group berfokus pada penerbitan buku, publikasi ilmiah, penelitian
-                            terapan, serta pelatihan dan edukasi di berbagai bidang ilmu pengetahuan dan teknologi untuk
-                            mendukung kemajuan ilmu pengetahuan dan inovasi di Indonesia.
+                            Nagari Sastra Group merupakan perusahaan yang bergerak di bidang penerbitan buku ber-ISBN,
+                            publikasi jurnal ilmiah nasional dan internasional, serta pengembangan teknologi informasi
+                            untuk mendukung ekosistem riset dan pendidikan di Indonesia.
                         </p>
                     </div>
                 </div>

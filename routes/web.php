@@ -16,6 +16,8 @@ use App\Http\Controllers\Front\MenuProfilController;
 use App\Http\Controllers\Front\NewsController;
 use App\Http\Controllers\Front\PaymentController;
 use App\Http\Controllers\Front\TeamController;
+use App\Http\Controllers\Front\NewsletterController;
+use App\Http\Controllers\Front\PageController;
 
 use App\Http\Controllers\Back\DashboardController as BackDashboardController;
 use App\Http\Controllers\Back\AnnouncementController as BackAnnouncementController;
@@ -41,8 +43,6 @@ use App\Http\Controllers\Back\CrmController as BackCrmController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/visit', [HomeController::class, 'vistWebsite'])->name('visit.ajax');
-Route::get('/privacy-policy', [HomeController::class, 'privacyPolicy'])->name('privacy.policy');
-Route::get('/terms-of-service', [HomeController::class, 'termsOfService'])->name('terms.service');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
@@ -68,6 +68,9 @@ Route::prefix('account')->name('account.')->group(function () {
 });
 
 Route::get('/welcome', [HomeController::class, 'welcomeSpeech'])->name('welcome.speech');
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('page.terms');
+Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('page.privacy');
 
 Route::prefix('event')->name('event.')->group(function () {
     Route::get('/', [EventController::class, 'index'])->name('index');

@@ -17,7 +17,7 @@
                         <p class="p-md">
                             Kami membuka peluang kerja sama dengan berbagai institusi, peneliti, dan akademisi untuk
                             mengembangkan ilmu pengetahuan dan teknologi melalui penelitian dan publikasi ilmiah. seperti
-                            pembuatan OJS dan tema nya, Pelatihan, Workshop, dan lain-lain.
+                            pembuatan jurnal, pelatihan, workshop, perancangan aplikasi dan lain-lain.
                         </p>
 
                     </div>

@@ -34,12 +34,12 @@ class HomeController extends Controller
             'welcome_speech' => WelcomeSpeech::first(),
             'list_announcement' => Announcement::latest()->where('is_active', true)->limit(8)->get(),
             'list_event' => Event::latest()->where('is_active', true)->where('access', 'terbuka')->limit(8)->get(),
-            
+
             // Dynamic Stats
             'count_book' => \App\Models\Book::count(),
             'count_submission_published' => \App\Models\Submission::where('status', '3')->orWhere('status', 'published')->orWhere('status_label', 'Published')->count(),
             'count_journal' => \App\Models\Journal::count(),
-            
+
             // Latest Books
             'list_book' => \App\Models\Book::where('status', 'published')->with(['category', 'bookAuthors'])->latest()->take(8)->get(),
         ];
@@ -73,57 +73,5 @@ class HomeController extends Controller
         }
     }
 
-    public function privacyPolicy()
-    {
-        $setting_web = SettingWebsite::first();
-
-        $data = [
-            'title' => 'Kebijakan Privasi',
-            'meta' => [
-                'title' => 'Kebijakan Privasi | ' . $setting_web->name,
-                'description' => 'Kebijakan Privasi ' . $setting_web->name . ' - Perlindungan data dan privasi pengguna dalam sistem jurnal online.',
-                'keywords' => $setting_web->name . ', Kebijakan Privasi, Privacy Policy, Data Protection, Journal, Research, OJS System',
-                'favicon' => $setting_web->favicon
-            ],
-            'breadcrumbs' => [
-                [
-                    'name' => 'Beranda',
-                    'link' => route('home')
-                ],
-                [
-                    'name' => 'Kebijakan Privasi',
-                    'link' => route('privacy.policy')
-                ]
-            ],
-            'setting_web' => $setting_web,
-        ];
-        return view('front.pages.home.privacy_policy', $data);
-    }
-
-    public function termsOfService()
-    {
-        $setting_web = SettingWebsite::first();
-
-        $data = [
-            'title' => 'Syarat dan Ketentuan',
-            'meta' => [
-                'title' => 'Syarat dan Ketentuan | ' . $setting_web->name,
-                'description' => 'Syarat dan Ketentuan penggunaan layanan ' . $setting_web->name . ' - Aturan dan regulasi sistem jurnal online.',
-                'keywords' => $setting_web->name . ', Syarat dan Ketentuan, Terms of Service, Journal Rules, OJS System, Academic Journal',
-                'favicon' => $setting_web->favicon
-            ],
-            'breadcrumbs' => [
-                [
-                    'name' => 'Beranda',
-                    'link' => route('home')
-                ],
-                [
-                    'name' => 'Syarat dan Ketentuan',
-                    'link' => route('terms.service')
-                ]
-            ],
-            'setting_web' => $setting_web,
-        ];
-        return view('front.pages.home.terms_of_service', $data);
-    }
+    
 }

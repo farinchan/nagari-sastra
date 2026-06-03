@@ -190,8 +190,8 @@
                                         id="agree_terms" name="agree_terms"
                                         {{ old('agree_terms') ? 'checked' : '' }} required>
                                     <label class="custom-control-label p-sm" for="agree_terms">
-                                        Saya menyetujui <a href="{{ route('terms.service') }}" target="_blank" class="theme-color">Syarat dan Ketentuan</a>
-                                        serta <a href="{{ route('privacy.policy') }}" target="_blank" class="theme-color">Kebijakan Privasi</a> <span class="text-danger">*</span>
+                                        Saya menyetujui <a href="{{ route('page.terms') }}" target="_blank" class="theme-color">Syarat dan Ketentuan</a>
+                                        serta <a href="{{ route('page.privacy') }}" target="_blank" class="theme-color">Kebijakan Privasi</a> <span class="text-danger">*</span>
                                     </label>
                                     @error('agree_terms')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -244,7 +244,7 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="fbox-2 pr-25 mb-40 wow fadeInUp" data-wow-delay="0.4s">
                         <div class="fbox-ico">
-                            <div class="ico-50 theme-color"><span class="flaticon-document"></span></div>
+                            <div class="ico-50 theme-color"><span class="flaticon-pen"></span></div>
                         </div>
                         <div class="fbox-2-txt">
                             <h5 class="h5-md">Publikasi Artikel</h5>

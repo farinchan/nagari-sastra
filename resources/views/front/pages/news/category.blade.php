@@ -241,55 +241,5 @@
 
 
 
-    <!-- NEWSLETTER-1
-               ============================================= -->
-    <div id="newsletter-1" class="bg-10 newsletter-section division">
-        <div class="container white-color">
-
-
-            <!-- SECTION TITLE -->
-            <div class="row">
-                <div class="col-lg-10 offset-lg-1">
-                    <div class="section-title text-center mb-40">
-
-                        <!-- Title 	-->
-                        <h3 class="h3-md">Subscribe To Newsletter</h3>
-
-                        <!-- Text -->
-                        <p class="p-xl">Subscribe to the weekly newsletter for all the latest news</p>
-
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- NEWSLETTER FORM -->
-            <div class="row">
-                <div class="col-md-10 col-lg-8 offset-md-1 offset-lg-2">
-                    <div class="newsletter-txt text-center">
-                        <form class="newsletter-form">
-
-                            <div class="input-group">
-                                <input type="email" class="form-control" placeholder="Enter your email address"
-                                    required id="s-email">
-                                <span class="input-group-btn">
-                                    <button type="submit" class="btn btn-theme tra-white-hover">Subscribe</button>
-                                </span>
-                            </div>
-
-                            <!-- Small Text -->
-                            <p class="p-sm">No spam, just awesome stuff. Read the <a href="#">Privacy Policy</a>
-                            </p>
-
-                            <!-- Newsletter Form Notification -->
-                            <label for="s-email" class="form-notification"></label>
-
-                        </form>
-                    </div>
-                </div>
-            </div> <!-- END NEWSLETTER FORM -->
-
-
-        </div> <!-- End container -->
-    </div> <!-- END NEWSLETTER-1 -->
+   @include('front.partials.newsletter')
 @endsection

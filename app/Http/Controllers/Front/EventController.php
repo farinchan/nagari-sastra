@@ -120,12 +120,7 @@ class EventController extends Controller
             [
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|max:255',
-                'phone' => [
-                    'nullable',
-                    'string',
-                    'max:20',
-                    'regex:/^\+[1-9][0-9]{0,18}$/'
-                ],
+                'phone' => 'nullable|string|max:20',
             ],
             [
                 'name.required' => 'Nama lengkap harus diisi.',

@@ -3,7 +3,7 @@
     $setting_web = \App\Models\SettingWebsite::first();
 @endphp
 
-<footer id="footer-2" class="footer division" style="background-color: ">
+<footer id="footer-2" class="footer division" style="background-color: #f8f9fa;">
     <div class="container">
 
         <!-- FOOTER CONTENT -->
@@ -48,6 +48,12 @@
                         <li>
                             <p><a href="{{ route('contact.index') }}">Kontak</a></p>
                         </li>
+                        <li>
+                            <p><a href="{{ route('page.terms') }}">Syarat & Ketentuan</a></p>
+                        </li>
+                        <li>
+                            <p><a href="{{ route('page.privacy') }}">Kebijakan Privasi</a></p>
+                        </li>
                     </ul>
 
                 </div>
@@ -81,22 +87,57 @@
                     </p>
 
                     <!-- Newsletter Form Input -->
-                    <form class="newsletter-form">
-
+                    <form class="newsletter-form" id="footer-newsletter-form">
+                        @csrf
                         <div class="input-group">
-                            <input type="email" class="form-control" placeholder="Email Address" required
-                                id="s-email">
+                            <input type="email" name="email" class="form-control" placeholder="Email Address" required
+                                id="footer-email">
                             <span class="input-group-btn">
-                                <button type="submit" class="btn ico-25">
+                                <button type="submit" class="btn ico-25" id="footer-newsletter-btn">
                                     <span class="flaticon-arrow-right"></span>
                                 </button>
                             </span>
                         </div>
 
                         <!-- Newsletter Form Notification -->
-                        <label for="s-email" class="form-notification"></label>
+                        <div id="footer-newsletter-msg" class="form-notification" style="display: none; margin-top: 8px; font-size: 13px;"></div>
 
                     </form>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var form = document.getElementById('footer-newsletter-form');
+                            if (!form) return;
+                            form.addEventListener('submit', function(e) {
+                                e.preventDefault();
+                                var btn = document.getElementById('footer-newsletter-btn');
+                                var msgDiv = document.getElementById('footer-newsletter-msg');
+                                var emailInput = document.getElementById('footer-email');
+                                btn.disabled = true;
+                                msgDiv.style.display = 'none';
+                                var xhr = new XMLHttpRequest();
+                                xhr.open('POST', '{{ route("newsletter.subscribe") }}');
+                                xhr.setRequestHeader('Content-Type', 'application/json');
+                                xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                                xhr.onload = function() {
+                                    var data = JSON.parse(xhr.responseText);
+                                    msgDiv.style.display = 'block';
+                                    msgDiv.textContent = data.message;
+                                    msgDiv.style.color = xhr.status === 200 ? '#28a745' : '#dc3545';
+                                    if (xhr.status === 200) emailInput.value = '';
+                                    btn.disabled = false;
+                                    setTimeout(function() { msgDiv.style.display = 'none'; }, 5000);
+                                };
+                                xhr.onerror = function() {
+                                    msgDiv.style.display = 'block';
+                                    msgDiv.style.color = '#dc3545';
+                                    msgDiv.textContent = 'Terjadi kesalahan.';
+                                    btn.disabled = false;
+                                };
+                                xhr.send(JSON.stringify({ email: emailInput.value }));
+                            });
+                        });
+                    </script>
 
                 </div>
             </div>

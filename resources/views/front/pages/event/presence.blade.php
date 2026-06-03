@@ -67,7 +67,7 @@
                     @else
                         <div class="bg-white p-4 radius-06" style="border: 1px solid #e8e8e8;">
                             <h5 class="h5-md mb-20 text-center">Konfirmasi Kehadiran</h5>
-                            <form action="{{ route('event.presence.store', $event_attendance->code) }}" method="POST" class="contact-form">
+                            <form action="{{ route('event.presence.store', $event_attendance->code) }}" method="POST" class="event-presence-form">
                                 @csrf
                                 <div class="form-group mb-20">
                                     <label class="control-label">Catatan (Opsional)</label>
@@ -95,15 +95,15 @@
 
 @section('styles')
 <style>
-    .contact-form .control-label {
+    .event-presence-form .control-label {
         font-weight: 500;
         font-size: 14px;
         color: #555;
         margin-bottom: 8px;
         display: block;
     }
-    .contact-form .form-control { margin-bottom: 0; }
-    .contact-form textarea.form-control { min-height: 80px; padding: 15px; }
+    .event-presence-form .form-control { margin-bottom: 0; }
+    .event-presence-form textarea.form-control { min-height: 80px; padding: 15px; }
     .invalid-feedback {
         display: block;
         font-size: 13px;

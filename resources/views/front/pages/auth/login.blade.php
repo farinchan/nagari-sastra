@@ -32,7 +32,7 @@
                         <!-- ADVANTAGES -->
                         <div class="login-advantages">
                             <div class="d-flex align-items-start mb-20">
-                                <div class="ico-25 theme-color mr-15 mt-1"><span class="flaticon-check"></span></div>
+                                <div class="ico-25 theme-color mr-15 mt-1"><span class="flaticon-like"></span></div>
                                 <div>
                                     <h5 class="h5-xs mb-1">Kelola Publikasi</h5>
                                     <p class="p-md grey-color">Pantau status artikel dan buku yang sedang dalam proses review</p>
