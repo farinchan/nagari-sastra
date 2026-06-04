@@ -9,7 +9,6 @@ use App\Models\Journal;
 use App\Models\News;
 use App\Models\SettingWebsite;
 use App\Models\Visitor;
-use App\Models\WelcomeSpeech;
 use Illuminate\Http\Request;
 use Jenssegers\Agent\Facades\Agent;
 use Stevebauman\Location\Facades\Location;
@@ -31,7 +30,6 @@ class HomeController extends Controller
             'setting_web' => $setting_web,
             'list_news' => News::latest()->where('status', 'published')->limit(10)->get(),
             'list_journal' => Journal::limit(3)->get(),
-            'welcome_speech' => WelcomeSpeech::first(),
             'list_announcement' => Announcement::latest()->where('is_active', true)->limit(6)->get(),
             'list_event' => Event::latest()->where('is_active', true)->where('access', 'terbuka')->limit(8)->get(),
 
