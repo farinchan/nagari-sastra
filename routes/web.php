@@ -23,7 +23,6 @@ use App\Http\Controllers\Back\DashboardController as BackDashboardController;
 use App\Http\Controllers\Back\AnnouncementController as BackAnnouncementController;
 use App\Http\Controllers\Back\EventController as BackEventController;
 use App\Http\Controllers\Back\NewsController as BackNewsController;
-use App\Http\Controllers\Back\WelcomeSpeechController as BackWelcomeSpeechController;
 use App\Http\Controllers\Back\journalController as BackJournalController;
 use App\Http\Controllers\Back\BookController as BackBookController;
 use App\Http\Controllers\Back\FinanceController as BackFinanceController;
@@ -69,7 +68,6 @@ Route::prefix('account')->name('account.')->group(function () {
     Route::put('/profile/password/update', [AccountController::class, 'passwordUpdate'])->name('password.update');
 });
 
-Route::get('/welcome', [HomeController::class, 'welcomeSpeech'])->name('welcome.speech');
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('page.terms');
 Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('page.privacy');
@@ -237,10 +235,6 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/comment/spam/{id}', [BackNewsController::class, 'commentSpam'])->name('comment.spam');
     });
 
-    Route::prefix('welcomeSpeech')->name('welcomeSpeech.')->group(function () {
-        Route::get('/', [BackWelcomeSpeechController::class, 'index'])->name('index');
-        Route::put('/edit', [BackWelcomeSpeechController::class, 'update'])->name('update');
-    });
 
     Route::prefix('testimonial')->name('testimonial.')->group(function () {
         Route::get('/', [BackTestimonialController::class, 'index'])->name('index');
