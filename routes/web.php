@@ -164,6 +164,7 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/create', [BackBookController::class, 'create'])->name('create');
         Route::post('/create', [BackBookController::class, 'store'])->name('store');
         Route::put('/edit/{id}', [BackBookController::class, 'update'])->name('update');
+        Route::put('/edit/{id}/files', [BackBookController::class, 'updateFiles'])->name('update.files');
         Route::delete('/delete/{id}', [BackBookController::class, 'destroy'])->name('destroy');
 
         // Detail tabs

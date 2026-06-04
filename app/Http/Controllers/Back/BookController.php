@@ -298,6 +298,55 @@ class BookController extends Controller
         return redirect()->route('back.book.show', $id);
     }
 
+    public function updateFiles(Request $request, $id)
+    {
+        $book = Book::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192',
+            'preview_file' => 'nullable|mimes:pdf|max:30720',
+            'attachment' => 'nullable|mimes:pdf|max:30720',
+        ], [
+            'image' => 'File harus berupa gambar',
+            'mimes' => 'Format file harus :values',
+            'max' => 'Ukuran file maksimal :max KB',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', $validator->errors()->all());
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            if ($book->thumbnail && Storage::disk('public')->exists($book->thumbnail)) {
+                Storage::disk('public')->delete($book->thumbnail);
+            }
+            $thumbnail = $request->file('thumbnail');
+            $book->thumbnail = $thumbnail->storeAs('books', date('YmdHis') . '_' . Str::slug($book->title) . '.' . $thumbnail->getClientOriginalExtension(), 'public');
+        }
+
+        if ($request->hasFile('preview_file')) {
+            if ($book->preview_file && Storage::disk('public')->exists($book->preview_file)) {
+                Storage::disk('public')->delete($book->preview_file);
+            }
+            $preview = $request->file('preview_file');
+            $book->preview_file = $preview->storeAs('books/preview', date('YmdHis') . '_' . Str::slug($book->title) . '.' . $preview->getClientOriginalExtension(), 'public');
+        }
+
+        if ($request->hasFile('attachment')) {
+            if ($book->attachment && Storage::disk('public')->exists($book->attachment)) {
+                Storage::disk('public')->delete($book->attachment);
+            }
+            $attachment = $request->file('attachment');
+            $book->attachment = $attachment->storeAs('books/attachment', date('YmdHis') . '_' . Str::slug($book->title) . '.' . $attachment->getClientOriginalExtension(), 'public');
+        }
+
+        $book->save();
+
+        Alert::success('Success', 'File berhasil diperbarui');
+
+        return redirect()->route('back.book.show', $id);
+    }
+
     public function destroy($id)
     {
         $book = Book::find($id);

@@ -138,7 +138,7 @@
                         <div class="card-title"><h3>File & Lampiran</h3></div>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('back.book.update', $book->id) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('back.book.update.files', $book->id) }}" method="POST" enctype="multipart/form-data">
                             @method('PUT')
                             @csrf
                             <div class="mb-5">
@@ -178,11 +178,6 @@
                                 <input type="file" name="attachment" class="form-control form-control-sm" accept=".pdf" />
                                 <small class="text-muted">PDF (Max: 30MB)</small>
                             </div>
-
-                            {{-- Hidden fields so update doesn't blank out other data --}}
-                            <input type="hidden" name="title" value="{{ $book->title }}" />
-                            <input type="hidden" name="category_id" value="{{ $book->book_category_id }}" />
-                            <input type="hidden" name="status" value="{{ $book->status }}" />
 
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="ki-duotone ki-check fs-2"></i> Upload File
