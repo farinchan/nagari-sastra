@@ -32,7 +32,7 @@ class HomeController extends Controller
             'list_news' => News::latest()->where('status', 'published')->limit(10)->get(),
             'list_journal' => Journal::limit(3)->get(),
             'welcome_speech' => WelcomeSpeech::first(),
-            'list_announcement' => Announcement::latest()->where('is_active', true)->limit(8)->get(),
+            'list_announcement' => Announcement::latest()->where('is_active', true)->limit(6)->get(),
             'list_event' => Event::latest()->where('is_active', true)->where('access', 'terbuka')->limit(8)->get(),
 
             // Dynamic Stats
@@ -76,5 +76,5 @@ class HomeController extends Controller
         }
     }
 
-    
+
 }

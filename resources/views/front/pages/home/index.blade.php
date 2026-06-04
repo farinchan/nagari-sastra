@@ -32,6 +32,13 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+        .announcement-list a:hover > div {
+            border-color: #ccc !important;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        .announcement-list a {
+            text-decoration: none !important;
+        }
     </style>
     <!-- HERO-4
                                            ============================================= -->
@@ -80,7 +87,7 @@
 
                     <!-- IMAGE-2 -->
                     <div id="img-4-2" class="col-md-6 col-lg-4 wow fadeInUp" data-wow-delay="0.8s">
-                        <img class="img-fluid radius-06" src="{{ asset('front/images/hero-4-2.jpg') }}" alt="hero-image">
+                        <img class="img-fluid radius-06" src="{{ asset('front/images/image1.jpeg') }}" alt="hero-image">
                     </div>
 
                     <!-- IMAGE-3 -->
@@ -282,6 +289,142 @@
     <!-- END BLOG-1 -->
 
 
+    <!-- EVENT & ANNOUNCEMENT SECTION
+    ============================================= -->
+    <section id="event-announcement" class="wide-60 division">
+        <div class="container">
+
+            <div class="row">
+
+                <!-- EVENT COLUMN (LEFT) -->
+                <div class="col-lg-7 mb-40">
+
+                    <!-- Section Header -->
+                    <div class="d-flex align-items-center justify-content-between mb-30">
+                        <div>
+                            <div class="section-id grey-color" style="margin-bottom: 0px">Kegiatan</div>
+                            <h4 class="h4-md mb-0">Event Terbaru</h4>
+                        </div>
+                        @if(!$list_event->isEmpty())
+                            <a href="{{ route('event.index') }}" class="btn btn-tra-grey theme-hover btn-sm d-none d-md-inline-block">Lihat Semua</a>
+                        @endif
+                    </div>
+
+                    @if($list_event->isEmpty())
+                        <div class="bg-lightgrey p-4 text-center" style="border: 2px dashed #ddd; border-radius: 6px;">
+                            <div class="ico-50 mb-15 grey-color"><span class="flaticon-calendar"></span></div>
+                            <h6 class="h6-xs">Belum Ada Event</h6>
+                            <p class="p-md grey-color mb-0">Event terbaru akan tampil di sini.</p>
+                        </div>
+                    @else
+                        <div class="row">
+                            @foreach($list_event->take(4) as $event)
+                                <div class="col-sm-6">
+                                    <div class="blog-1-post radius-06 mb-30 wow fadeInUp" data-wow-delay="{{ $loop->index * 0.15 }}s">
+                                        <!-- IMAGE -->
+                                        <div class="blog-post-img" style="position: relative; overflow: hidden;">
+                                            <a href="{{ route('event.show', $event->slug) }}">
+                                                <img class="img-fluid" src="{{ $event->getThumbnail() }}" alt="{{ $event->name }}"
+                                                     style="width: 100%; height: 180px; object-fit: cover;">
+                                            </a>
+                                            <div class="post-tag txt-upcase" style="position: absolute; top: 10px; left: 10px; background: #fff; padding: 3px 12px; border-radius: 4px; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                                {{ $event->type ?? 'Event' }}
+                                            </div>
+                                            @if($event->status)
+                                                <span style="position: absolute; top: 10px; right: 10px; background: {{ $event->status == 'selesai' ? '#6c757d' : '#28a745' }}; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px;">
+                                                    {{ ucfirst($event->status) }}
+                                                </span>
+                                            @endif
+                                        </div>
+
+                                        <!-- TEXT -->
+                                        <div class="blog-post-txt">
+                                            <p class="post-date mb-5" style="font-size: 13px;">
+                                                <span class="flaticon-clock mr-1"></span>
+                                                {{ $event->datetime ?: '-' }}
+                                            </p>
+                                            <h6 class="h6-xs" style="line-height: 1.4; margin-bottom: 8px;">
+                                                <a href="{{ route('event.show', $event->slug) }}">{{ Str::limit($event->name, 45) }}</a>
+                                            </h6>
+                                            <p class="p-sm grey-color mb-0" style="font-size: 13px;">
+                                                <span class="flaticon-pin mr-1" style="font-size: 11px;"></span>
+                                                {{ Str::limit($event->location ?? 'Online', 30) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <!-- MOBILE LINK -->
+                        <div class="d-md-none text-center mt-2">
+                            <a href="{{ route('event.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Event</a>
+                        </div>
+                    @endif
+
+                </div>
+                <!-- END EVENT COLUMN -->
+
+
+                <!-- ANNOUNCEMENT COLUMN (RIGHT) -->
+                <div class="col-lg-5 mb-40">
+
+                    <!-- Section Header -->
+                    <div class="d-flex align-items-center justify-content-between mb-30">
+                        <div>
+                            <div class="section-id grey-color" style="margin-bottom: 0px">Informasi</div>
+                            <h4 class="h4-md mb-0">Pengumuman</h4>
+                        </div>
+                        @if(!$list_announcement->isEmpty())
+                            <a href="{{ route('announcement.index') }}" class="btn btn-tra-grey theme-hover btn-sm d-none d-md-inline-block">Lihat Semua</a>
+                        @endif
+                    </div>
+
+                    @if($list_announcement->isEmpty())
+                        <div class="bg-lightgrey p-4 text-center" style="border: 2px dashed #ddd; border-radius: 6px;">
+                            <div class="ico-50 mb-15 grey-color"><span class="flaticon-chat-1"></span></div>
+                            <h6 class="h6-xs">Belum Ada Pengumuman</h6>
+                            <p class="p-md grey-color mb-0">Pengumuman terbaru akan tampil di sini.</p>
+                        </div>
+                    @else
+                        <div class="announcement-list">
+                            @foreach($list_announcement->take(6) as $announcement)
+                                <a href="{{ route('announcement.show', $announcement->slug) }}" class="d-block text-decoration-none wow fadeInUp" data-wow-delay="{{ $loop->index * 0.1 }}s">
+                                    <div class="d-flex align-items-center p-3 mb-2 bg-white radius-06" style="border: 1px solid #eee; transition: all 0.3s ease;">
+                                        <!-- Text -->
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <h6 class="h6-xs mb-1 deepgrey-color" style="line-height: 1.4; font-size: 14px;">{{ Str::limit($announcement->title, 60) }}</h6>
+                                            <p class="p-sm grey-color mb-0" style="font-size: 12px;">
+                                                <span class="flaticon-clock mr-1" style="font-size: 11px;"></span>
+                                                {{ $announcement->created_at->diffForHumans() }}
+                                                @if($announcement->file)
+                                                    <span class="ml-2"><span class="flaticon-pdf" style="font-size: 11px;"></span> Lampiran</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <!-- Arrow -->
+                                        <div class="flex-shrink-0 ml-2">
+                                            <span class="flaticon-right-arrow grey-color" style="font-size: 12px;"></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+
+                        <!-- MOBILE LINK -->
+                        <div class="d-md-none text-center mt-3">
+                            <a href="{{ route('announcement.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Pengumuman</a>
+                        </div>
+                    @endif
+
+                </div>
+                <!-- END ANNOUNCEMENT COLUMN -->
+
+            </div> <!-- End row -->
+
+        </div> <!-- End container -->
+    </section>
+    <!-- END EVENT & ANNOUNCEMENT SECTION -->
 
 
 
