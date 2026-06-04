@@ -227,7 +227,7 @@
     var embedBaseUrl = '{{ url("/api/webchat/embed") }}';
 
     function showEmbed(token) {
-        var code = '<scr' + 'ipt src="' + embedBaseUrl + '/' + token + '.js">' + '</scr' + 'ipt>';
+        var code = '<scr' + 'ipt src="' + embedBaseUrl + '/' + token + '">' + '</scr' + 'ipt>';
         document.getElementById('embedCodeText').textContent = code;
         var modal = new bootstrap.Modal(document.getElementById('embedModal'));
         modal.show();

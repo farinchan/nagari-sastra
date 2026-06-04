@@ -42,7 +42,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 // Webchat Widget API (public, no auth)
 Route::prefix('webchat')->name('webchat.')->group(function () {
     Route::get('/embed.js', [App\Http\Controllers\Api\WebchatController::class, 'embedScript'])->name('embed');
-    Route::get('/embed/{token}.js', [App\Http\Controllers\Api\WebchatController::class, 'embedScriptByPath'])->name('embed.token');
+    Route::get('/embed/{token}', [App\Http\Controllers\Api\WebchatController::class, 'embedScriptByPath'])->name('embed.token');
     Route::post('/start', [App\Http\Controllers\Api\WebchatController::class, 'startConversation'])->name('start')->middleware('throttle:30,1');
     Route::post('/send', [App\Http\Controllers\Api\WebchatController::class, 'sendMessage'])->name('send')->middleware('throttle:30,1');
     Route::post('/upload', [App\Http\Controllers\Api\WebchatController::class, 'uploadImage'])->name('upload')->middleware('throttle:10,1');
