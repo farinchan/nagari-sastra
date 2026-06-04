@@ -117,7 +117,7 @@
             $webchatWidget = \App\Models\WebchatWidget::where('is_active', true)->first();
         @endphp
         @if($webchatWidget)
-            <script src="{{ url('/api/webchat/embed.js?token=' . $webchatWidget->token) }}"></script>
+            <script src="{{ url('/api/webchat/embed/' . $webchatWidget->token . '.js') }}"></script>
         @endif
 
     </div> <!-- END PAGE CONTENT -->

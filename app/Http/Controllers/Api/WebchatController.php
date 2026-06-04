@@ -22,12 +22,29 @@ class WebchatController extends Controller
      */
     public function embedScript(Request $request)
     {
-        $token = $request->query('token');
+        $token = $request->query('token') ?? $request->route('token');
         if (!$token) {
             return response('// Webchat: missing token', 200)
                 ->header('Content-Type', 'application/javascript');
         }
 
+        return $this->generateEmbedJs($token);
+    }
+
+    /**
+     * Serve the embeddable widget JavaScript via path parameter.
+     * Usage: <script src="https://yoursite.com/api/webchat/embed/{token}.js"></script>
+     */
+    public function embedScriptByPath(Request $request, $token)
+    {
+        return $this->generateEmbedJs($token);
+    }
+
+    /**
+     * Generate the embed JS for a given widget token.
+     */
+    private function generateEmbedJs(string $token)
+    {
         $widget = WebchatWidget::where('token', $token)->where('is_active', true)->first();
         if (!$widget) {
             return response('// Webchat: invalid or inactive widget token', 200)
