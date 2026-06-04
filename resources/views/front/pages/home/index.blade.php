@@ -677,7 +677,7 @@
                         </ul> <!-- End Text List -->
 
                         <!--  Button -->
-                        <a href="#faqs-1" class="btn btn-md btn-tra-grey theme-hover">Read The FAQs</a>
+                        <a href="{{ route('page.faq') }}" class="btn btn-md btn-tra-grey theme-hover">Lihat FAQ</a>
 
                     </div>
                 </div> <!-- END TEXT BLOCK -->

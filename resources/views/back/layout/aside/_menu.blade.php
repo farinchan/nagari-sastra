@@ -150,6 +150,20 @@
             </div>
 
             <div class= "menu-item">
+                <a class="menu-link @if (request()->routeIs('back.faq.*')) active @endif"
+                    href="{{ route('back.faq.index') }}">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-question-2 fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">FAQ</span>
+                </a>
+            </div>
+
+            <div class= "menu-item">
                 <a class="menu-link @if (request()->routeIs('back.menu.profil.*')) active @endif"
                     href="{{ route('back.menu.profil.index') }}">
                     <span class="menu-icon">

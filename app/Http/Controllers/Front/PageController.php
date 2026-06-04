@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Models\Faq;
 use App\Models\SettingWebsite;
 
 class PageController extends Controller
@@ -49,5 +50,28 @@ class PageController extends Controller
         ];
 
         return view('front.pages.page.privacy', $data);
+    }
+
+    public function faq()
+    {
+        $setting_web = SettingWebsite::first();
+
+        $data = [
+            'title' => 'FAQ',
+            'meta' => [
+                'title' => 'FAQ | ' . $setting_web->name,
+                'description' => 'Pertanyaan yang sering diajukan seputar layanan ' . $setting_web->name,
+                'keywords' => $setting_web->name . ', FAQ, Pertanyaan, Bantuan, Help',
+                'favicon' => $setting_web->favicon,
+            ],
+            'breadcrumbs' => [
+                ['name' => 'Beranda', 'link' => route('home')],
+                ['name' => 'FAQ', 'link' => route('page.faq')],
+            ],
+            'setting_web' => $setting_web,
+            'list_faq' => Faq::active()->ordered()->get(),
+        ];
+
+        return view('front.pages.page.faq', $data);
     }
 }

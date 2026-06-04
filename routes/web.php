@@ -36,6 +36,7 @@ use App\Http\Controllers\Back\IncomingMailController as BackIncomingMailControll
 use App\Http\Controllers\Back\OutgoingMailController as BackOutgoingMailController;
 use App\Http\Controllers\Back\CrmController as BackCrmController;
 use App\Http\Controllers\Back\TestimonialController as BackTestimonialController;
+use App\Http\Controllers\Back\FaqController as BackFaqController;
 
 
 
@@ -72,6 +73,7 @@ Route::get('/welcome', [HomeController::class, 'welcomeSpeech'])->name('welcome.
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
 Route::get('/syarat-ketentuan', [PageController::class, 'terms'])->name('page.terms');
 Route::get('/kebijakan-privasi', [PageController::class, 'privacy'])->name('page.privacy');
+Route::get('/faq', [PageController::class, 'faq'])->name('page.faq');
 
 Route::prefix('event')->name('event.')->group(function () {
     Route::get('/', [EventController::class, 'index'])->name('index');
@@ -245,6 +247,13 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::post('/', [BackTestimonialController::class, 'store'])->name('store');
         Route::put('/edit/{id}', [BackTestimonialController::class, 'update'])->name('update');
         Route::delete('/delete/{id}', [BackTestimonialController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('faq')->name('faq.')->group(function () {
+        Route::get('/', [BackFaqController::class, 'index'])->name('index');
+        Route::post('/', [BackFaqController::class, 'store'])->name('store');
+        Route::put('/edit/{id}', [BackFaqController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [BackFaqController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('menu')->name('menu.')->group(function () {
