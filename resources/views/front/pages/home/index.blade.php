@@ -370,7 +370,7 @@
 
                     @if($list_announcement->isEmpty())
                         <div class="bg-lightgrey p-4 text-center" style="border: 2px dashed #ddd; border-radius: 6px;">
-                            <div class="ico-50 mb-15 grey-color"><span class="flaticon-chat-1"></span></div>
+                            <div class="ico-50 mb-15 grey-color"><span class="flaticon-megaphone"></span></div>
                             <h6 class="h6-xs">Belum Ada Pengumuman</h6>
                             <p class="p-md grey-color mb-0">Pengumuman terbaru akan tampil di sini.</p>
                         </div>

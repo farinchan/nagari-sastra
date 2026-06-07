@@ -126,9 +126,10 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('google.callback');
 
-Route::prefix('account')->name('account.')->group(function () {
+Route::prefix('account')->middleware('auth')->name('account.')->group(function () {
     Route::get('/profile', [AccountController::class, 'profile'])->name('profile');
     Route::put('/profile/update', [AccountController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/profile/photo', [AccountController::class, 'updatePhoto'])->name('profile.photo');
     Route::get('/profile/password', [AccountController::class, 'password'])->name('password');
     Route::put('/profile/password/update', [AccountController::class, 'passwordUpdate'])->name('password.update');
 });

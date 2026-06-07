@@ -205,7 +205,7 @@
                             <a href="#"><span class="flaticon-user"></span>&nbsp;{{ Auth::user()->name }}</a>
                             <ul class="sub-menu">
                                 <li aria-haspopup="true">
-                                    <a href="#">Profil Saya</a>
+                                    <a href="{{ route('account.profile') }}">Profil Saya</a>
                                 </li>
                                 <li aria-haspopup="true">
                                     <a href="{{ route('back.dashboard') }}">Dashboard</a>
