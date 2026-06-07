@@ -19,7 +19,7 @@ class AnnouncementController extends Controller
             'meta' => [
                 'title' => 'Pengumuman | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($setting_web->about), 155),
-                'keywords' => 'pengumuman, informasi, ' . $setting_web->name,
+                'keywords' => 'pengumuman, informasi, penerbitan, ' . $setting_web->name,
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -53,7 +53,7 @@ class AnnouncementController extends Controller
             'meta' => [
                 'title' => $announcement->title . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($announcement->content), 155),
-                'keywords' => $setting_web->name . ', ' . $announcement->title . ', pengumuman, informasi',
+                'keywords' => $setting_web->name . ', ' . $announcement->title . ', pengumuman, informasi, penerbitan',
                 'favicon' => $announcement->image ?? $setting_web->favicon,
                 'og_image' => $announcement->image ?? ($setting_web->logo ?? $setting_web->favicon),
                 'og_type' => 'article',

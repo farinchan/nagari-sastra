@@ -21,7 +21,7 @@ class PaymentController extends Controller
             'meta' => [
                 'title' => 'Pembayaran | ' . $setting_web->name,
                 'description' => 'Halaman pembayaran ' . $setting_web->name,
-                'keywords' => $setting_web->name . ', pembayaran, invoice',
+                'keywords' => $setting_web->name . ', pembayaran, invoice, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_type' => 'website',
                 'robots' => 'noindex, nofollow',
@@ -109,7 +109,7 @@ class PaymentController extends Controller
             'meta' => [
                 'title' => 'Pembayaran - ' . $paymentInvoice->invoice . ' | ' . $setting_web->name,
                 'description' => 'Pembayaran invoice ' . $paymentInvoice->invoice,
-                'keywords' => $setting_web->name . ', pembayaran, invoice',
+                'keywords' => $setting_web->name . ', pembayaran, invoice, kota padang, sumatera barat',
                 'favicon' => $journal?->getJournalThumbnail() ?? $setting_web->favicon,
                 'og_type' => 'website',
                 'robots' => 'noindex, nofollow',

@@ -17,7 +17,7 @@ class PageController extends Controller
             'meta' => [
                 'title' => 'Syarat & Ketentuan | ' . $setting_web->name,
                 'description' => 'Syarat dan ketentuan penggunaan layanan ' . $setting_web->name,
-                'keywords' => $setting_web->name . ', Syarat, Ketentuan, Terms, Conditions',
+                'keywords' => $setting_web->name . ', Syarat, Ketentuan, Terms, Conditions, Penggunaan, Layanan, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -43,7 +43,7 @@ class PageController extends Controller
             'meta' => [
                 'title' => 'Kebijakan Privasi | ' . $setting_web->name,
                 'description' => 'Kebijakan privasi dan perlindungan data pengguna ' . $setting_web->name,
-                'keywords' => $setting_web->name . ', Kebijakan, Privasi, Privacy, Policy',
+                'keywords' => $setting_web->name . ', Kebijakan, Privasi, Privacy, Policy, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -69,7 +69,7 @@ class PageController extends Controller
             'meta' => [
                 'title' => 'FAQ | ' . $setting_web->name,
                 'description' => 'Pertanyaan yang sering diajukan seputar layanan ' . $setting_web->name,
-                'keywords' => $setting_web->name . ', FAQ, Pertanyaan, Bantuan, Help',
+                'keywords' => $setting_web->name . ', FAQ, Pertanyaan, Bantuan, Help, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',

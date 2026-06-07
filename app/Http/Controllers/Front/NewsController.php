@@ -31,7 +31,7 @@ class NewsController extends Controller
             'meta' => [
                 'title' => 'Berita | ' . $setting_web->name,
                 'description' => Str::limit('Berita terbaru dari ' . strip_tags($setting_web->about), 155),
-                'keywords' => $setting_web->name . ', berita, informasi, artikel, kabar terbaru',
+                'keywords' => $setting_web->name . ', berita, informasi, artikel, kabar terbaru, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -65,8 +65,9 @@ class NewsController extends Controller
             'meta' => [
                 'title' => $news->title . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($news->content), 155),
-                'keywords' => $setting_web->name . ', ' . $news->title . ', ' . ($news->category->name ?? 'berita') . ', artikel',
+                'keywords' => $setting_web->name . ', ' . $news->title . ', ' . ($news->category->name ?? 'berita') . ', artikel, kota padang, sumatera barat',
                 'favicon' => $news->thumbnail ?? $setting_web->favicon,
+                'author' => $news->user?->name ?? $setting_web->name,
                 'og_image' => $news->getThumbnail(),
                 'og_type' => 'article',
                 'robots' => 'index, follow',
@@ -105,7 +106,7 @@ class NewsController extends Controller
             'meta' => [
                 'title' => $category->name . ' | ' . $setting_web->name,
                 'description' => Str::limit('Berita kategori ' . $category->name . ' - ' . strip_tags($setting_web->about), 155),
-                'keywords' => $setting_web->name . ', ' . $category->name . ', berita, kategori, artikel',
+                'keywords' => $setting_web->name . ', ' . $category->name . ', berita, kategori, artikel, kota padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',

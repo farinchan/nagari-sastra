@@ -35,7 +35,7 @@ class BookController extends Controller
             'meta' => [
                 'title' => 'Buku | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($setting_web->about), 155),
-                'keywords' => 'buku, katalog buku, penerbitan, ' . $setting_web->name,
+                'keywords' => 'buku, katalog buku, penerbitan, panjelasan, informasi, kota padang, ' . $setting_web->name,
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -79,7 +79,7 @@ class BookController extends Controller
             'meta' => [
                 'title' => $book->title . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($book->description), 155),
-                'keywords' => $setting_web->name . ', ' . $book->title . ', ' . $book->author . ', ' . $book->publisher,
+                'keywords' => $setting_web->name . ', ' . $book->title . ', ' . $book->author . ', ' . $book->publisher . ', penerbitan, panjelasan, informasi, kota padang',
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
                 'og_image' => $book->getThumbnail(),
                 'og_type' => 'book',
@@ -125,7 +125,7 @@ class BookController extends Controller
             'meta' => [
                 'title' => $book->title . ' Preview | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($book->description), 155),
-                'keywords' => $setting_web->name . ', ' . $book->title . ', Preview Buku',
+                'keywords' => $setting_web->name . ', ' . $book->title . ', Preview Buku, penerbitan, panjelasan, informasi, kota padang',
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
                 'og_image' => $book->getThumbnail(),
                 'og_type' => 'book',
@@ -177,7 +177,7 @@ class BookController extends Controller
             'meta' => [
                 'title' => $category->name . ' | ' . $setting_web->name,
                 'description' => Str::limit('Buku kategori ' . $category->name . ' - ' . strip_tags($setting_web->about), 155),
-                'keywords' => $setting_web->name . ', ' . $category->name . ', buku, katalog buku, penerbitan',
+                'keywords' => $setting_web->name . ', ' . $category->name . ', buku, katalog buku, penerbitan, panjelasan, informasi, kategori buku',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',

@@ -19,7 +19,7 @@ class JournalController extends Controller
             'meta' => [
                 'title' => 'Jurnal | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($setting_web->about), 155),
-                'keywords' => 'jurnal ilmiah, publikasi, penelitian, akademik, ' . $setting_web->name,
+                'keywords' => 'jurnal ilmiah, publikasi, penelitian, akademik, kota padang, sumatera barat, ' . $setting_web->name,
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -53,7 +53,7 @@ class JournalController extends Controller
             'meta' => [
                 'title' => $journal->title . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($journal->description), 155),
-                'keywords' => $setting_web->name . ', ' . $journal->title . ', jurnal ilmiah, publikasi, penelitian',
+                'keywords' => $setting_web->name . ', ' . $journal->title . ', jurnal ilmiah, publikasi, penelitian, kota padang, sumatera barat',
                 'favicon' => $journal->getJournalThumbnail() ?? $setting_web->favicon,
                 'og_image' => $journal->getJournalThumbnail(),
                 'og_type' => 'website',
