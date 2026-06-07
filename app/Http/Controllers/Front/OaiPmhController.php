@@ -295,7 +295,7 @@ class OaiPmhController extends Controller
         // dc:creator (authors)
         if ($authors && $authors->count() > 0) {
             foreach ($authors as $author) {
-                $name = $author->name_with_title ?: $author->name;
+                $name = $author->name;
                 if ($name) {
                     $xml .= '
           <dc:creator>' . e($name) . '</dc:creator>';
@@ -395,7 +395,7 @@ class OaiPmhController extends Controller
             $mainAuthor = $authors->first();
             $xml .= '
           <datafield tag="100" ind1="1" ind2=" ">
-            <subfield code="a">' . e($mainAuthor->name_with_title ?: $mainAuthor->name) . '</subfield>
+            <subfield code="a">' . e($mainAuthor->name) . '</subfield>
           </datafield>';
         }
 
@@ -456,7 +456,7 @@ class OaiPmhController extends Controller
             foreach ($authors->skip(1) as $author) {
                 $xml .= '
           <datafield tag="700" ind1="1" ind2=" ">
-            <subfield code="a">' . e($author->name_with_title ?: $author->name) . '</subfield>
+            <subfield code="a">' . e($author->name) . '</subfield>
           </datafield>';
             }
         }
