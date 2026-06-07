@@ -313,7 +313,7 @@
                     @if ($book->getPreviewFile())
                         <div class="mb-50">
                             <a href="{{ route('book.preview', $book->slug) }}" target="_blank"
-                               class="btn btn-theme tra-white-hover btn-block">
+                               class="btn btn-theme btn-block">
                                 <span class="flaticon-document mr-2"></span> Preview Buku
                             </a>
                         </div>
