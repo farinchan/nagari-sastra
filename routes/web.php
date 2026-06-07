@@ -47,7 +47,6 @@ Route::get('/visit', [HomeController::class, 'vistWebsite'])->name('visit.ajax')
 
 // Sitemap XML (SEO)
 Route::get('/sitemap.xml', function () {
-    $setting_web = \App\Models\SettingWebsite::first();
     $news = \App\Models\News::where('status', 'published')->latest()->get();
     $journals = \App\Models\Journal::all();
     $books = \App\Models\Book::where('status', 'published')->latest()->get();
@@ -55,9 +54,56 @@ Route::get('/sitemap.xml', function () {
     $announcements = \App\Models\Announcement::where('is_active', true)->latest()->get();
     $menuProfils = \App\Models\MenuProfil::all();
 
-    return response()->view('front.partials.sitemap', compact(
-        'news', 'journals', 'books', 'events', 'announcements', 'menuProfils'
-    ))->header('Content-Type', 'application/xml');
+    $urls = [];
+
+    // Static pages
+    $urls[] = ['loc' => route('home'), 'changefreq' => 'daily', 'priority' => '1.0'];
+    $urls[] = ['loc' => route('news.index'), 'changefreq' => 'daily', 'priority' => '0.8'];
+    $urls[] = ['loc' => route('journal.index'), 'changefreq' => 'weekly', 'priority' => '0.8'];
+    $urls[] = ['loc' => route('book.index'), 'changefreq' => 'weekly', 'priority' => '0.8'];
+    $urls[] = ['loc' => route('event.index'), 'changefreq' => 'weekly', 'priority' => '0.8'];
+    $urls[] = ['loc' => route('announcement.index'), 'changefreq' => 'weekly', 'priority' => '0.7'];
+    $urls[] = ['loc' => route('contact.index'), 'changefreq' => 'monthly', 'priority' => '0.6'];
+    $urls[] = ['loc' => route('page.faq'), 'changefreq' => 'monthly', 'priority' => '0.5'];
+    $urls[] = ['loc' => route('page.terms'), 'changefreq' => 'yearly', 'priority' => '0.3'];
+    $urls[] = ['loc' => route('page.privacy'), 'changefreq' => 'yearly', 'priority' => '0.3'];
+
+    // Dynamic content
+    foreach ($news as $item) {
+        $urls[] = ['loc' => route('news.detail', $item->slug), 'lastmod' => $item->updated_at->toW3cString(), 'changefreq' => 'monthly', 'priority' => '0.7'];
+    }
+    foreach ($journals as $journal) {
+        $urls[] = ['loc' => route('journal.detail', $journal->url_path), 'lastmod' => $journal->updated_at->toW3cString(), 'changefreq' => 'weekly', 'priority' => '0.8'];
+    }
+    foreach ($books as $book) {
+        $urls[] = ['loc' => route('book.show', $book->slug), 'lastmod' => $book->updated_at->toW3cString(), 'changefreq' => 'monthly', 'priority' => '0.7'];
+    }
+    foreach ($events as $event) {
+        $urls[] = ['loc' => route('event.show', $event->slug), 'lastmod' => $event->updated_at->toW3cString(), 'changefreq' => 'weekly', 'priority' => '0.7'];
+    }
+    foreach ($announcements as $announcement) {
+        $urls[] = ['loc' => route('announcement.show', $announcement->slug), 'lastmod' => $announcement->updated_at->toW3cString(), 'changefreq' => 'monthly', 'priority' => '0.6'];
+    }
+    foreach ($menuProfils as $menu) {
+        $urls[] = ['loc' => route('profil.show', $menu->slug), 'lastmod' => $menu->updated_at->toW3cString(), 'changefreq' => 'monthly', 'priority' => '0.5'];
+    }
+
+    // Build XML manually (avoids <?xml Blade parsing issue)
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($urls as $url) {
+        $xml .= "  <url>\n";
+        $xml .= "    <loc>" . htmlspecialchars($url['loc']) . "</loc>\n";
+        if (!empty($url['lastmod'])) {
+            $xml .= "    <lastmod>" . $url['lastmod'] . "</lastmod>\n";
+        }
+        $xml .= "    <changefreq>" . $url['changefreq'] . "</changefreq>\n";
+        $xml .= "    <priority>" . $url['priority'] . "</priority>\n";
+        $xml .= "  </url>\n";
+    }
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'application/xml');
 })->name('sitemap');
 
 Route::get('/login', [LoginController::class, 'index'])->name('login');
