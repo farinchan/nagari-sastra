@@ -1,0 +1,545 @@
+/*------------------------------------------*/
+/*  PROSE / RICH CONTENT STYLES
+/*  Styling for WYSIWYG/CKEditor/TinyMCE HTML content
+/*  Applied to .single-post-txt, .post-txt, .prose
+/*------------------------------------------*/
+
+.single-post-txt,
+.post-txt,
+.prose {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: #444;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Headings */
+.single-post-txt h1,
+.post-txt h1,
+.prose h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    color: #222;
+}
+
+.single-post-txt h2,
+.post-txt h2,
+.prose h2 {
+    font-size: 1.65rem;
+    font-weight: 700;
+    margin-top: 1.8rem;
+    margin-bottom: 0.8rem;
+    line-height: 1.35;
+    color: #222;
+}
+
+.single-post-txt h3,
+.post-txt h3,
+.prose h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 1.6rem;
+    margin-bottom: 0.7rem;
+    line-height: 1.4;
+    color: #333;
+}
+
+.single-post-txt h4,
+.post-txt h4,
+.prose h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 1.4rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.4;
+    color: #333;
+}
+
+.single-post-txt h5,
+.post-txt h5,
+.prose h5 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.single-post-txt h6,
+.post-txt h6,
+.prose h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Paragraphs */
+.single-post-txt p,
+.post-txt p,
+.prose p {
+    margin-bottom: 1.15rem;
+    line-height: 1.8;
+}
+
+/* Links */
+.single-post-txt a,
+.post-txt a,
+.prose a {
+    color: #3b82f6;
+    text-decoration: underline;
+    text-decoration-color: rgba(59, 130, 246, 0.3);
+    text-underline-offset: 2px;
+    transition: color 0.2s, text-decoration-color 0.2s;
+}
+
+.single-post-txt a:hover,
+.post-txt a:hover,
+.prose a:hover {
+    color: #1d4ed8;
+    text-decoration-color: #1d4ed8;
+}
+
+/* ---- Lists ---- */
+
+/* Unordered List */
+.single-post-txt ul,
+.post-txt ul,
+.prose ul {
+    list-style-type: disc;
+    padding-left: 2rem;
+    margin-bottom: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.single-post-txt ul ul,
+.post-txt ul ul,
+.prose ul ul {
+    list-style-type: circle;
+    margin-bottom: 0;
+    margin-top: 0.25rem;
+}
+
+.single-post-txt ul ul ul,
+.post-txt ul ul ul,
+.prose ul ul ul {
+    list-style-type: square;
+}
+
+/* Ordered List */
+.single-post-txt ol,
+.post-txt ol,
+.prose ol {
+    list-style-type: decimal;
+    padding-left: 2rem;
+    margin-bottom: 1.25rem;
+    margin-top: 0.5rem;
+}
+
+.single-post-txt ol ol,
+.post-txt ol ol,
+.prose ol ol {
+    list-style-type: lower-alpha;
+    margin-bottom: 0;
+    margin-top: 0.25rem;
+}
+
+.single-post-txt ol ol ol,
+.post-txt ol ol ol,
+.prose ol ol ol {
+    list-style-type: lower-roman;
+}
+
+/* List Items */
+.single-post-txt li,
+.post-txt li,
+.prose li {
+    margin-bottom: 0.4rem;
+    line-height: 1.7;
+    color: #444;
+}
+
+.single-post-txt li p,
+.post-txt li p,
+.prose li p {
+    margin-bottom: 0.4rem;
+}
+
+/* ---- Blockquote ---- */
+.single-post-txt blockquote,
+.post-txt blockquote,
+.prose blockquote {
+    border-left: 4px solid #3b82f6;
+    background: #f0f7ff;
+    margin: 1.5rem 0;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #374151;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    position: relative;
+}
+
+.single-post-txt blockquote::before,
+.post-txt blockquote::before,
+.prose blockquote::before {
+    content: "\201C";
+    font-size: 3.5rem;
+    color: #3b82f6;
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    font-family: Georgia, serif;
+    line-height: 1;
+    opacity: 0.3;
+}
+
+.single-post-txt blockquote p,
+.post-txt blockquote p,
+.prose blockquote p {
+    margin-bottom: 0.5rem;
+}
+
+.single-post-txt blockquote p:last-child,
+.post-txt blockquote p:last-child,
+.prose blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+.single-post-txt blockquote cite,
+.post-txt blockquote cite,
+.prose blockquote cite {
+    display: block;
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.single-post-txt blockquote cite::before,
+.post-txt blockquote cite::before,
+.prose blockquote cite::before {
+    content: "— ";
+}
+
+/* Nested blockquote */
+.single-post-txt blockquote blockquote,
+.post-txt blockquote blockquote,
+.prose blockquote blockquote {
+    border-left-color: #93c5fd;
+    background: #e8f2ff;
+    margin: 1rem 0 0.5rem;
+}
+
+/* ---- Tables ---- */
+.single-post-txt table,
+.post-txt table,
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.95rem;
+    overflow-x: auto;
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .single-post-txt table,
+    .post-txt table,
+    .prose table {
+        display: table;
+    }
+}
+
+.single-post-txt thead,
+.post-txt thead,
+.prose thead {
+    background: #f3f4f6;
+}
+
+.single-post-txt th,
+.post-txt th,
+.prose th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #d1d5db;
+    white-space: nowrap;
+}
+
+.single-post-txt td,
+.post-txt td,
+.prose td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+    vertical-align: top;
+}
+
+.single-post-txt tbody tr:hover,
+.post-txt tbody tr:hover,
+.prose tbody tr:hover {
+    background: #f9fafb;
+}
+
+.single-post-txt caption,
+.post-txt caption,
+.prose caption {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+    caption-side: bottom;
+    text-align: center;
+}
+
+/* ---- Code ---- */
+.single-post-txt code,
+.post-txt code,
+.prose code {
+    background: #f3f4f6;
+    color: #e11d48;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    word-break: break-word;
+}
+
+.single-post-txt pre,
+.post-txt pre,
+.prose pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
+    -webkit-overflow-scrolling: touch;
+}
+
+.single-post-txt pre code,
+.post-txt pre code,
+.prose pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+/* ---- Images ---- */
+.single-post-txt img,
+.post-txt img,
+.prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+    display: block;
+}
+
+.single-post-txt figure,
+.post-txt figure,
+.prose figure {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.single-post-txt figcaption,
+.post-txt figcaption,
+.prose figcaption {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* ---- Horizontal Rule ---- */
+.single-post-txt hr,
+.post-txt hr,
+.prose hr {
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    margin: 2rem 0;
+}
+
+/* ---- Definition List ---- */
+.single-post-txt dl,
+.post-txt dl,
+.prose dl {
+    margin-bottom: 1.25rem;
+}
+
+.single-post-txt dt,
+.post-txt dt,
+.prose dt {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.25rem;
+}
+
+.single-post-txt dd,
+.post-txt dd,
+.prose dd {
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #555;
+}
+
+/* ---- Misc Inline Elements ---- */
+.single-post-txt mark,
+.post-txt mark,
+.prose mark {
+    background: #fef08a;
+    padding: 0.1rem 0.3rem;
+    border-radius: 2px;
+}
+
+.single-post-txt sup,
+.post-txt sup,
+.prose sup {
+    font-size: 0.75em;
+    vertical-align: super;
+}
+
+.single-post-txt sub,
+.post-txt sub,
+.prose sub {
+    font-size: 0.75em;
+    vertical-align: sub;
+}
+
+.single-post-txt abbr[title],
+.post-txt abbr[title],
+.prose abbr[title] {
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+.single-post-txt kbd,
+.post-txt kbd,
+.prose kbd {
+    background: #374151;
+    color: #fff;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-family: monospace;
+    box-shadow: 0 2px 0 #1f2937;
+}
+
+/* ---- Video / Embed ---- */
+.single-post-txt iframe,
+.post-txt iframe,
+.prose iframe {
+    max-width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+}
+
+.single-post-txt video,
+.post-txt video,
+.prose video {
+    max-width: 100%;
+    height: auto;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+}
+
+/* ---- Checkbox list (CKEditor/TinyMCE todo list) ---- */
+.single-post-txt ul.todo-list,
+.post-txt ul.todo-list,
+.prose ul.todo-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.single-post-txt ul.todo-list li,
+.post-txt ul.todo-list li,
+.prose ul.todo-list li {
+    position: relative;
+    padding-left: 1.75rem;
+}
+
+.single-post-txt ul.todo-list li::before,
+.post-txt ul.todo-list li::before,
+.prose ul.todo-list li::before {
+    content: "☐";
+    position: absolute;
+    left: 0;
+    font-size: 1.1em;
+}
+
+.single-post-txt ul.todo-list li.checked::before,
+.post-txt ul.todo-list li.checked::before,
+.prose ul.todo-list li.checked::before {
+    content: "☑";
+    color: #22c55e;
+}
+
+/* ---- CKEditor specific ---- */
+.single-post-txt .image,
+.post-txt .image,
+.prose .image {
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.single-post-txt .image img,
+.post-txt .image img,
+.prose .image img {
+    margin: 0 auto;
+}
+
+.single-post-txt .image-style-side,
+.post-txt .image-style-side,
+.prose .image-style-side {
+    float: right;
+    margin: 0 0 1rem 1.5rem;
+    max-width: 50%;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 767.98px) {
+    .single-post-txt blockquote,
+    .post-txt blockquote,
+    .prose blockquote {
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+    }
+
+    .single-post-txt table,
+    .post-txt table,
+    .prose table {
+        font-size: 0.85rem;
+    }
+
+    .single-post-txt th,
+    .single-post-txt td,
+    .post-txt th,
+    .post-txt td,
+    .prose th,
+    .prose td {
+        padding: 0.5rem 0.65rem;
+    }
+
+    .single-post-txt pre,
+    .post-txt pre,
+    .prose pre {
+        padding: 1rem;
+        font-size: 0.8rem;
+    }
+}

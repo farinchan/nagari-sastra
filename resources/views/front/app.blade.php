@@ -71,6 +71,9 @@
     <!-- RESPONSIVE CSS -->
     <link href="{{ asset('front/css/responsive.css') }}" rel="stylesheet">
 
+    <!-- PROSE / RICH CONTENT CSS -->
+    <link href="{{ asset('front/css/prose.css') }}" rel="stylesheet">
+
 </head>
 
 

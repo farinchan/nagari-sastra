@@ -69,7 +69,7 @@
                         <div class="row post-share-links d-flex align-items-center">
 
                             <!-- POST TAGS -->
-                            <div class="col-md-9 col-xl-8 post-tags-list">
+                            <div class="col-md-9 col-xl-8 post-tags-list" style="display: flex; flex-wrap: wrap; gap: 15px;">
                                 @php
                                     $tags = explode(',', $news->meta_keywords ?? '');
                                 @endphp
