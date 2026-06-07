@@ -26,6 +26,7 @@
     @include('front.partials.breadcrumb_jsonld')
     @yield('seo')
     <link rel="shortcut icon" href="{{ $setting_web->favicon }}">
+    <link rel="alternate" type="application/xml" title="OAI-PMH" href="{{ route('oai-pmh', ['verb' => 'Identify']) }}">
 
 
     <!-- GOOGLE FONTS -->

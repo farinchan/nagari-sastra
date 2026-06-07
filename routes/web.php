@@ -16,6 +16,7 @@ use App\Http\Controllers\Front\MenuProfilController;
 use App\Http\Controllers\Front\NewsController;
 use App\Http\Controllers\Front\PaymentController;
 use App\Http\Controllers\Front\TeamController;
+use App\Http\Controllers\Front\OaiPmhController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\Front\PageController;
 
@@ -44,6 +45,9 @@ use App\Http\Controllers\Back\FaqController as BackFaqController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/visit', [HomeController::class, 'vistWebsite'])->name('visit.ajax');
+
+// OAI-PMH 2.0 Endpoint (Academic Harvesting: Google Scholar, BASE, WorldCat, OAPEN)
+Route::get('/oai', [OaiPmhController::class, 'handle'])->name('oai-pmh');
 
 // Sitemap XML (SEO)
 Route::get('/sitemap.xml', function () {
