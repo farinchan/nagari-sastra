@@ -15,9 +15,10 @@
     <!-- SITE TITLE -->
     <title>
         @isset($title)
-            {{ $title }} |
+            {{ $title }}
+        @else
+            {{ $setting_web->name ?? config('app.name') }}
         @endisset
-        {{ $setting_web->name }}
     </title>
     @isset($meta)
         @include('front.partials.seo')

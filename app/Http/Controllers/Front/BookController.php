@@ -77,7 +77,7 @@ class BookController extends Controller
         $data = [
             'title' => $book->title,
             'meta' => [
-                'title' => $book->title . ' | ' . $setting_web->name,
+                'title' => $book->title,
                 'description' => Str::limit(strip_tags($book->description), 155),
                 'keywords' => $setting_web->name . ', ' . $book->title . ', ' . $book->author . ', ' . $book->publisher . ', penerbitan, panjelasan, informasi, kota padang',
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
@@ -121,9 +121,9 @@ class BookController extends Controller
             ->firstOrFail();
 
         $data = [
-            'title' => $book->title . ' Preview',
+            'title' => $book->title . ' - Preview' . ' | ' . $setting_web->name,
             'meta' => [
-                'title' => $book->title . ' Preview | ' . $setting_web->name,
+                'title' => $book->title . ' - Preview | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($book->description), 155),
                 'keywords' => $setting_web->name . ', ' . $book->title . ', Preview Buku, penerbitan, panjelasan, informasi, kota padang',
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon,

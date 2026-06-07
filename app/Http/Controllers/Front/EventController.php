@@ -56,7 +56,7 @@ class EventController extends Controller
         $setting_web = SettingWebsite::first();
         $event = Event::where('slug', $slug)->first();
         $data = [
-            'title' => $event->name,
+            'title' => $event->name . ' | ' . $setting_web->name,
             'meta' => [
                 'title' => $event->name . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($event->description), 155),

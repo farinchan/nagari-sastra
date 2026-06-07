@@ -20,7 +20,7 @@ class HomeController extends Controller
         $setting_web = SettingWebsite::first();
 
         $data = [
-            'title' => 'Home',
+            'title' => 'Home | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Home | '.$setting_web->name,
                 'description' => Str::limit(strip_tags($setting_web->about), 155),

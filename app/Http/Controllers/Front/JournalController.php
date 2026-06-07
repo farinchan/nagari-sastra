@@ -49,7 +49,7 @@ class JournalController extends Controller
             abort(404);
         }
         $data = [
-            'title' => $journal->title,
+            'title' => $journal->title . ' | ' . $setting_web->name,
             'meta' => [
                 'title' => $journal->title . ' | ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($journal->description), 155),

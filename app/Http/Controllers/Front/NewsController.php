@@ -63,7 +63,7 @@ class NewsController extends Controller
         $data = [
             'title' => $news->title,
             'meta' => [
-                'title' => $news->title . ' | ' . $setting_web->name,
+                'title' => $news->title,
                 'description' => Str::limit(strip_tags($news->content), 155),
                 'keywords' => $setting_web->name . ', ' . $news->title . ', ' . ($news->category->name ?? 'berita') . ', artikel, kota padang, sumatera barat',
                 'favicon' => $news->thumbnail ?? $setting_web->favicon,
@@ -102,7 +102,7 @@ class NewsController extends Controller
         $category = NewsCategory::where('slug', $slug)->firstOrFail();
         $news = $category->news()->latest()->paginate(6);
         $data = [
-            'title' => $category->name,
+            'title' => $category->name . ' | ' . $setting_web->name,
             'meta' => [
                 'title' => $category->name . ' | ' . $setting_web->name,
                 'description' => Str::limit('Berita kategori ' . $category->name . ' - ' . strip_tags($setting_web->about), 155),
