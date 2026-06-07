@@ -83,7 +83,7 @@ class NewsController extends Controller
                     'link' => route('news.index')
                 ],
                 [
-                    'name' => $news->title,
+                    'name' => $news->id,
                     'link' => route('news.detail', $news->slug)
                 ]
             ],
