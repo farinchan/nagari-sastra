@@ -174,12 +174,10 @@ Route::prefix('team')->name('team.')->group(function () {
 
 Route::prefix('news')->name('news.')->group(function () {
     Route::get('/', [NewsController::class, 'index'])->name('index');
-    Route::get('/{slug}', [NewsController::class, 'detail'])->name('detail');
-
     Route::get('/category/{slug}', [NewsController::class, 'category'])->name('category');
-    Route::post('/comment', [NewsController::class, 'comment'])->name('comment');
-
-    Route::get('/visit/alt', [NewsController::class, 'visit'])->name('visit');
+    Route::post('/comment', [NewsController::class, 'comment'])->middleware('throttle:10,1')->name('comment');
+    Route::post('/visit/alt', [NewsController::class, 'visit'])->middleware('throttle:30,1')->name('visit');
+    Route::get('/{slug}', [NewsController::class, 'detail'])->name('detail');
 });
 
 Route::prefix('journal')->name('journal.')->group(function () {

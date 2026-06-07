@@ -43,30 +43,58 @@ class ContactController extends Controller
 
     public function send(Request $request)
     {
+        // Rate limit: max 3 messages per minute per IP
+        $rateLimitKey = 'contact:' . $request->ip();
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rateLimitKey, 3)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($rateLimitKey);
+            Alert::error('Terlalu Cepat', "Silakan tunggu {$seconds} detik sebelum mengirim pesan lagi.");
+            return redirect()->back()->withInput();
+        }
+
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'phone' => 'required',
-            'subject' => 'required',
-            'message' => 'required'
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'subject' => 'required|string|max:200',
+            'message' => 'required|string|max:5000',
+            'g-recaptcha-response' => 'required|captcha',
+        ], [
+            'name.required' => 'Nama wajib diisi.',
+            'name.max' => 'Nama maksimal 100 karakter.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'phone.required' => 'Nomor telepon wajib diisi.',
+            'phone.max' => 'Nomor telepon maksimal 20 karakter.',
+            'subject.required' => 'Subjek wajib diisi.',
+            'subject.max' => 'Subjek maksimal 200 karakter.',
+            'message.required' => 'Pesan tidak boleh kosong.',
+            'message.max' => 'Pesan maksimal 5000 karakter.',
+            'g-recaptcha-response.required' => 'Silakan verifikasi bahwa Anda bukan robot.',
+            'g-recaptcha-response.captcha' => 'Verifikasi captcha gagal, silakan coba lagi.',
         ]);
 
         if ($validator->fails()) {
-            Alert::error('Error', 'Please fill all the form');
+            Alert::error('Gagal', $validator->errors()->first());
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // Honeypot check
+        if ($request->filled('website_url')) {
+            Alert::success('Berhasil', 'Pesan berhasil dikirim');
+            return redirect()->back();
+        }
+
         $message = new Message();
-        $message->name = $request->name;
+        $message->name = strip_tags($request->name);
         $message->email = $request->email;
-        $message->phone = $request->phone;
-        $message->subject = $request->subject;
-        $message->message = $request->message;
+        $message->phone = strip_tags($request->phone);
+        $message->subject = strip_tags($request->subject);
+        $message->message = strip_tags($request->message);
         $message->save();
 
-        Alert::success('Success', 'Message has been sent');
+        \Illuminate\Support\Facades\RateLimiter::hit($rateLimitKey, 60);
+
+        Alert::success('Berhasil', 'Pesan berhasil dikirim');
         return redirect()->back();
-
-
     }
 }

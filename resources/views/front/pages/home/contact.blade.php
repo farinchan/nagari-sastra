@@ -94,6 +94,20 @@
                                 @enderror
                             </div>
 
+                            <!-- Honeypot (hidden from humans, bots fill it) -->
+                            <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                                <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+                            </div>
+
+                            <!-- reCAPTCHA -->
+                            <div class="col-md-12 mb-15">
+                                {!! NoCaptcha::renderJs() !!}
+                                {!! NoCaptcha::display() !!}
+                                @error('g-recaptcha-response')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
+                            </div>
+
                             <!-- Form Button -->
                             <div class="col-md-12  text-right">
                                 <button type="submit" class="btn btn-md btn-theme tra-grey-hover submit">Kirim

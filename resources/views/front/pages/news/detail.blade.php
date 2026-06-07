@@ -254,6 +254,11 @@
                                         @enderror
                                     </div>
 
+                                    <!-- Honeypot (hidden from humans, bots fill it) -->
+                                    <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                                        <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+                                    </div>
+
                                     <!-- Contact Form Button -->
                                     <div class="col-lg-12 form-btn">
                                         <button type="submit" class="btn btn-theme tra-grey-hover submit">
@@ -456,15 +461,12 @@
         $.ajax({
             url: "{{ route('news.visit') }}",
             data: {
+                _token: "{{ csrf_token() }}",
                 news_id: {{ $news->id }}
             },
-            type: "GET",
-            success: function(response) {
-                console.log(response);
-            },
-            error: function(error) {
-                console.log(error);
-            }
+            type: "POST",
+            success: function(response) {},
+            error: function(error) {}
         });
     </script>
 @endsection

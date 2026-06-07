@@ -6,12 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Models\EmailContact;
 use App\Models\EmailGroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 
 class NewsletterController extends Controller
 {
     public function subscribe(Request $request)
     {
+        // Rate limit: max 5 per minute per IP
+        $rateLimitKey = 'newsletter:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terlalu banyak percobaan. Silakan coba lagi nanti.',
+            ], 429);
+        }
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:255',
         ], [
@@ -24,6 +34,14 @@ class NewsletterController extends Controller
                 'success' => false,
                 'message' => $validator->errors()->first('email'),
             ], 422);
+        }
+
+        // Honeypot check
+        if ($request->filled('website_url')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Berhasil subscribe! Terima kasih.',
+            ]);
         }
 
         // Get or create the "Newsletter" group
@@ -51,6 +69,8 @@ class NewsletterController extends Controller
             // Re-subscribe
             $existing->update(['is_subscribed' => true]);
 
+            RateLimiter::hit($rateLimitKey, 60);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Berhasil subscribe kembali! Terima kasih.',
@@ -60,10 +80,12 @@ class NewsletterController extends Controller
         // Create new contact
         EmailContact::create([
             'email_group_id' => $group->id,
-            'name' => explode('@', $request->email)[0],
+            'name' => strip_tags(explode('@', $request->email)[0]),
             'email' => $request->email,
             'is_subscribed' => true,
         ]);
+
+        RateLimiter::hit($rateLimitKey, 60);
 
         return response()->json([
             'success' => true,
