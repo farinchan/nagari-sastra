@@ -1,10 +1,6 @@
 @extends('front.app')
 @section('seo')
-    <title>{{ $meta['title'] }}</title>
-    <meta name="description" content="{{ $meta['description'] }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="{{ $book->author }}">
-
+    {{-- Google Scholar / Highwire Press Citation Meta Tags --}}
     @php
         $citationAbstract = trim(strip_tags($book->description ?? ''));
         $citationPdfUrl = $book->getPreviewFile();
@@ -52,14 +48,7 @@
     <meta name="citation_fulltext_html_url" content="{{ $citationFulltextUrl }}">
     <meta name="citation_language" content="{{ $book->language ?: 'id' }}">
 
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ $meta['description'] }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ route('book.show', $book->slug) }}">
-    <link rel="canonical" href="{{ route('book.show', $book->slug) }}">
-    <meta property="og:image" content="{{ $book->getThumbnail() }}">
-
-    <!-- Dublin Core Metadata -->
+    {{-- Dublin Core Metadata --}}
     <meta name="DC.title" content="{{ $book->title }}">
     <meta name="DC.creator" content="{{ $book->author ?: 'Unknown' }}">
     <meta name="DC.subject"
@@ -83,16 +72,16 @@
     @endif
     <meta name="DC.rights" content="Copyright © {{ $book->publish_year ?: date('Y') }}">
 
-    <!-- Schema.org JSON-LD -->
+    {{-- Schema.org JSON-LD (Book) --}}
     @php
         $schemaOrg = [
             '@context' => 'https://schema.org',
             '@type' => 'Book',
             'name' => $book->title,
-            'author' => [
+            'author' => collect($citationAuthors)->map(fn($name) => [
                 '@type' => 'Person',
-                'name' => $book->author ?: 'Unknown',
-            ],
+                'name' => $name,
+            ])->values()->toArray() ?: [['@type' => 'Person', 'name' => $book->author ?: 'Unknown']],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => $book->publisher ?: 'Unknown',
@@ -122,7 +111,7 @@
         ];
 
         if ($book->publish_year) {
-            $schemaOrg['datePublished'] = $book->publish_year;
+            $schemaOrg['datePublished'] = (string) $book->publish_year;
         }
         if ($book->isbn) {
             $schemaOrg['isbn'] = $book->isbn;
@@ -135,10 +124,10 @@
         }
     @endphp
     <script type="application/ld+json">
-        {!! json_encode($schemaOrg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        {!! json_encode($schemaOrg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
     </script>
 
-    <!-- COinS (ContextObjects in Spans) -->
+    {{-- COinS (ContextObjects in Spans) --}}
     @php
         $coinsParams = [
             'ctx_ver' => 'Z39.88-2004',

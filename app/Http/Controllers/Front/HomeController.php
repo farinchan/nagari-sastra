@@ -10,6 +10,7 @@ use App\Models\News;
 use App\Models\SettingWebsite;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Jenssegers\Agent\Facades\Agent;
 use Stevebauman\Location\Facades\Location;
 
@@ -23,9 +24,13 @@ class HomeController extends Controller
             'title' => 'Home',
             'meta' => [
                 'title' => 'Home | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'Nagari Sastra, publikasi ilmiah, jurnal, buku, penelitian, pendidikan',
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('home'),
             ],
             'setting_web' => $setting_web,
             'list_news' => News::latest()->where('status', 'published')->limit(10)->get(),

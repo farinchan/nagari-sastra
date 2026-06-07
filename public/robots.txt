@@ -1,2 +1,12 @@
 User-agent: *
-Disallow:
+Allow: /
+
+# Disallow admin and private paths
+Disallow: /back/
+Disallow: /account/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /api/
+Disallow: /storage/

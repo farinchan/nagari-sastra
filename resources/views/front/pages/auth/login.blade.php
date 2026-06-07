@@ -1,17 +1,5 @@
 @extends('front.app')
-@section('seo')
-    <title>{{ $meta['description'] }}</title>
-    <meta name="description" content="{{ $meta['description'] }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Nagari Sastra">
 
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ $meta['description'] }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ route('home') }}">
-    <link rel="canonical" href="{{ route('home') }}">
-    <meta property="og:image" content="{{ Storage::url($meta['favicon']) }}">
-@endsection
 @section('content')
 
     <!-- LOGIN PAGE

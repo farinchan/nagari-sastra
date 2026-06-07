@@ -45,6 +45,21 @@ use App\Http\Controllers\Back\FaqController as BackFaqController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/visit', [HomeController::class, 'vistWebsite'])->name('visit.ajax');
 
+// Sitemap XML (SEO)
+Route::get('/sitemap.xml', function () {
+    $setting_web = \App\Models\SettingWebsite::first();
+    $news = \App\Models\News::where('status', 'published')->latest()->get();
+    $journals = \App\Models\Journal::all();
+    $books = \App\Models\Book::where('status', 'published')->latest()->get();
+    $events = \App\Models\Event::where('is_active', true)->where('access', 'terbuka')->latest()->get();
+    $announcements = \App\Models\Announcement::where('is_active', true)->latest()->get();
+    $menuProfils = \App\Models\MenuProfil::all();
+
+    return response()->view('front.partials.sitemap', compact(
+        'news', 'journals', 'books', 'events', 'announcements', 'menuProfils'
+    ))->header('Content-Type', 'application/xml');
+})->name('sitemap');
+
 Route::get('/login', [LoginController::class, 'index'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout');

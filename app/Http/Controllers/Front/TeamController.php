@@ -10,6 +10,7 @@ use App\Models\SettingWebsite;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class TeamController extends Controller
 {
@@ -71,9 +72,13 @@ class TeamController extends Controller
             'title' =>  'Editor | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Editor | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Contact Us, Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'tim editor, editorial board, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('team.editor'),
             ],
             'breadcrumbs' =>  [
                 [
@@ -201,9 +206,13 @@ class TeamController extends Controller
             'title' =>  'Reviewer | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Reviewer | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Contact Us, Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'tim reviewer, peer review, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('team.reviewer'),
             ],
             'breadcrumbs' =>  [
                 [

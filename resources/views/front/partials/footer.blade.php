@@ -15,7 +15,7 @@
 
                     <!-- Footer Logo -->
                     <div class="footer-logo">
-                        <img src="{{ $setting_web?->getLogo() ?? '' }}" alt="footer-logo" style="max-height: 50px;" />
+                        <img src="{{ $setting_web?->getLogo() ?? '' }}" alt="{{ $setting_web->name ?? 'Logo' }}" style="max-height: 50px;" />
                     </div>
 
                     <!-- Text -->
@@ -161,22 +161,22 @@
                     <ul class="bottom-footer-list">
                         @if ($setting_web?->facebook)
                             <li>
-                                <a href="{{ $setting_web->facebook }}" title="Facebook"><span class="flaticon-facebook"></span></a>
+                                <a href="{{ $setting_web->facebook }}" title="Facebook" target="_blank" rel="noopener noreferrer" aria-label="Kunjungi halaman Facebook kami"><span class="flaticon-facebook"></span></a>
                             </li>
                         @endif
                         @if ($setting_web?->instagram)
                             <li>
-                                <a href="{{ $setting_web->instagram }}" title="Instagram"><span class="flaticon-instagram"></span></a>
+                                <a href="{{ $setting_web->instagram }}" title="Instagram" target="_blank" rel="noopener noreferrer" aria-label="Kunjungi halaman Instagram kami"><span class="flaticon-instagram"></span></a>
                             </li>
                         @endif
                         @if ($setting_web?->linkedin)
                             <li>
-                                <a href="{{ $setting_web->linkedin }}" title="LinkedIn"><span class="flaticon-linkedin"></span></a>
+                                <a href="{{ $setting_web->linkedin }}" title="LinkedIn" target="_blank" rel="noopener noreferrer" aria-label="Kunjungi halaman LinkedIn kami"><span class="flaticon-linkedin"></span></a>
                             </li>
                         @endif
                         @if ($setting_web?->whatsapp)
                             <li>
-                                <a href="https://wa.me/{{ $setting_web->whatsapp }}" title="WhatsApp"><span class="flaticon-whatsapp"></span></a>
+                                <a href="https://wa.me/{{ $setting_web->whatsapp }}" title="WhatsApp" target="_blank" rel="noopener noreferrer" aria-label="Hubungi kami via WhatsApp"><span class="flaticon-whatsapp"></span></a>
                             </li>
                         @endif
                     </ul>

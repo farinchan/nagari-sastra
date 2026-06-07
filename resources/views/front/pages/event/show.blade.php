@@ -1,17 +1,5 @@
 @extends('front.app')
-@section('seo')
-    <title>{{ $meta['title'] }}</title>
-    <meta name="description" content="{{ $meta['description'] }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Nagari Sastra">
 
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ $meta['description'] }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ route('event.show', $event->slug) }}">
-    <link rel="canonical" href="{{ route('event.show', $event->slug) }}">
-    <meta property="og:image" content="{{ $event->getThumbnail() }}">
-@endsection
 @section('content')
 
     <!-- EVENT DETAIL

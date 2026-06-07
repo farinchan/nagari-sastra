@@ -1,17 +1,6 @@
 @extends('front.app')
 @section('seo')
-    <title>{{ $meta['title'] }}</title>
-    <meta name="description" content="{{ $meta['description'] }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Nagari Sastra">
-
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ $meta['description'] }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $payment_invoice->invoice)]) }}">
-    <link rel="canonical" href="{{ route('payment.show', ['invoice_number' => str_replace('/', '-', $payment_invoice->invoice)]) }}">
-    <meta property="og:image" content="{{ $meta['favicon'] }}">
-
+   
     <style>
         /* Override theme badge reset */
         .payment-detail-section .status-badge {

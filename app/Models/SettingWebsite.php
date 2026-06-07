@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\LogOptions;
@@ -22,12 +23,48 @@ class SettingWebsite extends Model
 
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
-    public function getLogo(){
-        return Storage::url($this->logo);
+    /**
+     * Accessor: $setting_web->logo → full Storage URL
+     */
+    public function getLogoAttribute($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+        if (Str::startsWith(trim($value), ['http://', 'https://'])) {
+            return $value;
+        }
+        return Storage::url($value);
     }
 
-    public function getFavicon(){
-        return Storage::url($this->favicon);
+    /**
+     * Accessor: $setting_web->favicon → full Storage URL
+     */
+    public function getFaviconAttribute($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+        if (Str::startsWith(trim($value), ['http://', 'https://'])) {
+            return $value;
+        }
+        return Storage::url($value);
+    }
+
+    /**
+     * Get logo URL (kept for backward compatibility)
+     */
+    public function getLogo(): ?string
+    {
+        return $this->logo;
+    }
+
+    /**
+     * Get favicon URL (kept for backward compatibility)
+     */
+    public function getFavicon(): ?string
+    {
+        return $this->favicon;
     }
 
     public function getAboutRaw(){

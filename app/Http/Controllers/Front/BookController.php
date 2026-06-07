@@ -7,6 +7,7 @@ use App\Models\Book;
 use App\Models\BookCategory;
 use App\Models\SettingWebsite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -33,9 +34,13 @@ class BookController extends Controller
             'title' => 'Buku | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Buku | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Buku, Koleksi Buku, Katalog, Perpustakaan',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'buku, katalog buku, penerbitan, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('book.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -73,9 +78,13 @@ class BookController extends Controller
             'title' => $book->title,
             'meta' => [
                 'title' => $book->title . ' | ' . $setting_web->name,
-                'description' => strip_tags($book->description),
+                'description' => Str::limit(strip_tags($book->description), 155),
                 'keywords' => $setting_web->name . ', ' . $book->title . ', ' . $book->author . ', ' . $book->publisher,
-                'favicon' => $book->getThumbnail() ?? $setting_web->favicon
+                'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
+                'og_image' => $book->getThumbnail(),
+                'og_type' => 'book',
+                'robots' => 'index, follow',
+                'canonical' => route('book.show', $book->slug),
             ],
             'breadcrumbs' => [
                 [
@@ -115,9 +124,13 @@ class BookController extends Controller
             'title' => $book->title . ' Preview',
             'meta' => [
                 'title' => $book->title . ' Preview | ' . $setting_web->name,
-                'description' => strip_tags($book->description),
+                'description' => Str::limit(strip_tags($book->description), 155),
                 'keywords' => $setting_web->name . ', ' . $book->title . ', Preview Buku',
-                'favicon' => $book->getThumbnail() ?? $setting_web->favicon
+                'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
+                'og_image' => $book->getThumbnail(),
+                'og_type' => 'book',
+                'robots' => 'noindex, follow',
+                'canonical' => route('book.show', $book->slug),
             ],
             'breadcrumbs' => [
                 [
@@ -163,9 +176,13 @@ class BookController extends Controller
             'title' => $category->name . ' | ' . $setting_web->name,
             'meta' => [
                 'title' => $category->name . ' | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', ' . $category->name . ', Buku, Koleksi Buku, Katalog',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit('Buku kategori ' . $category->name . ' - ' . strip_tags($setting_web->about), 155),
+                'keywords' => $setting_web->name . ', ' . $category->name . ', buku, katalog buku, penerbitan',
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('book.category', $category->slug),
             ],
             'breadcrumbs' => [
                 [

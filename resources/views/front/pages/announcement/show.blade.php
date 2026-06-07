@@ -1,17 +1,5 @@
 @extends('front.app')
-@section('seo')
-    <title>{{ $meta['title'] }}</title>
-    <meta name="description" content="{{ Str::limit(strip_tags($meta['description']), 160) }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Nagari Sastra">
 
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ Str::limit(strip_tags($meta['description']), 160) }}">
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ route('announcement.show', $announcement->slug) }}">
-    <link rel="canonical" href="{{ route('announcement.show', $announcement->slug) }}">
-    <meta property="og:image" content="{{ Storage::url($meta['favicon']) }}">
-@endsection
 @section('content')
 
     <style>

@@ -18,9 +18,13 @@ class ContactController extends Controller
             'title' => 'Hubungi Kami | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Hubungi Kami | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Contact Us, Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => 'Hubungi Nagari Sastra Group untuk informasi lebih lanjut mengenai layanan publikasi, jurnal, dan penerbitan buku.',
+                'keywords' => 'kontak, hubungi kami, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('contact.index'),
             ],
             'breadcrumbs' =>  [
                 [

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
 
@@ -19,8 +19,12 @@
         @endisset
         {{ $setting_web->name }}
     </title>
+    @isset($meta)
+        @include('front.partials.seo')
+    @endisset
+    @include('front.partials.breadcrumb_jsonld')
     @yield('seo')
-    <link rel="shortcut icon" href="{{ Storage::url($setting_web->favicon) }}">
+    <link rel="shortcut icon" href="{{ $setting_web->favicon }}">
 
 
     <!-- GOOGLE FONTS -->
@@ -116,7 +120,7 @@
         @php
             $webchatWidget = \App\Models\WebchatWidget::where('is_active', true)->first();
         @endphp
-        @if($webchatWidget)
+        @if ($webchatWidget)
             <script src="{{ url('/api/webchat/embed/' . $webchatWidget->token) }}"></script>
         @endif
 
@@ -152,24 +156,16 @@
 
     @yield('scripts')
 
-    <!-- Google Analytics: Change UA-XXXXX-X to be your site's ID. Go to http://www.google.com/analytics/ for more information. -->
-    <!--
-  <script>
-      var _gaq = _gaq || [];
-      _gaq.push(['_setAccount', 'UA-XXXXX-X']);
-      _gaq.push(['_trackPageview']);
-
-      (function() {
-          var ga = document.createElement('script');
-          ga.type = 'text/javascript';
-          ga.async = true;
-          ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') +
-              '.google-analytics.com/ga.js';
-          var s = document.getElementsByTagName('script')[0];
-          s.parentNode.insertBefore(ga, s);
-      })();
-  </script>
-  -->
+    {{-- Google Analytics / Google Tag Manager --}}
+    {{-- Uncomment and configure with your tracking ID:
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    --}}
 
 
 

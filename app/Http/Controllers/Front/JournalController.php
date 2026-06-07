@@ -7,6 +7,7 @@ use App\Models\Journal;
 use App\Models\SettingWebsite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class JournalController extends Controller
 {
@@ -17,9 +18,13 @@ class JournalController extends Controller
             'title' => 'Jurnal | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Jurnal | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'jurnal ilmiah, publikasi, penelitian, akademik, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('journal.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -47,9 +52,13 @@ class JournalController extends Controller
             'title' => $journal->title,
             'meta' => [
                 'title' => $journal->title . ' | ' . $setting_web->name,
-                'description' => strip_tags($journal->description),
-                'keywords' => $setting_web->name . ', ' . $journal->title . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $journal->getJournalThumbnail() ?? Storage::url($setting_web->favicon)
+                'description' => Str::limit(strip_tags($journal->description), 155),
+                'keywords' => $setting_web->name . ', ' . $journal->title . ', jurnal ilmiah, publikasi, penelitian',
+                'favicon' => $journal->getJournalThumbnail() ?? $setting_web->favicon,
+                'og_image' => $journal->getJournalThumbnail(),
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('journal.detail', $journal->url_path),
             ],
             'breadcrumbs' => [
                 [

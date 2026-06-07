@@ -23,7 +23,7 @@
     <meta property="og:url" content="{{ url()->current() }}" />
     <meta property="og:site_name" content="{{ $setting_web->name }}" />
     <link rel="canonical" href="{{ url()->current() }}" />
-    <link rel="shortcut icon" href="{{ Storage::url($setting_web->favicon) }}" />
+    <link rel="shortcut icon" href="{{ $setting_web->favicon }}" />
     <!--begin::Fonts(mandatory for all pages)-->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" /> <!--end::Fonts-->
     <!--begin::Vendor Stylesheets(used for this page only)-->

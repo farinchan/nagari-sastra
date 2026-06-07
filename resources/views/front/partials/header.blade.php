@@ -22,9 +22,9 @@
 
                 <!-- HEADER LOGO -->
                 <div class="desktoplogo"><a href="#hero-13" class="logo-black"><img
-                            src="{{ $setting_web?->getLogo() ?? '' }}" alt="header-logo"></a></div>
+                            src="{{ $setting_web?->getLogo() ?? '' }}" alt="{{ $setting_web->name ?? 'Logo' }}"></a></div>
                 <div class="desktoplogo"><a href="#hero-13" class="logo-white"><img
-                            src="{{ $setting_web?->getLogo() ?? '' }}" alt="header-logo"></a></div>
+                            src="{{ $setting_web?->getLogo() ?? '' }}" alt="{{ $setting_web->name ?? 'Logo' }}"></a></div>
 
 
                 <!-- MAIN MENU -->
@@ -128,7 +128,7 @@
 
                                             <!-- Image -->
                                             <div class="fluid-width-video-wrapper mb-15"><img
-                                                    src="{{ $news_popular->getThumbnail() }}" alt="featured-news"
+                                                    src="{{ $news_popular->getThumbnail() }}" alt="{{ $news_popular->title ?? 'Berita Populer' }}"
                                                     style="width: 100%; height: 200px; object-fit: cover;" />
                                             </div>
 
@@ -162,7 +162,7 @@
 
                                                         <!-- Image -->
                                                         <img class="img-fluid" src="{{ $news->getThumbnail() }}"
-                                                            alt="blog-post-preview" />
+                                                            alt="{{ $news->title ?? 'Berita' }}" />
 
                                                         <!-- Text -->
                                                         <div class="post-summary">

@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class EventController extends Controller
@@ -24,9 +25,13 @@ class EventController extends Controller
             'title' => 'Agenda | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Agenda | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'event, seminar, workshop, webinar, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('event.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -54,9 +59,13 @@ class EventController extends Controller
             'title' => $event->name,
             'meta' => [
                 'title' => $event->name . ' | ' . $setting_web->name,
-                'description' => strip_tags($event->description),
-                'keywords' => $setting_web->name . ', ' . $event->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $event->thumbnail ?? $setting_web->favicon
+                'description' => Str::limit(strip_tags($event->description), 155),
+                'keywords' => $setting_web->name . ', ' . $event->name . ', event, seminar, workshop',
+                'favicon' => $event->thumbnail ?? $setting_web->favicon,
+                'og_image' => $event->getThumbnail(),
+                'og_type' => 'event',
+                'robots' => 'index, follow',
+                'canonical' => route('event.show', $event->slug),
             ],
             'breadcrumbs' => [
                 [
@@ -214,9 +223,12 @@ class EventController extends Controller
             'title' => 'Event Attendance | ' . $event_attendance->event->name,
             'meta' => [
                 'title' => 'Event Attendance | ' . $event_attendance->event->name,
-                'description' => strip_tags($event_attendance->description),
+                'description' => Str::limit(strip_tags($event_attendance->description), 155),
                 'keywords' => $event_attendance->event->name . ', Event, Attendance',
-                'favicon' => $event_attendance->event->thumbnail
+                'favicon' => $event_attendance->event->thumbnail,
+                'og_type' => 'event',
+                'robots' => 'noindex, nofollow',
+                'canonical' => route('event.show', $event_attendance->event->slug),
             ],
             'breadcrumbs' => [
                 [

@@ -20,9 +20,12 @@ class PaymentController extends Controller
             'title' => 'Pembayaran | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Pembayaran | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => 'Halaman pembayaran ' . $setting_web->name,
+                'keywords' => $setting_web->name . ', pembayaran, invoice',
+                'favicon' => $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'noindex, nofollow',
+                'canonical' => route('payment.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -106,8 +109,10 @@ class PaymentController extends Controller
             'meta' => [
                 'title' => 'Pembayaran - ' . $paymentInvoice->invoice . ' | ' . $setting_web->name,
                 'description' => 'Pembayaran invoice ' . $paymentInvoice->invoice,
-                'keywords' => $setting_web->name . ', Payment, Invoice',
-                'favicon' => $journal?->getJournalThumbnail() ?? Storage::url($setting_web->favicon)
+                'keywords' => $setting_web->name . ', pembayaran, invoice',
+                'favicon' => $journal?->getJournalThumbnail() ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'noindex, nofollow',
             ],
             'breadcrumbs' => [
                 [

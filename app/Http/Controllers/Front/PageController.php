@@ -19,6 +19,10 @@ class PageController extends Controller
                 'description' => 'Syarat dan ketentuan penggunaan layanan ' . $setting_web->name,
                 'keywords' => $setting_web->name . ', Syarat, Ketentuan, Terms, Conditions',
                 'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('page.terms'),
             ],
             'breadcrumbs' => [
                 ['name' => 'Beranda', 'link' => route('home')],
@@ -41,6 +45,10 @@ class PageController extends Controller
                 'description' => 'Kebijakan privasi dan perlindungan data pengguna ' . $setting_web->name,
                 'keywords' => $setting_web->name . ', Kebijakan, Privasi, Privacy, Policy',
                 'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('page.privacy'),
             ],
             'breadcrumbs' => [
                 ['name' => 'Beranda', 'link' => route('home')],
@@ -63,6 +71,10 @@ class PageController extends Controller
                 'description' => 'Pertanyaan yang sering diajukan seputar layanan ' . $setting_web->name,
                 'keywords' => $setting_web->name . ', FAQ, Pertanyaan, Bantuan, Help',
                 'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('page.faq'),
             ],
             'breadcrumbs' => [
                 ['name' => 'Beranda', 'link' => route('home')],

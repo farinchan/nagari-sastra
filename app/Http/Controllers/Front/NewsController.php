@@ -9,6 +9,7 @@ use App\Models\NewsViewer;
 use App\Models\SettingWebsite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use RealRashid\SweetAlert\Facades\Alert;
 use Jenssegers\Agent\Facades\Agent;
 use Stevebauman\Location\Facades\Location;
@@ -29,9 +30,13 @@ class NewsController extends Controller
             'title' => 'Berita | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Berita | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit('Berita terbaru dari ' . strip_tags($setting_web->about), 155),
+                'keywords' => $setting_web->name . ', berita, informasi, artikel, kabar terbaru',
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('news.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -59,9 +64,13 @@ class NewsController extends Controller
             'title' => $news->title,
             'meta' => [
                 'title' => $news->title . ' | ' . $setting_web->name,
-                'description' => strip_tags($news->content),
-                'keywords' => $setting_web->name . ', ' . $news->title . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $news->thumbnail ?? $setting_web->favicon
+                'description' => Str::limit(strip_tags($news->content), 155),
+                'keywords' => $setting_web->name . ', ' . $news->title . ', ' . ($news->category->name ?? 'berita') . ', artikel',
+                'favicon' => $news->thumbnail ?? $setting_web->favicon,
+                'og_image' => $news->getThumbnail(),
+                'og_type' => 'article',
+                'robots' => 'index, follow',
+                'canonical' => route('news.detail', $news->slug),
             ],
             'breadcrumbs' => [
                 [
@@ -95,9 +104,13 @@ class NewsController extends Controller
             'title' => $category->name,
             'meta' => [
                 'title' => $category->name . ' | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', ' . $category->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit('Berita kategori ' . $category->name . ' - ' . strip_tags($setting_web->about), 155),
+                'keywords' => $setting_web->name . ', ' . $category->name . ', berita, kategori, artikel',
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('news.category', $category->slug),
             ],
             'breadcrumbs' => [
                 [

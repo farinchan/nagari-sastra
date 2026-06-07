@@ -1,17 +1,5 @@
 @extends('front.app')
-@section('seo')
-    <title>{{ $meta['title'] }}</title>
-    <meta name="description" content="{{ $meta['description'] }}">
-    <meta name="keywords" content="{{ $meta['keywords'] }}">
-    <meta name="author" content="Nagari Sastra">
 
-    <meta property="og:title" content="{{ $meta['title'] }}">
-    <meta property="og:description" content="{{ $meta['description'] }}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ route('news.detail', $news->slug) }}">
-    <link rel="canonical" href="{{ route('news.detail', $news->slug) }}">
-    <meta property="og:image" content="{{ Storage::url($meta['favicon']) }}">
-@endsection
 @section('content')
     <!-- BLOG POSTS LISTING-1
                ============================================= -->

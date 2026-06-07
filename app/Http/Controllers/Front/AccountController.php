@@ -27,9 +27,12 @@ class AccountController extends Controller
             'title' => $me->name . ' | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Profil',
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => 'Halaman profil pengguna ' . $setting_web->name,
+                'keywords' => $setting_web->name . ', profil, akun',
+                'favicon' => $setting_web->favicon,
+                'og_type' => 'profile',
+                'robots' => 'noindex, nofollow',
+                'canonical' => route('account.profile'),
             ],
             'breadcrumbs' => [
                 [

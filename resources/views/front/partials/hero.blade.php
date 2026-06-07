@@ -10,7 +10,7 @@
                         <div class="hero-13-txt text-center white-color">
 
                             <!-- Title -->
-                            <h3 class="h3-lg">NAGARI SASTRA GROUP</h3>
+                            <h1 class="h3-lg" style="color: #fff;">NAGARI SASTRA GROUP</h1>
 
                             <!-- Text -->
                             <p class="p-xl">
@@ -40,7 +40,7 @@
                                     </div>
 
                                     <!-- Preview Image -->
-                                    <img class="img-fluid" src="{{ asset('front/images/hero-13-img.png') }}" alt="video-preview">
+                                    <img class="img-fluid" src="{{ asset('front/images/hero-13-img.png') }}" alt="Nagari Sastra Group - Platform Publikasi, Riset dan Pendidikan">
 
                                 </a>
                             </div>

@@ -20,9 +20,13 @@ class MenuProfilController extends Controller
             'title' => $menu_profil->name,
             'meta' => [
                 'title' => $menu_profil->name . ' | ' . $setting_web->name,
-                'description' => Str::limit(strip_tags($menu_profil->content), 160),
-                'keywords' => $setting_web->name . ', ' . $menu_profil->name .', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $menu_profil->image ?? $setting_web->favicon
+                'description' => Str::limit(strip_tags($menu_profil->content), 155),
+                'keywords' => $setting_web->name . ', ' . $menu_profil->name . ', profil, informasi',
+                'favicon' => $menu_profil->image ?? $setting_web->favicon,
+                'og_image' => $menu_profil->image ?? ($setting_web->logo ?? $setting_web->favicon),
+                'og_type' => 'article',
+                'robots' => 'index, follow',
+                'canonical' => route('profil.show', $menu_profil->slug),
             ],
             'breadcrumbs' => [
                 [

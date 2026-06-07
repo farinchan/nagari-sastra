@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\SettingWebsite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AnnouncementController extends Controller
 {
@@ -17,9 +18,13 @@ class AnnouncementController extends Controller
             'title' => 'Pengumuman | ' . $setting_web->name,
             'meta' => [
                 'title' => 'Pengumuman | ' . $setting_web->name,
-                'description' => strip_tags($setting_web->about),
-                'keywords' => $setting_web->name . ', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $setting_web->favicon
+                'description' => Str::limit(strip_tags($setting_web->about), 155),
+                'keywords' => 'pengumuman, informasi, ' . $setting_web->name,
+                'favicon' => $setting_web->favicon,
+                'og_image' => $setting_web->logo ?? $setting_web->favicon,
+                'og_type' => 'website',
+                'robots' => 'index, follow',
+                'canonical' => route('announcement.index'),
             ],
             'breadcrumbs' => [
                 [
@@ -47,9 +52,13 @@ class AnnouncementController extends Controller
             'title' => $announcement->title,
             'meta' => [
                 'title' => $announcement->title . ' | ' . $setting_web->name,
-                'description' => strip_tags($announcement->content),
-                'keywords' => $setting_web->name . ', ' . $announcement->title .', Journal, Research, OJS System, Open Journal System, Research Journal, Academic Journal, Publication',
-                'favicon' => $announcement->image ?? $setting_web->favicon
+                'description' => Str::limit(strip_tags($announcement->content), 155),
+                'keywords' => $setting_web->name . ', ' . $announcement->title . ', pengumuman, informasi',
+                'favicon' => $announcement->image ?? $setting_web->favicon,
+                'og_image' => $announcement->image ?? ($setting_web->logo ?? $setting_web->favicon),
+                'og_type' => 'article',
+                'robots' => 'index, follow',
+                'canonical' => route('announcement.show', $announcement->slug),
             ],
             'breadcrumbs' => [
                 [
