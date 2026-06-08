@@ -1006,9 +1006,19 @@ class CrmController extends Controller
             return response('OK', 200);
         }
 
-        Log::info('Telegram Webhook [Bot: ' . $bot->name . ']', $request->all());
-
         $update = $request->all();
+
+        // Deduplicate by update_id — Telegram may retry the same update
+        $updateId = $update['update_id'] ?? null;
+        if ($updateId) {
+            $cacheKey = 'tg_update:' . $bot->id . ':' . $updateId;
+            if (cache()->has($cacheKey)) {
+                return response('OK', 200); // Already processed
+            }
+            cache()->put($cacheKey, true, 300); // Remember for 5 minutes
+        }
+
+        Log::info('Telegram Webhook [Bot: ' . $bot->name . ']', $update);
 
         // Get message from update
         $message = $update['message'] ?? $update['edited_message'] ?? null;
@@ -1024,6 +1034,12 @@ class CrmController extends Controller
 
         $telegramChatId = $chatData['id'];
         $chatType = $chatData['type'] ?? 'private';
+        $telegramMessageId = $message['message_id'] ?? null;
+
+        // Skip if no message_id (shouldn't happen, but safeguard)
+        if (!$telegramMessageId) {
+            return response('OK', 200);
+        }
 
         // Create or update chat
         $chat = TelegramChat::updateOrCreate(
@@ -1041,6 +1057,15 @@ class CrmController extends Controller
             ]
         );
 
+        // Check if this message_id already exists for this chat — prevent duplicates
+        $exists = TelegramMessage::where('telegram_chat_id', $chat->id)
+            ->where('message_id', $telegramMessageId)
+            ->exists();
+
+        if ($exists) {
+            return response('OK', 200); // Already saved, skip
+        }
+
         // Determine message type and content
         $text = $message['text'] ?? $message['caption'] ?? null;
         $type = 'text';
@@ -1050,7 +1075,6 @@ class CrmController extends Controller
 
         if (isset($message['photo'])) {
             $type = 'photo';
-            // Take largest photo (last in array)
             $photos = $message['photo'];
             $fileId = end($photos)['file_id'] ?? null;
         } elseif (isset($message['document'])) {
@@ -1081,7 +1105,7 @@ class CrmController extends Controller
         TelegramMessage::create([
             'telegram_bot_id' => $bot->id,
             'telegram_chat_id' => $chat->id,
-            'message_id' => $message['message_id'] ?? null,
+            'message_id' => $telegramMessageId,
             'direction' => 'in',
             'text' => $text,
             'type' => $type,
