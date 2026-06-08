@@ -249,13 +249,83 @@
 <script>
 @if(isset($activeChat))
 var chatDiv = document.getElementById('chatMessages');
-if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
+var tgReplyForm = document.getElementById('tgReplyForm');
+var tgTextarea = tgReplyForm.querySelector('textarea[name="text"]');
+var tgPhotoInput = document.getElementById('tgPhotoInput');
+var tgSendBtn = tgReplyForm.querySelector('button[type="submit"]');
+var tgLastMsgId = {{ $activeChat->messages->last()?->id ?? 0 }};
+var tgChatDbId = {{ $activeChat->id }};
+var tgFetchUrl = '{{ route("back.crm.telegram.fetch-messages", $activeChat->id) }}';
+var tgSendUrl = '{{ route("back.crm.telegram.send-message") }}';
+var tgCsrfToken = '{{ csrf_token() }}';
+var tgPollingTimer = null;
+
+// Scroll to bottom
+function tgScrollBottom() {
+    if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+tgScrollBottom();
+
+// Build message bubble HTML
+function tgBuildMsgHtml(msg) {
+    var isOut = msg.direction === 'out';
+    var html = '';
+
+    if (isOut) {
+        html += '<div class="d-flex justify-content-end mb-4">';
+        html += '<div style="max-width: 70%;">';
+        html += '<div class="bg-primary rounded-3 p-3">';
+    } else {
+        html += '<div class="d-flex justify-content-start mb-4">';
+        html += '<div style="max-width: 70%;">';
+        html += '<div class="bg-white rounded-3 p-3 shadow-sm">';
+    }
+
+    // Photo
+    if (msg.type === 'photo' && msg.photo_url) {
+        html += '<a href="' + msg.photo_url + '" target="_blank">';
+        html += '<img src="' + msg.photo_url + '" class="rounded-2 mb-2" style="max-width: 240px; max-height: 200px; display: block;" alt="Foto" loading="lazy">';
+        html += '</a>';
+    } else if (msg.type !== 'text') {
+        var badges = {photo:'📷 Foto', document:'📄 '+(msg.file_name||'Dokumen'), sticker:'🎭 Sticker', video:'🎬 Video', voice:'🎤 Voice', location:'📍 Lokasi', contact:'👤 Kontak'};
+        html += '<div class="mb-1"><span class="badge badge-light-info fs-9">' + (badges[msg.type] || msg.type) + '</span></div>';
+    }
+
+    // Text
+    if (msg.text) {
+        var escaped = msg.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+        var textClass = isOut ? 'text-white' : 'text-gray-800';
+        html += '<div class="' + textClass + ' fs-7">' + escaped + '</div>';
+    }
+
+    html += '</div>'; // close bg
+
+    // Time
+    if (isOut) {
+        html += '<div class="text-muted fs-9 mt-1 text-end me-1">';
+        html += '<i class="ki-duotone ki-check fs-9 text-success"><span class="path1"></span><span class="path2"></span></i> ';
+        html += msg.time + '</div>';
+    } else {
+        html += '<div class="text-muted fs-9 mt-1 ms-1">' + msg.time + '</div>';
+    }
+
+    html += '</div></div>';
+    return html;
+}
+
+// Append message to chat
+function tgAppendMsg(msg) {
+    if (!chatDiv) return;
+    chatDiv.insertAdjacentHTML('beforeend', tgBuildMsgHtml(msg));
+    if (msg.id && msg.id > tgLastMsgId) tgLastMsgId = msg.id;
+    tgScrollBottom();
+}
 
 // Image picker
 document.getElementById('tgAttachBtn').addEventListener('click', function() {
-    document.getElementById('tgPhotoInput').click();
+    tgPhotoInput.click();
 });
-document.getElementById('tgPhotoInput').addEventListener('change', function(e) {
+tgPhotoInput.addEventListener('change', function(e) {
     var file = e.target.files[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) { alert('Maksimal 5MB'); this.value = ''; return; }
@@ -268,15 +338,96 @@ document.getElementById('tgPhotoInput').addEventListener('change', function(e) {
     reader.readAsDataURL(file);
 });
 document.getElementById('tgClearImage').addEventListener('click', function() {
-    document.getElementById('tgPhotoInput').value = '';
+    tgPhotoInput.value = '';
     document.getElementById('tgImagePreview').classList.add('d-none');
 });
 
-// Validate form: must have text or photo
-document.getElementById('tgReplyForm').addEventListener('submit', function(e) {
-    var text = this.querySelector('textarea[name="text"]').value.trim();
-    var hasFile = document.getElementById('tgPhotoInput').files.length > 0;
-    if (!text && !hasFile) { e.preventDefault(); alert('Kirim pesan teks atau gambar.'); }
+// AJAX Send
+tgReplyForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var text = tgTextarea.value.trim();
+    var hasFile = tgPhotoInput.files.length > 0;
+
+    if (!text && !hasFile) {
+        alert('Kirim pesan teks atau gambar.');
+        return;
+    }
+
+    // Disable button
+    tgSendBtn.disabled = true;
+    var origIcon = tgSendBtn.innerHTML;
+    tgSendBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    var formData = new FormData(tgReplyForm);
+
+    fetch(tgSendUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': tgCsrfToken,
+            'Accept': 'application/json'
+        }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success && data.data) {
+            tgAppendMsg(data.data);
+
+            // Reset form
+            tgTextarea.value = '';
+            tgPhotoInput.value = '';
+            document.getElementById('tgImagePreview').classList.add('d-none');
+        } else {
+            alert(data.message || 'Gagal mengirim pesan.');
+        }
+    })
+    .catch(function(err) {
+        console.error('Send error:', err);
+        alert('Terjadi kesalahan saat mengirim.');
+    })
+    .finally(function() {
+        tgSendBtn.disabled = false;
+        tgSendBtn.innerHTML = origIcon;
+        tgTextarea.focus();
+    });
+});
+
+// Enter to send (Shift+Enter for newline)
+tgTextarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        tgReplyForm.dispatchEvent(new Event('submit'));
+    }
+});
+
+// Polling: fetch new messages every 5 seconds
+function tgPollMessages() {
+    fetch(tgFetchUrl + '?last_id=' + tgLastMsgId, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.success && data.messages && data.messages.length > 0) {
+            data.messages.forEach(function(msg) {
+                // Only append if not already shown
+                if (msg.id > tgLastMsgId) {
+                    tgAppendMsg(msg);
+                }
+            });
+        }
+    })
+    .catch(function(err) {
+        console.error('Poll error:', err);
+    });
+}
+
+tgPollingTimer = setInterval(tgPollMessages, 5000);
+
+// Clean up on page leave
+window.addEventListener('beforeunload', function() {
+    if (tgPollingTimer) clearInterval(tgPollingTimer);
 });
 @endif
 

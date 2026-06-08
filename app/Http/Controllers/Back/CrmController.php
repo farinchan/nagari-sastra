@@ -788,20 +788,27 @@ class CrmController extends Controller
 
     public function telegramSendMessage(Request $request)
     {
+        $isAjax = $request->ajax() || $request->wantsJson();
+
         $validator = Validator::make($request->all(), [
             'chat_id' => 'required',
-            'text' => 'nullable|string',
+            'text' => 'nullable|string|max:4096',
             'bot_id' => 'required',
             'photo' => 'nullable|file|mimes:jpeg,png,gif,webp|max:5120',
         ]);
 
         if ($validator->fails()) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+            }
             Alert::error('Gagal', $validator->errors()->first());
             return redirect()->back();
         }
 
-        // Must have text or photo
         if (!$request->text && !$request->hasFile('photo')) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Kirim pesan teks atau gambar.'], 422);
+            }
             Alert::error('Gagal', 'Kirim pesan teks atau gambar.');
             return redirect()->back();
         }
@@ -812,15 +819,18 @@ class CrmController extends Controller
             ->firstOrFail();
 
         try {
+            $savedMsg = null;
+
             if ($request->hasFile('photo')) {
-                // Validate real image
                 $file = $request->file('photo');
                 if (!@getimagesize($file->getRealPath())) {
+                    if ($isAjax) {
+                        return response()->json(['success' => false, 'message' => 'File bukan gambar yang valid.'], 422);
+                    }
                     Alert::error('Gagal', 'File bukan gambar yang valid.');
                     return redirect()->back();
                 }
 
-                // Send photo via Telegram API
                 $params = ['chat_id' => $request->chat_id];
                 if ($request->text) {
                     $params['caption'] = $request->text;
@@ -829,30 +839,38 @@ class CrmController extends Controller
                 $result = $bot->sendMultipart('sendPhoto', $params, $file, 'photo');
 
                 if (isset($result['ok']) && $result['ok']) {
-                    TelegramMessage::create([
+                    $fileId = null;
+                    if (isset($result['result']['photo']) && is_array($result['result']['photo'])) {
+                        $lastPhoto = end($result['result']['photo']);
+                        $fileId = $lastPhoto['file_id'] ?? null;
+                    }
+
+                    $savedMsg = TelegramMessage::create([
                         'telegram_bot_id' => $bot->id,
                         'telegram_chat_id' => $chat->id,
                         'message_id' => $result['result']['message_id'] ?? null,
                         'direction' => 'out',
                         'text' => $request->text,
                         'type' => 'photo',
-                        'file_id' => $result['result']['photo'][0]['file_id'] ?? null,
+                        'file_id' => $fileId,
                         'sent_at' => now(),
                     ]);
-
-                    Alert::success('Berhasil', 'Gambar berhasil dikirim.');
                 } else {
-                    Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim gambar.');
+                    $errMsg = $result['description'] ?? 'Gagal mengirim gambar.';
+                    if ($isAjax) {
+                        return response()->json(['success' => false, 'message' => $errMsg]);
+                    }
+                    Alert::error('Gagal', $errMsg);
+                    return redirect()->back();
                 }
             } else {
-                // Text only
                 $result = $bot->sendRequest('sendMessage', [
                     'chat_id' => $request->chat_id,
                     'text' => $request->text,
                 ]);
 
                 if (isset($result['ok']) && $result['ok']) {
-                    TelegramMessage::create([
+                    $savedMsg = TelegramMessage::create([
                         'telegram_bot_id' => $bot->id,
                         'telegram_chat_id' => $chat->id,
                         'message_id' => $result['result']['message_id'] ?? null,
@@ -861,17 +879,85 @@ class CrmController extends Controller
                         'type' => 'text',
                         'sent_at' => now(),
                     ]);
-
-                    Alert::success('Berhasil', 'Pesan berhasil dikirim.');
                 } else {
-                    Alert::error('Gagal', $result['description'] ?? 'Gagal mengirim pesan.');
+                    $errMsg = $result['description'] ?? 'Gagal mengirim pesan.';
+                    if ($isAjax) {
+                        return response()->json(['success' => false, 'message' => $errMsg]);
+                    }
+                    Alert::error('Gagal', $errMsg);
+                    return redirect()->back();
                 }
             }
+
+            // Update last message time
+            $chat->update(['last_message_at' => now()]);
+
+            if ($isAjax && $savedMsg) {
+                $photoUrl = null;
+                if ($savedMsg->type === 'photo' && $savedMsg->file_id) {
+                    $photoUrl = route('back.crm.telegram.file-proxy', [$bot->id, $savedMsg->file_id]);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pesan berhasil dikirim.',
+                    'data' => [
+                        'id' => $savedMsg->id,
+                        'direction' => 'out',
+                        'type' => $savedMsg->type,
+                        'text' => $savedMsg->text,
+                        'file_id' => $savedMsg->file_id,
+                        'photo_url' => $photoUrl,
+                        'time' => now()->format('d M H:i'),
+                    ],
+                ]);
+            }
+
+            Alert::success('Berhasil', 'Pesan berhasil dikirim.');
         } catch (\Exception $e) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Gagal mengirim: ' . $e->getMessage()], 500);
+            }
             Alert::error('Gagal', 'Gagal mengirim: ' . $e->getMessage());
         }
 
         return redirect()->back();
+    }
+
+    /**
+     * AJAX: Fetch new messages for a Telegram chat (polling).
+     */
+    public function telegramFetchMessages(Request $request, $chatId)
+    {
+        $chat = TelegramChat::findOrFail($chatId);
+        $lastId = (int) $request->input('last_id', 0);
+
+        $messages = TelegramMessage::where('telegram_chat_id', $chat->id)
+            ->where('id', '>', $lastId)
+            ->orderBy('id', 'asc')
+            ->limit(50)
+            ->get()
+            ->map(function ($msg) use ($chat) {
+                $photoUrl = null;
+                if ($msg->type === 'photo' && $msg->file_id) {
+                    $photoUrl = route('back.crm.telegram.file-proxy', [$chat->telegram_bot_id, $msg->file_id]);
+                }
+                return [
+                    'id' => $msg->id,
+                    'direction' => $msg->direction,
+                    'type' => $msg->type,
+                    'text' => $msg->text,
+                    'file_id' => $msg->file_id,
+                    'file_name' => $msg->file_name,
+                    'photo_url' => $photoUrl,
+                    'time' => $msg->sent_at ? $msg->sent_at->format('d M H:i') : $msg->created_at->format('d M H:i'),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'messages' => $messages,
+        ]);
     }
 
     /**

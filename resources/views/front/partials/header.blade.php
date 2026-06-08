@@ -207,9 +207,11 @@
                                 <li aria-haspopup="true">
                                     <a href="{{ route('account.profile') }}">Profil Saya</a>
                                 </li>
+                                @if(Auth::user()->getRoleNames()->isNotEmpty())
                                 <li aria-haspopup="true">
                                     <a href="{{ route('back.dashboard') }}">Dashboard</a>
                                 </li>
+                                @endif
                                 <li aria-haspopup="true">
                                     <a href="{{ route('logout') }}"
                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
