@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmailCampaignLog extends Model
 {
+
     protected $guarded = ['id'];
 
     protected $casts = [

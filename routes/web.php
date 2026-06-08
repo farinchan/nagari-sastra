@@ -37,6 +37,7 @@ use App\Http\Controllers\Back\OutgoingMailController as BackOutgoingMailControll
 use App\Http\Controllers\Back\CrmController as BackCrmController;
 use App\Http\Controllers\Back\TestimonialController as BackTestimonialController;
 use App\Http\Controllers\Back\FaqController as BackFaqController;
+use App\Http\Controllers\Back\LogController as BackLogController;
 
 
 
@@ -563,6 +564,12 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::delete('/webchat/{id}/destroy', [BackCrmController::class, 'webchatDestroy'])->name('webchat.destroy');
         Route::get('/webchat/{id}/fetch', [BackCrmController::class, 'webchatFetchNew'])->name('webchat.fetch');
         Route::post('/webchat/{id}/reply-ajax', [BackCrmController::class, 'webchatReplyAjax'])->name('webchat.reply-ajax');
+    });
+
+    // Logs
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/activity', [BackLogController::class, 'activityLog'])->name('activity');
+        Route::get('/activity/data', [BackLogController::class, 'activityLogData'])->name('activity.data');
     });
 });
 

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class PaymentInvoice extends Model
 {
+    use LogsActivity;
     protected $guarded = [
         'id',
         'created_at',
@@ -21,6 +24,14 @@ class PaymentInvoice extends Model
         'is_paid' => 'boolean',
         'is_custom' => 'boolean',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function submissions()
     {

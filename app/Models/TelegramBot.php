@@ -4,9 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Http;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class TelegramBot extends Model
 {
+    use LogsActivity;
+
     protected $guarded = ['id'];
 
     protected $casts = [
@@ -14,6 +18,14 @@ class TelegramBot extends Model
         'is_active' => 'boolean',
         'webhook_active' => 'boolean',
     ];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
+    }
 
     public function chats()
     {
