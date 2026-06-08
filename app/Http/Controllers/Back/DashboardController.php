@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Announcement;
 use App\Models\Event;
 use App\Models\Finance;
-use App\Models\Payment;
-use App\Models\FinanceYear;
+
+
 
 class DashboardController extends Controller
 {
@@ -73,16 +73,31 @@ class DashboardController extends Controller
             'title' => 'Dashboard Berita',
             'menu' => 'dashboard',
             'sub_menu' => '',
-            'berita_count' => News::count(),
+            'total_news' => News::count(),
+            'total_views' => NewsViewer::count(),
+            'total_comments' => NewsComment::count(),
+            'total_published' => News::where('status', 'published')->count(),
+            'total_draft' => News::where('status', 'draft')->count(),
             'news_popular' => News::with('comments')->withCount('viewers')->orderBy('viewers_count', 'desc')->limit(5)->get(),
             'news_new' => News::with(['comments', 'viewers'])->latest()->limit(5)->get(),
-            'news_writer' => news::select(
+            'news_writer' => News::select(
                 DB::raw('count(*) as total'),
                 'news.user_id',
             )
-                ->groupBy('news.user_id')
+                ->join('users', 'users.id', '=', 'news.user_id')
+                ->addSelect('users.name', 'users.email')
+                ->groupBy('news.user_id', 'users.name', 'users.email')
                 ->orderBy('total', 'desc')
                 ->limit(5)
+                ->get(),
+            'news_by_category' => News::select(
+                DB::raw('count(*) as total'),
+                'news_categories.name as category_name',
+            )
+                ->join('news_categories', 'news_categories.id', '=', 'news.news_category_id')
+                ->groupBy('news.news_category_id', 'news_categories.name')
+                ->orderBy('total', 'desc')
+                ->limit(8)
                 ->get(),
         ];
         return view('back.pages.dashboard.news', $data);
@@ -130,10 +145,9 @@ class DashboardController extends Controller
     {
         try {
             $data = cache()->remember('cashflow_stats', 60, function () {
-                // Get current finance year
-                $financeYear = FinanceYear::latest()->first();
-                $startDate = $financeYear ? $financeYear->start_date : now()->startOfYear()->toDateString();
-                $endDate = $financeYear && $financeYear->end_date ? $financeYear->end_date : now()->addDay()->toDateString();
+                // Use current year as date range
+                $startDate = now()->startOfYear()->toDateString();
+                $endDate = now()->addDay()->toDateString();
 
                 // Monthly cashflow data
                 $monthlyData = Finance::select(
@@ -148,25 +162,9 @@ class DashboardController extends Controller
                 ->limit(30)
                 ->get();
 
-                // Payment income data
-                $paymentIncome = Payment::with(['paymentInvoice'])
-                    ->where('created_at', '>=', $startDate)
-                    ->where('created_at', '<=', $endDate)
-                    ->where('payment_status', 'accepted')
-                    ->get()
-                    ->groupBy(function($payment) {
-                        return $payment->created_at->format('Y-m-d');
-                    })
-                    ->map(function($payments) {
-                        return $payments->sum(function($payment) {
-                            return $payment->paymentInvoice->payment_amount ?? 0;
-                        });
-                    });
-
                 // Merge and process monthly data
-                $mergedMonthly = $monthlyData->map(function ($item) use ($paymentIncome) {
-                    $paymentForDate = $paymentIncome->get($item->date, 0);
-                    $totalIncome = (int)($item->income + $paymentForDate);
+                $mergedMonthly = $monthlyData->map(function ($item) {
+                    $totalIncome = (int)$item->income;
                     $expense = (int)$item->expense;
 
                     return [
@@ -184,64 +182,6 @@ class DashboardController extends Controller
                     ->groupBy('type')
                     ->get();
 
-                // Finance Years overview
-                $financeYears = FinanceYear::orderBy('start_date', 'desc')
-                    ->limit(5)
-                    ->get();
-
-                if ($financeYears->isEmpty()) {
-                    // If no finance years exist, create a default one for current year
-                    $financeYears = collect([[
-                        'name' => 'Current Year (' . now()->year . ')',
-                        'income' => 0,
-                        'outcome' => 0,
-                        'balance' => 0,
-                        'start_date' => now()->startOfYear()->toDateString(),
-                        'end_date' => now()->endOfYear()->toDateString(),
-                        'is_active' => true
-                    ]]);
-                } else {
-                    $financeYears = $financeYears->map(function ($year) {
-                        $startDate = $year->start_date;
-                        $endDate = $year->end_date ?? now()->addDay()->toDateString();
-
-                        // Calculate income for this finance year
-                        $income = Finance::where('type', 'income')
-                            ->where('date', '>=', $startDate)
-                            ->where('date', '<=', $endDate)
-                            ->sum('amount');
-
-                        // Calculate payment income for this finance year
-                        $paymentIncome = Payment::with(['paymentInvoice'])
-                            ->where('created_at', '>=', $startDate)
-                            ->where('created_at', '<=', $endDate)
-                            ->where('payment_status', 'accepted')
-                            ->get()
-                            ->sum(function ($payment) {
-                                return $payment->paymentInvoice->payment_amount ?? 0;
-                            });
-
-                        // Calculate outcome for this finance year
-                        $outcome = Finance::where('type', 'expense')
-                            ->where('date', '>=', $startDate)
-                            ->where('date', '<=', $endDate)
-                            ->sum('amount');
-
-                        $totalIncome = $income + $paymentIncome;
-                        $balance = $totalIncome - $outcome;
-
-                        return [
-                            'name' => $year->name,
-                            'income' => (int)$totalIncome,
-                            'outcome' => (int)$outcome,
-                            'balance' => (int)$balance,
-                            'start_date' => $year->start_date,
-                            'end_date' => $year->end_date,
-                            'is_active' => $year->is_active
-                        ];
-                    });
-                }
-
                 // Recent transactions
                 $recentTransactions = Finance::where('date', '>=', $startDate)
                     ->where('date', '<=', $endDate)
@@ -256,14 +196,7 @@ class DashboardController extends Controller
                     ->where('date', '<=', $endDate)
                     ->sum('amount');
 
-                $totalPaymentIncome = Payment::with(['paymentInvoice'])
-                    ->where('created_at', '>=', $startDate)
-                    ->where('created_at', '<=', $endDate)
-                    ->where('payment_status', 'accepted')
-                    ->get()
-                    ->sum(function ($payment) {
-                        return $payment->paymentInvoice->payment_amount ?? 0;
-                    });
+                $totalPaymentIncome = 0;
 
                 $totalExpense = Finance::where('type', 'expense')
                     ->where('date', '>=', $startDate)
@@ -344,13 +277,17 @@ class DashboardController extends Controller
                     ->sum('amount');
 
                 // Pending invoices count
-                $pendingInvoiceCount = \App\Models\PaymentInvoice::where('payment_status', 'pending')->count();
+                try {
+                    $pendingInvoiceCount = \App\Models\PaymentInvoice::where('payment_status', 'pending')->count();
+                } catch (\Exception $e) {
+                    $pendingInvoiceCount = 0;
+                }
 
                 return [
                     'monthly_cashflow' => $mergedMonthly->values()->toArray(),
                     'monthly_aggregated' => $monthlyAggregated,
                     'transaction_types' => $transactionTypes->toArray(),
-                    'finance_years' => $financeYears->toArray(),
+
                     'recent_transactions' => $recentTransactions->toArray(),
                     'top_expenses' => $topExpenses,
                     'payment_methods' => $paymentMethods,
