@@ -100,6 +100,11 @@ class Book extends Model
         return $this->belongsToMany(User::class, 'book_editors', 'book_id', 'user_id');
     }
 
+    public function bookEditors()
+    {
+        return $this->hasMany(BookEditor::class)->orderBy('order');
+    }
+
     public function bookAuthors()
     {
         return $this->hasMany(BookAuthor::class)->orderBy('order');

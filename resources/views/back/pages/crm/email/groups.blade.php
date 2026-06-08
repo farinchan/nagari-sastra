@@ -1,76 +1,98 @@
 @extends('back.app')
 
 @section('content')
-    <div id="kt_content_container" class=" container-xxl ">
-
-            <div class="card card-flush">
-                <div class="card-header pt-5">
-                    <h3 class="card-title align-items-start flex-column">
-                        <span class="card-label fw-bold text-dark">Grup Kontak</span>
-                        <span class="text-muted mt-1 fw-semibold fs-7">Kelola grup kontak email marketing</span>
-                    </h3>
-                    <div class="card-toolbar">
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
-                            <i class="ki-duotone ki-plus fs-4"></i> Tambah Grup
-                        </button>
+    <div id="kt_content_container" class="container-xxl">
+        <div class="card card-flush">
+            <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+                <div class="card-title">
+                    <div class="d-flex align-items-center position-relative my-1">
+                        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <input type="text" data-kt-ecommerce-product-filter="search"
+                            class="form-control form-control-solid w-250px ps-12" placeholder="Cari Grup" />
                     </div>
                 </div>
-                <div class="card-body pt-3">
-                    <div class="table-responsive">
-                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
-                            <thead>
-                                <tr class="fw-bold text-muted">
-                                    <th>Nama</th>
-                                    <th>Warna</th>
-                                    <th>Deskripsi</th>
-                                    <th>Jumlah Kontak</th>
-                                    <th class="text-end">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($groups as $group)
-                                <tr>
-                                    <td class="fw-bold text-gray-800">{{ $group->name }}</td>
-                                    <td>
-                                        <span class="bullet bullet-dot h-10px w-10px" style="background-color: {{ $group->color }}"></span>
-                                    </td>
-                                    <td class="text-muted">{{ Str::limit($group->description, 60) ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge badge-light-primary fs-7">{{ $group->contacts_count }} kontak</span>
-                                    </td>
-                                    <td class="text-end">
-                                        <a href="{{ route('back.crm.email.contacts', $group->id) }}" class="btn btn-sm btn-light-primary me-1" title="Lihat Kontak">
-                                            <i class="ki-duotone ki-people fs-5"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-light-warning me-1 btn-edit-group"
-                                            data-id="{{ $group->id }}"
-                                            data-name="{{ $group->name }}"
-                                            data-description="{{ $group->description }}"
-                                            data-color="{{ $group->color }}"
-                                            title="Edit">
-                                            <i class="ki-duotone ki-pencil fs-5"><span class="path1"></span><span class="path2"></span></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-light-danger btn-delete-group" data-id="{{ $group->id }}" data-name="{{ $group->name }}" title="Hapus">
-                                            <i class="ki-duotone ki-trash fs-5"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-10">
-                                        <i class="ki-duotone ki-people fs-3x text-muted mb-3"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                        <p class="mb-0">Belum ada grup kontak. Buat grup pertama Anda.</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="card-toolbar">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGroupModal">
+                        <i class="ki-duotone ki-plus fs-2"></i> Tambah Grup
+                    </button>
                 </div>
             </div>
+            <div class="card-body pt-0">
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_ecommerce_products_table">
+                    <thead>
+                        <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                            <th class="w-10px pe-2">
+                                <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                    <input class="form-check-input" type="checkbox" data-kt-check="true"
+                                        data-kt-check-target="#kt_ecommerce_products_table .form-check-input"
+                                        value="1" />
+                                </div>
+                            </th>
+                            <th class="min-w-200px">Grup</th>
+                            <th class="min-w-150px">Deskripsi</th>
+                            <th class="text-end min-w-100px">Jumlah Kontak</th>
+                            <th class="text-end min-w-120px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fw-semibold text-gray-600">
+                        @foreach($groups as $group)
+                            <tr>
+                                <td>
+                                    <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                        <input class="form-check-input" type="checkbox" value="1" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="bullet bullet-dot h-10px w-10px me-3" style="background-color: {{ $group->color }}"></span>
+                                        <span class="text-gray-800 fw-bold fs-6"
+                                            data-kt-ecommerce-product-filter="product_name">{{ $group->name }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-muted">{{ Str::limit($group->description, 60) ?? '-' }}</td>
+                                <td class="text-end pe-0">
+                                    <span class="badge badge-light-primary fs-7">{{ $group->contacts_count }} kontak</span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="#"
+                                        class="btn btn-sm btn-light btn-flex btn-center btn-active-light-primary"
+                                        data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">Actions
+                                        <i class="ki-duotone ki-down fs-5 ms-1"></i></a>
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4"
+                                        data-kt-menu="true">
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.crm.email.contacts', $group->id) }}" class="menu-link px-3">
+                                                <i class="ki-duotone ki-people fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Kontak
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-edit-group"
+                                                data-id="{{ $group->id }}"
+                                                data-name="{{ $group->name }}"
+                                                data-description="{{ $group->description }}"
+                                                data-color="{{ $group->color }}">
+                                                <i class="ki-duotone ki-pencil fs-5 me-2"><span class="path1"></span><span class="path2"></span></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-delete-group" data-id="{{ $group->id }}" data-name="{{ $group->name }}">
+                                                <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Hapus
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!--begin::Add Group Modal-->
+    {{-- Add Group Modal --}}
     <div class="modal fade" id="addGroupModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -78,7 +100,7 @@
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Tambah Grup Kontak</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                     </div>
                     <div class="modal-body">
                         <div class="mb-5">
@@ -103,7 +125,7 @@
         </div>
     </div>
 
-    <!--begin::Edit Group Modal-->
+    {{-- Edit Group Modal --}}
     <div class="modal fade" id="editGroupModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -112,7 +134,7 @@
                     @method('PUT')
                     <div class="modal-header">
                         <h5 class="modal-title">Edit Grup Kontak</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                     </div>
                     <div class="modal-body">
                         <div class="mb-5">
@@ -137,7 +159,7 @@
         </div>
     </div>
 
-    <!--begin::Delete Form-->
+    {{-- Delete Form --}}
     <form id="deleteGroupForm" method="POST" class="d-none">
         @csrf
         @method('DELETE')
@@ -145,48 +167,49 @@
 @endsection
 
 @section('scripts')
-<script>
-    // Edit Group
-    document.querySelectorAll('.btn-edit-group').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var id = this.dataset.id;
-            var name = this.dataset.name;
-            var description = this.dataset.description;
-            var color = this.dataset.color;
+    <script src="{{ asset('back/js/custom/apps/crm/email-groups.js') }}"></script>
+    <script>
+        // Edit Group
+        document.querySelectorAll('.btn-edit-group').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                var name = this.dataset.name;
+                var description = this.dataset.description;
+                var color = this.dataset.color;
 
-            document.getElementById('editName').value = name;
-            document.getElementById('editDescription').value = description;
-            document.getElementById('editColor').value = color;
-            document.getElementById('editGroupForm').action = '/back/crm/email/groups/' + id + '/update';
+                document.getElementById('editName').value = name;
+                document.getElementById('editDescription').value = description;
+                document.getElementById('editColor').value = color;
+                document.getElementById('editGroupForm').action = '/back/crm/email/groups/' + id + '/update';
 
-            var modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
-            modal.show();
-        });
-    });
-
-    // Delete Group
-    document.querySelectorAll('.btn-delete-group').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var id = this.dataset.id;
-            var name = this.dataset.name;
-
-            Swal.fire({
-                title: 'Hapus Grup?',
-                text: 'Grup "' + name + '" dan semua kontak di dalamnya akan dihapus.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Ya, Hapus!',
-                cancelButtonText: 'Batal'
-            }).then(function(result) {
-                if (result.isConfirmed) {
-                    var form = document.getElementById('deleteGroupForm');
-                    form.action = '/back/crm/email/groups/' + id + '/destroy';
-                    form.submit();
-                }
+                var modal = new bootstrap.Modal(document.getElementById('editGroupModal'));
+                modal.show();
             });
         });
-    });
-</script>
+
+        // Delete Group
+        document.querySelectorAll('.btn-delete-group').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.dataset.id;
+                var name = this.dataset.name;
+
+                Swal.fire({
+                    title: 'Hapus Grup?',
+                    text: 'Grup "' + name + '" dan semua kontak di dalamnya akan dihapus.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        var form = document.getElementById('deleteGroupForm');
+                        form.action = '/back/crm/email/groups/' + id + '/destroy';
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 @endsection

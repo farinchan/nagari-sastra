@@ -186,3 +186,6 @@
         </div>
     @endforeach
 @endsection
+@section('scripts')
+    <script src="{{ asset('back/js/custom/apps/ecommerce/catalog/book-categories.js') }}"></script>
+@endsection

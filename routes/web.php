@@ -237,7 +237,10 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::get('/{id}/payment', [BackBookController::class, 'paymentTab'])->name('payment');
 
         // Editor
-        Route::put('/{id}/editor', [BackBookController::class, 'editorUpdate'])->name('editor.update');
+        Route::post('/{id}/editor', [BackBookController::class, 'editorStore'])->name('editor.store');
+        Route::put('/{id}/editor/{editorId}', [BackBookController::class, 'editorUpdate'])->name('editor.update');
+        Route::delete('/{id}/editor/{editorId}', [BackBookController::class, 'editorDestroy'])->name('editor.destroy');
+        Route::get('/{id}/editor/{editorId}/certificate', [BackBookController::class, 'editorCertificate'])->name('editor.certificate');
 
         // Authors
         Route::post('/{id}/author', [BackBookController::class, 'authorStore'])->name('author.store');

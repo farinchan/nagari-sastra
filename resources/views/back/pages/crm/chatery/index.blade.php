@@ -1,117 +1,129 @@
 @extends('back.app')
 
-
 @section('content')
-    <div id="kt_app_content" class="app-content flex-column-fluid">
-        <div id="kt_app_content_container" class="app-container container-xxl">
-
-            {{-- Add Session Button --}}
-            <div class="d-flex justify-content-end mb-5">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSessionModal">
-                    <i class="ki-duotone ki-plus fs-2"></i> Tambah Session
-                </button>
-            </div>
-
-            {{-- Sessions Table --}}
-            <div class="card card-flush">
-                <div class="card-header align-items-center py-5 gap-2 gap-md-5">
-                    <div class="card-title">
-                        <i class="ki-duotone ki-message-notif fs-2 me-2 text-success"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                        Daftar Session Chatery
+    <div id="kt_content_container" class="container-xxl">
+        <div class="card card-flush">
+            <div class="card-header align-items-center py-5 gap-2 gap-md-5">
+                <div class="card-title">
+                    <div class="d-flex align-items-center position-relative my-1">
+                        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <input type="text" data-kt-ecommerce-product-filter="search"
+                            class="form-control form-control-solid w-250px ps-12" placeholder="Cari Session" />
                     </div>
                 </div>
-                <div class="card-body pt-0">
-                    <div class="table-responsive" style="overflow: visible;">
-                        <table class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
-                            <thead>
-                                <tr class="fw-bold text-muted">
-                                    <th class="min-w-30px">#</th>
-                                    <th class="min-w-150px">Session</th>
-                                    <th class="min-w-120px">No. HP</th>
-                                    <th class="min-w-80px">Default</th>
-                                    <th class="min-w-80px">Status</th>
-                                    <th class="min-w-200px text-end">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($sessions as $index => $session)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            <div class="fw-semibold">{{ $session->name }}</div>
-                                            <div class="text-muted fs-8"><code>{{ $session->session_id }}</code></div>
-                                            <div class="text-muted fs-9 text-truncate" style="max-width: 200px;" title="{{ $session->api_url }}">{{ $session->api_url }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="text-success">{{ $session->phone_number ?? '-' }}</span>
-                                        </td>
-                                        <td>
-                                            @if($session->is_default)
-                                                <span class="badge badge-light-success">Default</span>
-                                            @else
-                                                <span class="badge badge-light-secondary">-</span>
-                                            @endif
-                                        </td>
-                                        <td id="status-badge-{{ $session->id }}">
-                                            @if($session->is_connected)
-                                                <span class="badge badge-light-success">Connected</span>
-                                            @else
-                                                <span class="badge badge-light-danger">Disconnected</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="dropdown">
-                                                <button class="btn btn-sm btn-light btn-flex btn-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    Aksi <i class="ki-duotone ki-down fs-5 ms-1"></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-end menu-sub menu-sub-dropdown menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-175px py-4">
-                                                    <div class="menu-item px-3">
-                                                        <a href="#" class="menu-link px-3 btn-check-status" data-id="{{ $session->id }}">
-                                                            <i class="ki-duotone ki-wifi fs-4 me-2 text-info"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i> Cek Status
-                                                        </a>
-                                                    </div>
-                                                    <div class="menu-item px-3">
-                                                        <a href="#" class="menu-link px-3 btn-connect" data-id="{{ $session->id }}">
-                                                            <i class="ki-duotone ki-rocket fs-4 me-2 text-success"><span class="path1"></span><span class="path2"></span></i> Connect
-                                                        </a>
-                                                    </div>
-                                                    <div class="menu-item px-3">
-                                                        <a href="#" class="menu-link px-3 btn-disconnect" data-id="{{ $session->id }}">
-                                                            <i class="ki-duotone ki-disconnect fs-4 me-2 text-warning"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Disconnect
-                                                        </a>
-                                                    </div>
-                                                    <div class="separator my-2"></div>
-                                                    <div class="menu-item px-3">
-                                                        <a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#editSessionModal-{{ $session->id }}">
-                                                            <i class="ki-duotone ki-pencil fs-4 me-2 text-primary"><span class="path1"></span><span class="path2"></span></i> Edit
-                                                        </a>
-                                                    </div>
-                                                    <div class="menu-item px-3">
-                                                        <a href="#" class="menu-link px-3 btn-delete-session" data-id="{{ $session->id }}" data-name="{{ $session->name }}">
-                                                            <i class="ki-duotone ki-trash fs-4 me-2 text-danger"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Hapus
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <form id="deleteSessionForm-{{ $session->id }}" action="{{ route('back.crm.chatery.destroy', $session->id) }}" method="POST" class="d-none">
-                                                @csrf
-                                                @method('DELETE')
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-10">
-                                            Belum ada session. Klik "Tambah Session" untuk memulai.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
+                    <div class="w-100 mw-150px">
+                        <select class="form-select form-select-solid" data-control="select2" data-hide-search="true"
+                            data-placeholder="Status" data-kt-ecommerce-product-filter="status">
+                            <option></option>
+                            <option value="all">Semua</option>
+                            <option value="Connected">Connected</option>
+                            <option value="Disconnected">Disconnected</option>
+                        </select>
                     </div>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSessionModal">
+                        <i class="ki-duotone ki-plus fs-2"></i> Tambah Session
+                    </button>
                 </div>
             </div>
-
+            <div class="card-body pt-0">
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_ecommerce_products_table">
+                    <thead>
+                        <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                            <th class="w-10px pe-2">
+                                <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                    <input class="form-check-input" type="checkbox" data-kt-check="true"
+                                        data-kt-check-target="#kt_ecommerce_products_table .form-check-input"
+                                        value="1" />
+                                </div>
+                            </th>
+                            <th class="min-w-200px">Session</th>
+                            <th class="min-w-120px">No. HP</th>
+                            <th class="text-end min-w-80px">Default</th>
+                            <th class="text-end min-w-80px">Status</th>
+                            <th class="text-end min-w-70px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fw-semibold text-gray-600">
+                        @foreach($sessions as $session)
+                            <tr>
+                                <td>
+                                    <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                        <input class="form-check-input" type="checkbox" value="1" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="text-gray-800 fw-bold fs-6"
+                                            data-kt-ecommerce-product-filter="product_name">{{ $session->name }}</span>
+                                        <span class="text-muted fs-7"><code>{{ $session->session_id }}</code></span>
+                                        <span class="text-muted fs-8 text-truncate" style="max-width: 200px;" title="{{ $session->api_url }}">{{ $session->api_url }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-success">{{ $session->phone_number ?? '-' }}</span>
+                                </td>
+                                <td class="text-end pe-0">
+                                    @if($session->is_default)
+                                        <div class="badge badge-light-success">Default</div>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-end pe-0" id="status-badge-{{ $session->id }}">
+                                    @if($session->is_connected)
+                                        <div class="badge badge-light-success">Connected</div>
+                                    @else
+                                        <div class="badge badge-light-danger">Disconnected</div>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    <a href="#"
+                                        class="btn btn-sm btn-light btn-flex btn-center btn-active-light-primary"
+                                        data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">Actions
+                                        <i class="ki-duotone ki-down fs-5 ms-1"></i></a>
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-175px py-4"
+                                        data-kt-menu="true">
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-check-status" data-id="{{ $session->id }}">
+                                                <i class="ki-duotone ki-wifi fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i> Cek Status
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-connect" data-id="{{ $session->id }}">
+                                                <i class="ki-duotone ki-rocket fs-5 me-2"><span class="path1"></span><span class="path2"></span></i> Connect
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-disconnect" data-id="{{ $session->id }}">
+                                                <i class="ki-duotone ki-disconnect fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Disconnect
+                                            </a>
+                                        </div>
+                                        <div class="separator my-2"></div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#editSessionModal-{{ $session->id }}">
+                                                <i class="ki-duotone ki-pencil fs-5 me-2"><span class="path1"></span><span class="path2"></span></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-delete-session" data-id="{{ $session->id }}" data-name="{{ $session->name }}">
+                                                <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Hapus
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <form id="deleteSessionForm-{{ $session->id }}" action="{{ route('back.crm.chatery.destroy', $session->id) }}" method="POST" class="d-none">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -123,29 +135,29 @@
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold">Tambah Session Chatery</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                     </div>
                     <div class="modal-body">
                         <div class="mb-4">
                             <label class="form-label required">Nama</label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g. CS Nagari Sastra" required>
+                            <input type="text" name="name" class="form-control form-control-solid" placeholder="e.g. CS Nagari Sastra" required>
                         </div>
                         <div class="mb-4">
                             <label class="form-label required">Session ID</label>
-                            <input type="text" name="session_id" class="form-control" placeholder="e.g. nagari_sastra" required>
-                            <small class="text-muted">Hanya huruf, angka, dash, dan underscore.</small>
+                            <input type="text" name="session_id" class="form-control form-control-solid" placeholder="e.g. nagari_sastra" required>
+                            <div class="form-text">Hanya huruf, angka, dash, dan underscore.</div>
                         </div>
                         <div class="mb-4">
                             <label class="form-label required">API URL</label>
-                            <input type="url" name="api_url" class="form-control" placeholder="http://localhost:3000" required>
+                            <input type="url" name="api_url" class="form-control form-control-solid" placeholder="http://localhost:3000" required>
                         </div>
                         <div class="mb-4">
                             <label class="form-label">API Key</label>
-                            <input type="text" name="api_key" class="form-control" placeholder="Opsional">
+                            <input type="text" name="api_key" class="form-control form-control-solid" placeholder="Opsional">
                         </div>
                         <div class="mb-4">
                             <label class="form-label">No. HP</label>
-                            <input type="text" name="phone_number" class="form-control" placeholder="e.g. 628123456789">
+                            <input type="text" name="phone_number" class="form-control form-control-solid" placeholder="e.g. 628123456789">
                         </div>
                         <div class="form-check form-switch mb-4">
                             <input class="form-check-input" type="checkbox" name="is_default" value="1" id="addIsDefault">
@@ -171,29 +183,29 @@
                         @method('PUT')
                         <div class="modal-header">
                             <h5 class="modal-title fw-bold">Edit Session: {{ $session->name }}</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                         </div>
                         <div class="modal-body">
                             <div class="mb-4">
                                 <label class="form-label required">Nama</label>
-                                <input type="text" name="name" class="form-control" value="{{ $session->name }}" required>
+                                <input type="text" name="name" class="form-control form-control-solid" value="{{ $session->name }}" required>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label required">Session ID</label>
-                                <input type="text" name="session_id" class="form-control" value="{{ $session->session_id }}" required>
+                                <input type="text" name="session_id" class="form-control form-control-solid" value="{{ $session->session_id }}" required>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label required">API URL</label>
-                                <input type="url" name="api_url" class="form-control" value="{{ $session->api_url }}" required>
+                                <input type="url" name="api_url" class="form-control form-control-solid" value="{{ $session->api_url }}" required>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">API Key</label>
-                                <input type="text" name="api_key" class="form-control" placeholder="Kosongkan jika tidak diubah">
-                                <small class="text-muted">Kosongkan untuk mempertahankan API key saat ini.</small>
+                                <input type="text" name="api_key" class="form-control form-control-solid" placeholder="Kosongkan jika tidak diubah">
+                                <div class="form-text">Kosongkan untuk mempertahankan API key saat ini.</div>
                             </div>
                             <div class="mb-4">
                                 <label class="form-label">No. HP</label>
-                                <input type="text" name="phone_number" class="form-control" value="{{ $session->phone_number }}">
+                                <input type="text" name="phone_number" class="form-control form-control-solid" value="{{ $session->phone_number }}">
                             </div>
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" name="is_active" value="1"
@@ -222,7 +234,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">Scan QR Code</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                 </div>
                 <div class="modal-body text-center py-10">
                     <p class="text-muted mb-5">Scan QR code berikut menggunakan WhatsApp di ponsel Anda.</p>
@@ -244,42 +256,81 @@
 @endsection
 
 @section('scripts')
-<script>
-    // Check Status
-    document.querySelectorAll('.btn-check-status').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const id = this.dataset.id;
-            const badge = document.getElementById('status-badge-' + id);
-            badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+    <script src="{{ asset('back/js/custom/apps/crm/chatery-sessions.js') }}"></script>
+    <script>
+        // Check Status
+        document.querySelectorAll('.btn-check-status').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const badge = document.getElementById('status-badge-' + id);
+                badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
 
-            fetch("{{ url('back/crm/chatery') }}/" + id + "/status")
+                fetch("{{ url('back/crm/chatery') }}/" + id + "/status")
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            const status = data.data?.data?.status || data.data?.status || 'unknown';
+                            if (status === 'connected') {
+                                badge.innerHTML = '<div class="badge badge-light-success">Connected</div>';
+                            } else {
+                                badge.innerHTML = '<div class="badge badge-light-danger">' + status + '</div>';
+                            }
+                        } else {
+                            badge.innerHTML = '<div class="badge badge-light-danger">Error</div>';
+                        }
+                    })
+                    .catch(() => {
+                        badge.innerHTML = '<div class="badge badge-light-danger">Error</div>';
+                    });
+            });
+        });
+
+        // Connect
+        let currentConnectId = null;
+        document.querySelectorAll('.btn-connect').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentConnectId = this.dataset.id;
+                const qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+                document.getElementById('qr-loading').style.display = 'block';
+                document.getElementById('qr-image').style.display = 'none';
+
+                fetch("{{ url('back/crm/chatery') }}/" + currentConnectId + "/connect", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                })
                 .then(r => r.json())
                 .then(data => {
-                    if (data.success) {
-                        const status = data.data?.data?.status || data.data?.status || 'unknown';
-                        if (status === 'connected') {
-                            badge.innerHTML = '<span class="badge badge-light-success">Connected</span>';
-                        } else {
-                            badge.innerHTML = '<span class="badge badge-light-danger">' + status + '</span>';
-                        }
+                    if (data.success && data.qr_url) {
+                        const img = document.getElementById('qr-image');
+                        img.src = data.qr_url + '?t=' + Date.now();
+                        img.onload = function() {
+                            document.getElementById('qr-loading').style.display = 'none';
+                            img.style.display = 'block';
+                        };
+                        img.onerror = function() {
+                            document.getElementById('qr-loading').innerHTML = '<p class="text-muted">QR code belum tersedia. Coba refresh.</p>';
+                        };
                     } else {
-                        badge.innerHTML = '<span class="badge badge-light-danger">Error</span>';
+                        document.getElementById('qr-loading').innerHTML = '<p class="text-danger">' + (data.message || 'Gagal menghubungkan') + '</p>';
                     }
                 })
-                .catch(() => {
-                    badge.innerHTML = '<span class="badge badge-light-danger">Error</span>';
+                .catch(err => {
+                    document.getElementById('qr-loading').innerHTML = '<p class="text-danger">Error: ' + err.message + '</p>';
                 });
-        });
-    });
 
-    // Connect
-    let currentConnectId = null;
-    document.querySelectorAll('.btn-connect').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            currentConnectId = this.dataset.id;
-            const qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+                qrModal.show();
+            });
+        });
+
+        // Refresh QR
+        document.getElementById('btn-refresh-qr').addEventListener('click', function() {
+            if (!currentConnectId) return;
             document.getElementById('qr-loading').style.display = 'block';
             document.getElementById('qr-image').style.display = 'none';
 
@@ -300,83 +351,72 @@
                         document.getElementById('qr-loading').style.display = 'none';
                         img.style.display = 'block';
                     };
-                    img.onerror = function() {
-                        document.getElementById('qr-loading').innerHTML = '<p class="text-muted">QR code belum tersedia. Coba refresh.</p>';
-                    };
-                } else {
-                    document.getElementById('qr-loading').innerHTML = '<p class="text-danger">' + (data.message || 'Gagal menghubungkan') + '</p>';
                 }
-            })
-            .catch(err => {
-                document.getElementById('qr-loading').innerHTML = '<p class="text-danger">Error: ' + err.message + '</p>';
             });
-
-            qrModal.show();
         });
-    });
 
-    // Refresh QR
-    document.getElementById('btn-refresh-qr').addEventListener('click', function() {
-        if (!currentConnectId) return;
-        document.getElementById('qr-loading').style.display = 'block';
-        document.getElementById('qr-image').style.display = 'none';
+        // Disconnect
+        document.querySelectorAll('.btn-disconnect').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
 
-        fetch("{{ url('back/crm/chatery') }}/" + currentConnectId + "/connect", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.qr_url) {
-                const img = document.getElementById('qr-image');
-                img.src = data.qr_url + '?t=' + Date.now();
-                img.onload = function() {
-                    document.getElementById('qr-loading').style.display = 'none';
-                    img.style.display = 'block';
-                };
-            }
+                Swal.fire({
+                    title: 'Disconnect Session?',
+                    text: 'Yakin ingin memutuskan session ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Disconnect!',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        fetch("{{ url('back/crm/chatery') }}/" + id + "/disconnect", {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('status-badge-' + id).innerHTML = '<div class="badge badge-light-danger">Disconnected</div>';
+                                Swal.fire('Berhasil', 'Session berhasil diputuskan.', 'success');
+                            } else {
+                                Swal.fire('Gagal', data.message || 'Gagal memutuskan session.', 'error');
+                            }
+                        })
+                        .catch(err => Swal.fire('Error', err.message, 'error'));
+                    }
+                });
+            });
         });
-    });
 
-    // Disconnect
-    document.querySelectorAll('.btn-disconnect').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (!confirm('Yakin ingin memutuskan session ini?')) return;
-            const id = this.dataset.id;
+        // Delete
+        document.querySelectorAll('.btn-delete-session').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const id = this.dataset.id;
+                const name = this.dataset.name;
 
-            fetch("{{ url('back/crm/chatery') }}/" + id + "/disconnect", {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('status-badge-' + id).innerHTML = '<span class="badge badge-light-danger">Disconnected</span>';
-                    alert('Session berhasil diputuskan.');
-                } else {
-                    alert(data.message || 'Gagal memutuskan session.');
-                }
-            })
-            .catch(err => alert('Error: ' + err.message));
+                Swal.fire({
+                    title: 'Hapus Session?',
+                    text: 'Session "' + name + '" akan dihapus secara permanen.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteSessionForm-' + id).submit();
+                    }
+                });
+            });
         });
-    });
-    // Delete
-    document.querySelectorAll('.btn-delete-session').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            if (confirm('Yakin ingin menghapus session "' + this.dataset.name + '"?')) {
-                document.getElementById('deleteSessionForm-' + this.dataset.id).submit();
-            }
-        });
-    });
-</script>
+    </script>
 @endsection

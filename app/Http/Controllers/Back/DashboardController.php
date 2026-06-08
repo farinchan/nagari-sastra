@@ -279,11 +279,81 @@ class DashboardController extends Controller
                     ->where('date', '<=', now()->endOfMonth())
                     ->count();
 
+                // Top expense categories (by name keywords)
+                $topExpenses = Finance::where('type', 'expense')
+                    ->where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate)
+                    ->select('name', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+                    ->groupBy('name')
+                    ->orderByDesc('total')
+                    ->limit(5)
+                    ->get()
+                    ->toArray();
+
+                // Payment method distribution
+                $paymentMethods = Finance::where('date', '>=', $startDate)
+                    ->where('date', '<=', $endDate)
+                    ->whereNotNull('payment_method')
+                    ->where('payment_method', '!=', '')
+                    ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total'))
+                    ->groupBy('payment_method')
+                    ->orderByDesc('total')
+                    ->get()
+                    ->toArray();
+
+                // Monthly aggregated data (for bar chart)
+                $monthlyAggregated = Finance::select(
+                        DB::raw("DATE_FORMAT(date, '%Y-%m') as month"),
+                        DB::raw('SUM(CASE WHEN type = "income" THEN amount ELSE 0 END) as income'),
+                        DB::raw('SUM(CASE WHEN type = "expense" THEN amount ELSE 0 END) as expense')
+                    )
+                    ->where('date', '>=', now()->subMonths(12)->startOfMonth())
+                    ->where('date', '<=', $endDate)
+                    ->groupBy(DB::raw("DATE_FORMAT(date, '%Y-%m')"))
+                    ->orderBy('month', 'asc')
+                    ->get()
+                    ->map(function ($item) {
+                        return [
+                            'month' => $item->month,
+                            'income' => (int)$item->income,
+                            'expense' => (int)$item->expense,
+                            'balance' => (int)($item->income - $item->expense),
+                        ];
+                    })
+                    ->toArray();
+
+                // Daily average (current month)
+                $daysInMonth = now()->day;
+                $currentMonthIncome = Finance::where('type', 'income')
+                    ->where('date', '>=', now()->startOfMonth())
+                    ->where('date', '<=', now())
+                    ->sum('amount');
+                $currentMonthExpense = Finance::where('type', 'expense')
+                    ->where('date', '>=', now()->startOfMonth())
+                    ->where('date', '<=', now())
+                    ->sum('amount');
+
+                // Previous month totals (for MoM comparison)
+                $prevMonthIncome = Finance::where('type', 'income')
+                    ->where('date', '>=', now()->subMonth()->startOfMonth())
+                    ->where('date', '<=', now()->subMonth()->endOfMonth())
+                    ->sum('amount');
+                $prevMonthExpense = Finance::where('type', 'expense')
+                    ->where('date', '>=', now()->subMonth()->startOfMonth())
+                    ->where('date', '<=', now()->subMonth()->endOfMonth())
+                    ->sum('amount');
+
+                // Pending invoices count
+                $pendingInvoiceCount = \App\Models\PaymentInvoice::where('payment_status', 'pending')->count();
+
                 return [
                     'monthly_cashflow' => $mergedMonthly->values()->toArray(),
+                    'monthly_aggregated' => $monthlyAggregated,
                     'transaction_types' => $transactionTypes->toArray(),
                     'finance_years' => $financeYears->toArray(),
                     'recent_transactions' => $recentTransactions->toArray(),
+                    'top_expenses' => $topExpenses,
+                    'payment_methods' => $paymentMethods,
                     'summary' => [
                         'total_income' => (int)($totalIncome + $totalPaymentIncome),
                         'total_expense' => (int)$totalExpense,
@@ -291,7 +361,14 @@ class DashboardController extends Controller
                         'finance_income' => (int)$totalIncome,
                         'payment_income' => (int)$totalPaymentIncome,
                         'transaction_count' => $totalTransactionCount,
-                        'monthly_transactions' => $monthlyTransactionCount
+                        'monthly_transactions' => $monthlyTransactionCount,
+                        'daily_avg_income' => $daysInMonth > 0 ? (int)($currentMonthIncome / $daysInMonth) : 0,
+                        'daily_avg_expense' => $daysInMonth > 0 ? (int)($currentMonthExpense / $daysInMonth) : 0,
+                        'prev_month_income' => (int)$prevMonthIncome,
+                        'prev_month_expense' => (int)$prevMonthExpense,
+                        'current_month_income' => (int)$currentMonthIncome,
+                        'current_month_expense' => (int)$currentMonthExpense,
+                        'pending_invoices' => $pendingInvoiceCount,
                     ]
                 ];
             });

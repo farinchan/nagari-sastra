@@ -1,88 +1,114 @@
 @extends('back.app')
 @section('content')
-    <div id="kt_content_container" class=" container-xxl ">
-
+    <div id="kt_content_container" class="container-xxl">
         <div class="card card-flush">
-            <div class="card-header align-items-center py-5">
+            <div class="card-header align-items-center py-5 gap-2 gap-md-5">
                 <div class="card-title">
-                    <i class="ki-duotone ki-code fs-2 me-2 text-primary"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
-                    Kelola Widget Webchat
+                    <div class="d-flex align-items-center position-relative my-1">
+                        <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                        </i>
+                        <input type="text" data-kt-ecommerce-product-filter="search"
+                            class="form-control form-control-solid w-250px ps-12" placeholder="Cari Widget" />
+                    </div>
                 </div>
-                <div class="card-toolbar">
-                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createWidgetModal">
-                        <i class="ki-duotone ki-plus fs-4"></i> Tambah Widget
+                <div class="card-toolbar flex-row-fluid justify-content-end gap-5">
+                    <div class="w-100 mw-150px">
+                        <select class="form-select form-select-solid" data-control="select2" data-hide-search="true"
+                            data-placeholder="Status" data-kt-ecommerce-product-filter="status">
+                            <option></option>
+                            <option value="all">Semua</option>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Nonaktif">Nonaktif</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createWidgetModal">
+                        <i class="ki-duotone ki-plus fs-2"></i> Tambah Widget
                     </button>
                 </div>
             </div>
             <div class="card-body pt-0">
-
-                @if($widgets->isEmpty())
-                    <div class="text-center text-muted py-15">
-                        <i class="ki-duotone ki-code fs-3x text-gray-300 mb-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
-                        <div class="fs-6">Belum ada widget webchat.</div>
-                        <div class="fs-7 text-gray-400 mt-1">Buat widget baru untuk mendapatkan embed code.</div>
-                    </div>
-                @else
-                    <div class="table-responsive">
-                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4">
-                            <thead>
-                                <tr class="fw-bold text-muted">
-                                    <th>Widget</th>
-                                    <th>Warna</th>
-                                    <th>Status</th>
-                                    <th>Percakapan</th>
-                                    <th class="text-end">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($widgets as $widget)
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex flex-column">
-                                                <span class="fw-bold text-gray-800">{{ $widget->name }}</span>
-                                                <span class="text-muted fs-8">{{ $widget->header_title }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg, {{ $widget->primary_color }} 0%, {{ $widget->secondary_color }} 100%);"></div>
-                                                <span class="text-muted fs-8">{{ $widget->primary_color }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @if($widget->is_active)
-                                                <span class="badge badge-light-success">Aktif</span>
-                                            @else
-                                                <span class="badge badge-light-secondary">Nonaktif</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="fw-semibold">{{ $widget->conversations_count }}</span>
-                                        </td>
-                                        <td class="text-end">
-                                            <button class="btn btn-sm btn-icon btn-light-info me-1" title="Embed Code"
-                                                    onclick="showEmbed('{{ $widget->token }}')">
-                                                <i class="ki-duotone ki-code fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-icon btn-light-primary me-1" title="Edit"
-                                                    data-bs-toggle="modal" data-bs-target="#editWidgetModal{{ $widget->id }}">
-                                                <i class="ki-duotone ki-pencil fs-4"><span class="path1"></span><span class="path2"></span></i>
-                                            </button>
-                                            <form action="{{ route('back.crm.webchat.widgets.destroy', $widget->id) }}" method="POST" class="d-inline"
-                                                  onsubmit="return confirm('Yakin ingin menghapus widget ini? Semua percakapan terkait juga akan dihapus.')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-icon btn-light-danger" title="Hapus">
-                                                    <i class="ki-duotone ki-trash fs-4"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
+                <table class="table align-middle table-row-dashed fs-6 gy-5" id="kt_ecommerce_products_table">
+                    <thead>
+                        <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                            <th class="w-10px pe-2">
+                                <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                    <input class="form-check-input" type="checkbox" data-kt-check="true"
+                                        data-kt-check-target="#kt_ecommerce_products_table .form-check-input"
+                                        value="1" />
+                                </div>
+                            </th>
+                            <th class="min-w-200px">Widget</th>
+                            <th class="min-w-80px">Warna</th>
+                            <th class="text-end min-w-80px">Percakapan</th>
+                            <th class="text-end min-w-80px">Status</th>
+                            <th class="text-end min-w-70px">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fw-semibold text-gray-600">
+                        @foreach($widgets as $widget)
+                            <tr>
+                                <td>
+                                    <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                        <input class="form-check-input" type="checkbox" value="1" />
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="text-gray-800 fw-bold fs-6"
+                                            data-kt-ecommerce-product-filter="product_name">{{ $widget->name }}</span>
+                                        <span class="text-muted fs-7">{{ $widget->header_title }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div style="width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg, {{ $widget->primary_color }} 0%, {{ $widget->secondary_color }} 100%);"></div>
+                                        <span class="text-muted fs-8">{{ $widget->primary_color }}</span>
+                                    </div>
+                                </td>
+                                <td class="text-end pe-0">
+                                    <span class="fw-semibold">{{ $widget->conversations_count }}</span>
+                                </td>
+                                <td class="text-end pe-0">
+                                    @if($widget->is_active)
+                                        <div class="badge badge-light-success">Aktif</div>
+                                    @else
+                                        <div class="badge badge-light-secondary">Nonaktif</div>
+                                    @endif
+                                </td>
+                                <td class="text-end">
+                                    <a href="#"
+                                        class="btn btn-sm btn-light btn-flex btn-center btn-active-light-primary"
+                                        data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">Actions
+                                        <i class="ki-duotone ki-down fs-5 ms-1"></i></a>
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-150px py-4"
+                                        data-kt-menu="true">
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3" onclick="showEmbed('{{ $widget->token }}'); return false;">
+                                                <i class="ki-duotone ki-code fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i> Embed Code
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3" data-bs-toggle="modal" data-bs-target="#editWidgetModal{{ $widget->id }}">
+                                                <i class="ki-duotone ki-pencil fs-5 me-2"><span class="path1"></span><span class="path2"></span></i> Edit
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="#" class="menu-link px-3 btn-delete-widget" data-id="{{ $widget->id }}" data-name="{{ $widget->name }}">
+                                                <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i> Hapus
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <form id="deleteWidgetForm{{ $widget->id }}" action="{{ route('back.crm.webchat.widgets.destroy', $widget->id) }}" method="POST" class="d-none">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -95,7 +121,7 @@
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title">Tambah Widget Webchat</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                     </div>
                     <div class="modal-body">
                         <div class="mb-4">
@@ -149,7 +175,7 @@
                     @method('PUT')
                     <div class="modal-header">
                         <h5 class="modal-title">Edit Widget: {{ $widget->name }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                     </div>
                     <div class="modal-body">
                         <div class="mb-4">
@@ -206,7 +232,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Embed Code</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal"><i class="ki-duotone ki-cross fs-1"><span class="path1"></span><span class="path2"></span></i></div>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted fs-7 mb-4">Salin kode di bawah ini dan tempelkan sebelum tag <code>&lt;/body&gt;</code> di website Anda.</p>
@@ -223,27 +249,52 @@
 @endsection
 
 @section('scripts')
-<script>
-    var embedBaseUrl = '{{ url("/api/webchat/embed") }}';
+    <script src="{{ asset('back/js/custom/apps/crm/webchat-widgets.js') }}"></script>
+    <script>
+        var embedBaseUrl = '{{ url("/api/webchat/embed") }}';
 
-    function showEmbed(token) {
-        var code = '<scr' + 'ipt src="' + embedBaseUrl + '/' + token + '">' + '</scr' + 'ipt>';
-        document.getElementById('embedCodeText').textContent = code;
-        var modal = new bootstrap.Modal(document.getElementById('embedModal'));
-        modal.show();
-    }
+        function showEmbed(token) {
+            var code = '<scr' + 'ipt src="' + embedBaseUrl + '/' + token + '">' + '</scr' + 'ipt>';
+            document.getElementById('embedCodeText').textContent = code;
+            var modal = new bootstrap.Modal(document.getElementById('embedModal'));
+            modal.show();
+        }
 
-    function copyEmbed() {
-        var text = document.getElementById('embedCodeText').textContent;
-        navigator.clipboard.writeText(text).then(function() {
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: 'Embed code berhasil disalin.',
-                timer: 1500,
-                showConfirmButton: false
+        function copyEmbed() {
+            var text = document.getElementById('embedCodeText').textContent;
+            navigator.clipboard.writeText(text).then(function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Embed code berhasil disalin.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+        }
+
+        // Delete Widget
+        document.querySelectorAll('.btn-delete-widget').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var id = this.dataset.id;
+                var name = this.dataset.name;
+
+                Swal.fire({
+                    title: 'Hapus Widget?',
+                    text: 'Widget "' + name + '" dan semua percakapan terkait akan dihapus.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        document.getElementById('deleteWidgetForm' + id).submit();
+                    }
+                });
             });
         });
-    }
-</script>
+    </script>
 @endsection

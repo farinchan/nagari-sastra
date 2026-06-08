@@ -185,51 +185,6 @@
                         </form>
                     </div>
                 </div>
-
-                {{-- Editor Assignment --}}
-                <div class="card mb-5 mb-lg-10">
-                    <div class="card-header">
-                        <div class="card-title"><h3>Editor</h3></div>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('back.book.editor.update', $book->id) }}" method="POST">
-                            @method('PUT')
-                            @csrf
-                            <div class="mb-5">
-                                <label class="form-label fw-bold">Pilih Editor</label>
-                                <select class="form-select" data-control="select2" data-placeholder="Pilih editor..."
-                                    name="editor_ids[]" data-allow-clear="true" multiple="multiple">
-                                    <option></option>
-                                    @foreach ($editors as $editor)
-                                        <option value="{{ $editor->id }}"
-                                            {{ $book->editors->contains($editor->id) ? 'selected' : '' }}>
-                                            {{ $editor->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="ki-duotone ki-check fs-2"></i> Simpan Editor
-                            </button>
-                        </form>
-
-                        @if($book->editors->count() > 0)
-                            <div class="separator my-5"></div>
-                            <div class="fw-bold fs-6 mb-3">Editor Terpilih:</div>
-                            @foreach($book->editors as $ed)
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="symbol symbol-35px symbol-circle me-3">
-                                        <span class="symbol-label bg-light-primary text-primary fw-bold">{{ strtoupper(substr($ed->name, 0, 1)) }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="fw-bold text-gray-800">{{ $ed->name }}</span><br>
-                                        <span class="text-muted fs-7">{{ $ed->email }}</span>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @endif
-                    </div>
-                </div>
             </div>
         </div>
     </div>

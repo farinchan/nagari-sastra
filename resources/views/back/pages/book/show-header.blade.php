@@ -55,7 +55,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link text-active-primary py-5 me-6 @if(request()->routeIs('back.book.authors')) active @endif"
-                    href="{{ route('back.book.authors', $book->id) }}">Penulis</a>
+                    href="{{ route('back.book.authors', $book->id) }}">Penulis & Editor</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link text-active-primary py-5 me-6 @if(request()->routeIs('back.book.payment')) active @endif"

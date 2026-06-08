@@ -138,7 +138,7 @@ class BookController extends Controller
                     'link' => route('back.book.index')
                 ]
             ],
-            'list_books' => Book::with('category')->get()
+            'list_books' => Book::with(['category', 'bookAuthors'])->get()
         ];
 
         return view('back.pages.book.index', $data);
@@ -349,7 +349,12 @@ class BookController extends Controller
 
     public function destroy($id)
     {
-        $book = Book::find($id);
+        $book = Book::findOrFail($id);
+
+        if ($book->status === 'published') {
+            Alert::error('Gagal', 'Buku yang sudah dipublish tidak dapat dihapus');
+            return redirect()->back();
+        }
 
         if ($book->thumbnail && Storage::disk('public')->exists($book->thumbnail)) {
             Storage::disk('public')->delete($book->thumbnail);
@@ -372,7 +377,7 @@ class BookController extends Controller
 
     public function show($id)
     {
-        $book = Book::with(['category', 'editors', 'bookAuthors'])->findOrFail($id);
+        $book = Book::with(['category', 'bookAuthors', 'bookEditors'])->findOrFail($id);
 
         $data = [
             'title' => $book->title,
@@ -381,7 +386,6 @@ class BookController extends Controller
                 ['name' => $book->title, 'link' => route('back.book.show', $id)],
             ],
             'book' => $book,
-            'editors' => User::role('editor')->get(),
             'categories' => BookCategory::all(),
         ];
 
@@ -390,16 +394,17 @@ class BookController extends Controller
 
     public function authorTab($id)
     {
-        $book = Book::with(['category', 'bookAuthors', 'editors'])->findOrFail($id);
+        $book = Book::with(['category', 'bookAuthors', 'bookEditors', 'bookEditors.user'])->findOrFail($id);
 
         $data = [
-            'title' => $book->title . ' - Penulis',
+            'title' => $book->title . ' - Penulis & Editor',
             'breadcrumbs' => [
                 ['name' => 'Buku', 'link' => route('back.book.index')],
                 ['name' => $book->title, 'link' => route('back.book.show', $id)],
-                ['name' => 'Penulis', 'link' => route('back.book.authors', $id)],
+                ['name' => 'Penulis & Editor', 'link' => route('back.book.authors', $id)],
             ],
             'book' => $book,
+            'editorUsers' => User::role('editor')->get(),
         ];
 
         return view('back.pages.book.show-author', $data);
@@ -407,7 +412,7 @@ class BookController extends Controller
 
     public function paymentTab($id)
     {
-        $book = Book::with(['category', 'bookAuthors', 'editors'])->findOrFail($id);
+        $book = Book::with(['category', 'bookAuthors', 'bookEditors'])->findOrFail($id);
 
         $data = [
             'title' => $book->title . ' - Pembayaran',
@@ -423,27 +428,162 @@ class BookController extends Controller
     }
 
     // ==========================================
-    // EDITOR ASSIGNMENT
+    // EDITOR CRUD
     // ==========================================
 
-    public function editorUpdate(Request $request, $id)
+    public function editorStore(Request $request, $id)
     {
         $book = Book::findOrFail($id);
 
-        BookEditor::where('book_id', $book->id)->delete();
+        $validator = Validator::make($request->all(), [
+            'input_mode' => 'required|in:manual,select',
+            'user_id' => 'required_if:input_mode,select|nullable|exists:users,id',
+            'name' => 'required_if:input_mode,manual|nullable|string|max:255',
+            'name_with_title' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'affiliation' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+        ], [
+            'user_id.required_if' => 'Editor harus dipilih',
+            'name.required_if' => 'Nama editor harus diisi',
+        ]);
 
-        if ($request->editor_ids) {
-            foreach ($request->editor_ids as $editorId) {
-                BookEditor::create([
-                    'book_id' => $book->id,
-                    'user_id' => $editorId,
-                ]);
-            }
+        if ($validator->fails()) {
+            Alert::error('Error', $validator->errors()->all());
+            return redirect()->back()->withErrors($validator)->withInput();
         }
+
+        $maxOrder = $book->bookEditors()->max('order') ?? 0;
+
+        if ($request->input_mode === 'select') {
+            $user = User::findOrFail($request->user_id);
+            BookEditor::create([
+                'book_id' => $book->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'order' => $maxOrder + 1,
+            ]);
+        } else {
+            BookEditor::create([
+                'book_id' => $book->id,
+                'user_id' => null,
+                'name' => $request->name,
+                'name_with_title' => $request->name_with_title,
+                'email' => $request->email,
+                'affiliation' => $request->affiliation,
+                'phone' => $request->phone,
+                'order' => $maxOrder + 1,
+            ]);
+        }
+
+        Alert::success('Success', 'Editor berhasil ditambahkan');
+
+        return redirect()->back();
+    }
+
+    public function editorUpdate(Request $request, $id, $editorId)
+    {
+        $book = Book::findOrFail($id);
+        $editor = BookEditor::where('book_id', $book->id)->findOrFail($editorId);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'name_with_title' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'affiliation' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:50',
+        ], [
+            'name.required' => 'Nama editor harus diisi',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Error', $validator->errors()->all());
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $editor->update([
+            'name' => $request->name,
+            'name_with_title' => $request->name_with_title,
+            'email' => $request->email,
+            'affiliation' => $request->affiliation,
+            'phone' => $request->phone,
+        ]);
 
         Alert::success('Success', 'Editor berhasil diperbarui');
 
         return redirect()->back();
+    }
+
+    public function editorDestroy($id, $editorId)
+    {
+        $book = Book::findOrFail($id);
+        $editor = BookEditor::where('book_id', $book->id)->findOrFail($editorId);
+
+        $editor->delete();
+
+        Alert::success('Success', 'Editor berhasil dihapus');
+
+        return redirect()->back();
+    }
+
+    public function editorCertificate($id, $editorId)
+    {
+        $book = Book::findOrFail($id);
+        $editor = BookEditor::where('book_id', $book->id)->findOrFail($editorId);
+        $setting_web = SettingWebsite::first();
+
+        // Find or create category SRT-EB
+        $category = OutgoingMailCategory::firstOrCreate(
+            ['kode' => 'SRT-EB'],
+            ['name' => 'Sertifikat Editor Buku']
+        );
+
+        // Generate nomor surat
+        $now = Carbon::now();
+        $year = $now->year;
+        $month = $now->month;
+        $count = OutgoingMail::whereYear('tanggal_surat', $year)->count();
+        $sequence = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+
+        $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+        $romanMonth = $romans[$month] ?? '';
+        $nomorSurat = "{$sequence}/{$category->kode}/NSG/{$romanMonth}/{$year}";
+
+        $editorName = $editor->display_name;
+        $editorNameWithTitle = $editor->display_name_with_title;
+
+        // Generate PDF
+        $data = [
+            'book' => $book,
+            'editor' => $editor,
+            'setting_web' => $setting_web,
+            'date' => $now->translatedFormat('d F Y'),
+            'nomor_surat' => $nomorSurat,
+        ];
+
+        $pdf = Pdf::loadView('back.pages.book.pdf.certificate-editor', $data)->setPaper('A4', 'landscape');
+
+        // Save PDF file
+        $pdfPath = 'arsip/sertifikat-buku/' . $now->format('Y') . '/sertifikat-editor-' . Str::slug($editorName) . '-' . Str::slug($book->title) . '-' . $now->format('YmdHis') . '.pdf';
+        Storage::disk('public')->put($pdfPath, $pdf->output());
+
+        // Create OutgoingMail record
+        OutgoingMail::create([
+            'nomor_surat' => $nomorSurat,
+            'outgoing_mail_category_id' => $category->id,
+            'tujuan' => $editorNameWithTitle ?? $editorName,
+            'tanggal_surat' => $now->toDateString(),
+            'perihal' => 'Sertifikat Editor Buku: ' . $book->title,
+            'klasifikasi' => 'biasa',
+            'keterangan' => 'Sertifikat editor buku "' . $book->title . '" atas nama ' . ($editorNameWithTitle ?? $editorName),
+            'file_surat' => $pdfPath,
+            'user_id' => Auth::id(),
+        ]);
+
+        Alert::success('Berhasil', 'Sertifikat editor berhasil diterbitkan dan tercatat sebagai surat keluar');
+
+        return $pdf->download('Sertifikat-Editor-' . Str::slug($editorName) . '-' . Str::slug($book->title) . '.pdf');
     }
 
     // ==========================================

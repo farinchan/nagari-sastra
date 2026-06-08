@@ -1438,7 +1438,7 @@ class CrmController extends Controller
     public function emailContactIndex(Request $request, $groupId)
     {
         $group = EmailGroup::findOrFail($groupId);
-        $contacts = EmailContact::where('email_group_id', $groupId)->orderBy('name', 'asc')->paginate(20);
+        $contacts = EmailContact::where('email_group_id', $groupId)->orderBy('name', 'asc')->get();
         $data = [
             'title' => 'Kontak Email',
             'breadcrumbs' => [

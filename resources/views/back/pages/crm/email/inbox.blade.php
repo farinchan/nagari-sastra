@@ -1,6 +1,6 @@
 @extends('back.app')
 @section('content')
-    <div id="kt_content_container" class=" container-xxl ">
+    <div id="kt_content_container" class="container-xxl">
 
         @if(isset($no_account) && $no_account)
             <div class="alert alert-warning d-flex align-items-center">
@@ -94,15 +94,21 @@
                 {{-- Content --}}
                 <div class="col-md-9">
                     <div class="card card-flush">
-                        <div class="card-header align-items-center py-4 gap-2">
+                        <div class="card-header align-items-center py-5 gap-2 gap-md-5">
                             <div class="card-title">
-                                <i class="ki-duotone ki-sms fs-2 me-2 text-primary"><span class="path1"></span><span class="path2"></span></i>
-                                {{ $folder ?? 'INBOX' }}
-                                @if($selectedAccount)
-                                    <span class="text-muted fs-7 ms-2">- {{ $selectedAccount->email }}</span>
-                                @endif
+                                <div class="d-flex align-items-center position-relative my-1">
+                                    <i class="ki-duotone ki-magnifier fs-3 position-absolute ms-4">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                    <input type="text" data-kt-ecommerce-product-filter="search"
+                                        class="form-control form-control-solid w-250px ps-12" placeholder="Cari email..." />
+                                </div>
                             </div>
                             <div class="card-toolbar gap-2">
+                                @if($selectedAccount)
+                                    <span class="text-muted fs-7 me-3">{{ $selectedAccount->email }}</span>
+                                @endif
                                 <button type="button" class="btn btn-sm btn-light-success" id="btnSync">
                                     <i class="ki-duotone ki-arrows-circle fs-4"><span class="path1"></span><span class="path2"></span></i>
                                     <span id="syncText">Sync Email</span>
@@ -122,42 +128,50 @@
                                         <small class="text-muted">{{ $error }}</small>
                                     </div>
                                 </div>
-                            @elseif($emails->isEmpty())
-                                <div class="text-center py-10">
-                                    <i class="ki-duotone ki-sms fs-3x text-gray-300 mb-3"><span class="path1"></span><span class="path2"></span></i>
-                                    <p class="text-muted">Belum ada email. Klik <strong>Sync Email</strong> untuk mengambil email dari server.</p>
-                                </div>
                             @else
-                                <div class="table-responsive">
-                                    <table class="table table-hover table-row-bordered align-middle gs-0 gy-3">
-                                        <tbody>
-                                            @foreach($emails as $email)
-                                                <tr class="cursor-pointer {{ !$email->is_seen ? 'bg-light-primary' : '' }}" onclick="window.location='{{ route('back.crm.email.show', ['uid' => $email->uid, 'account_id' => $selectedAccount->id, 'folder' => $folder ?? 'INBOX']) }}'">
-                                                    <td style="width: 30px;">
-                                                        <div class="form-check form-check-sm form-check-custom">
-                                                            <input class="form-check-input" type="checkbox" onclick="event.stopPropagation();">
-                                                        </div>
-                                                    </td>
-                                                    <td style="width: 30px;">
-                                                        @if($email->has_attachment)
-                                                            <i class="ki-duotone ki-paper-clip fs-5 text-muted"><span class="path1"></span><span class="path2"></span></i>
-                                                        @endif
-                                                    </td>
-                                                    <td style="width: 220px;" class="{{ !$email->is_seen ? 'fw-bold' : '' }}">
-                                                        {{ Str::limit($email->from_name ?: $email->from_email, 30) }}
-                                                    </td>
-                                                    <td class="{{ !$email->is_seen ? 'fw-bold' : '' }}">
-                                                        {{ Str::limit($email->subject, 55) }}
-                                                    </td>
-                                                    <td class="text-end text-muted fs-7" style="width: 130px;">
-                                                        {{ $email->email_date ? $email->email_date->format('d M Y H:i') : '' }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="text-muted fs-7 mt-3">Menampilkan {{ $emails->count() }} email</div>
+                                <table class="table align-middle table-row-dashed fs-6 gy-4" id="kt_ecommerce_products_table">
+                                    <thead>
+                                        <tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0">
+                                            <th class="w-10px pe-2">
+                                                <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                                    <input class="form-check-input" type="checkbox" data-kt-check="true"
+                                                        data-kt-check-target="#kt_ecommerce_products_table .form-check-input"
+                                                        value="1" />
+                                                </div>
+                                            </th>
+                                            <th class="w-25px"></th>
+                                            <th class="min-w-150px">Pengirim</th>
+                                            <th class="min-w-250px">Subject</th>
+                                            <th class="text-end min-w-100px">Tanggal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="fw-semibold text-gray-600">
+                                        @foreach($emails as $email)
+                                            <tr class="cursor-pointer {{ !$email->is_seen ? 'bg-light-primary' : '' }}" onclick="window.location='{{ route('back.crm.email.show', ['uid' => $email->uid, 'account_id' => $selectedAccount->id, 'folder' => $folder ?? 'INBOX']) }}'">
+                                                <td>
+                                                    <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                                        <input class="form-check-input" type="checkbox" onclick="event.stopPropagation();" value="1" />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    @if($email->has_attachment)
+                                                        <i class="ki-duotone ki-paper-clip fs-5 text-muted"><span class="path1"></span><span class="path2"></span></i>
+                                                    @endif
+                                                </td>
+                                                <td class="{{ !$email->is_seen ? 'fw-bold text-gray-800' : '' }}"
+                                                    data-kt-ecommerce-product-filter="product_name">
+                                                    {{ Str::limit($email->from_name ?: $email->from_email, 30) }}
+                                                </td>
+                                                <td class="{{ !$email->is_seen ? 'fw-bold text-gray-800' : '' }}">
+                                                    {{ Str::limit($email->subject, 55) }}
+                                                </td>
+                                                <td class="text-end text-muted fs-7">
+                                                    {{ $email->email_date ? $email->email_date->format('d M Y H:i') : '' }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
                             @endif
                         </div>
                     </div>
@@ -168,6 +182,7 @@
 @endsection
 
 @section('scripts')
+    <script src="{{ asset('back/js/custom/apps/crm/email-inbox.js') }}"></script>
     <script>
         // Account switcher
         document.getElementById('accountSwitcher')?.addEventListener('change', function() {
