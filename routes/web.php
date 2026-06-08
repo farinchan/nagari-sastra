@@ -483,6 +483,15 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         Route::delete('/email/contacts/{id}/destroy', [BackCrmController::class, 'emailContactDestroy'])->name('email.contacts.destroy');
         Route::post('/email/contacts/import', [BackCrmController::class, 'emailContactImport'])->name('email.contacts.import');
 
+        // Email Templates
+        Route::get('/email/templates', [BackCrmController::class, 'emailTemplateIndex'])->name('email.templates');
+        Route::post('/email/templates/store', [BackCrmController::class, 'emailTemplateStore'])->name('email.templates.store');
+        Route::get('/email/templates/{id}/edit', [BackCrmController::class, 'emailTemplateEdit'])->name('email.templates.edit');
+        Route::put('/email/templates/{id}/update', [BackCrmController::class, 'emailTemplateUpdate'])->name('email.templates.update');
+        Route::delete('/email/templates/{id}/destroy', [BackCrmController::class, 'emailTemplateDestroy'])->name('email.templates.destroy');
+        Route::get('/email/templates/{id}/preview', [BackCrmController::class, 'emailTemplatePreview'])->name('email.templates.preview');
+        Route::get('/email/templates/{id}/get', [BackCrmController::class, 'emailTemplateGet'])->name('email.templates.get');
+
         // Email Campaigns
         Route::get('/email/campaigns', [BackCrmController::class, 'emailCampaignIndex'])->name('email.campaigns');
         Route::get('/email/campaigns/create', [BackCrmController::class, 'emailCampaignCreate'])->name('email.campaigns.create');

@@ -389,6 +389,12 @@
                         </a>
                     </div>
                     <div class="menu-item">
+                        <a class="menu-link @if(request()->routeIs('back.crm.email.templates') || request()->routeIs('back.crm.email.templates.*')) active @endif" href="{{ route('back.crm.email.templates') }}">
+                            <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                            <span class="menu-title">Templates</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
                         <a class="menu-link @if(request()->routeIs('back.crm.email.campaigns') || request()->routeIs('back.crm.email.campaigns.*')) active @endif" href="{{ route('back.crm.email.campaigns') }}">
                             <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                             <span class="menu-title">Marketing</span>

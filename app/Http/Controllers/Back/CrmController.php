@@ -8,6 +8,7 @@ use App\Models\EmailCampaign;
 use App\Models\EmailCampaignLog;
 use App\Models\EmailContact;
 use App\Models\EmailGroup;
+use App\Models\EmailTemplate;
 use App\Models\EmailMessage;
 use App\Models\ChaterySession;
 use App\Models\ChateryContactGroup;
@@ -502,8 +503,10 @@ class CrmController extends Controller
     public function emailCompose(Request $request)
     {
         $accounts = EmailAccount::active()->orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
+        $templates = EmailTemplate::active()->orderBy('name', 'asc')->get();
 
         return view('back.pages.crm.email.compose', [
+            'templates' => $templates,
             'accounts' => $accounts,
             'selectedAccountId' => $request->get('account_id'),
             'to' => $request->get('to', ''),
@@ -1385,6 +1388,100 @@ class CrmController extends Controller
     }
 
     // ==========================================
+    // EMAIL TEMPLATES
+    // ==========================================
+
+    public function emailTemplateIndex()
+    {
+        $templates = EmailTemplate::orderBy('created_at', 'desc')->get();
+        return view('back.pages.crm.email.templates', compact('templates'));
+    }
+
+    public function emailTemplateStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'body_html' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        EmailTemplate::create([
+            'name' => $request->name,
+            'body_html' => $request->body_html,
+            'is_active' => $request->has('is_active') ? true : false,
+            'created_by' => Auth::id(),
+        ]);
+
+        Alert::success('Berhasil', 'Template email berhasil ditambahkan.');
+        return redirect()->route('back.crm.email.templates');
+    }
+
+    public function emailTemplateEdit($id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+        return view('back.pages.crm.email.template-edit', compact('template'));
+    }
+
+    public function emailTemplateUpdate(Request $request, $id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'body_html' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            Alert::error('Gagal', $validator->errors()->first());
+            return redirect()->back()->withInput();
+        }
+
+        $template->update([
+            'name' => $request->name,
+            'body_html' => $request->body_html,
+            'is_active' => $request->has('is_active') ? true : false,
+        ]);
+
+        Alert::success('Berhasil', 'Template email berhasil diperbarui.');
+        return redirect()->route('back.crm.email.templates');
+    }
+
+    public function emailTemplateDestroy($id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+        $template->delete();
+
+        Alert::success('Berhasil', 'Template email berhasil dihapus.');
+        return redirect()->back();
+    }
+
+    public function emailTemplatePreview($id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+        return response($template->body_html ?? '', 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
+     * AJAX: Get template data for use in compose/campaign.
+     */
+    public function emailTemplateGet($id)
+    {
+        $template = EmailTemplate::findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'template' => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'body_html' => $template->body_html,
+            ],
+        ]);
+    }
+
+    // ==========================================
     // EMAIL CAMPAIGNS
     // ==========================================
 
@@ -1398,7 +1495,8 @@ class CrmController extends Controller
     {
         $accounts = EmailAccount::active()->orderBy('name', 'asc')->get();
         $groups = EmailGroup::withCount('contacts')->orderBy('name', 'asc')->get();
-        return view('back.pages.crm.email.campaign-compose', compact('accounts', 'groups'));
+        $templates = EmailTemplate::active()->orderBy('name', 'asc')->get();
+        return view('back.pages.crm.email.campaign-compose', compact('accounts', 'groups', 'templates'));
     }
 
     public function emailCampaignStore(Request $request)

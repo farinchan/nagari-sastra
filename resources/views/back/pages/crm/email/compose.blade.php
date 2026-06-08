@@ -1,7 +1,6 @@
 @extends('back.app')
 @section('content')
     <div id="kt_content_container" class="container-fluid">
-        {{-- Breadcrumb --}}
         <div class="d-flex align-items-center mb-5">
             <span class="text-muted fw-semibold fs-7">
                 <a href="{{ route('back.dashboard') }}" class="text-muted">Dashboard</a>
@@ -22,7 +21,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <form action="{{ route('back.crm.email.send') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('back.crm.email.send') }}" method="POST" enctype="multipart/form-data" id="composeForm">
                     @csrf
                     <div class="mb-4">
                         <label class="form-label required">Dari</label>
@@ -52,9 +51,27 @@
                         <label class="form-label required">Subjek</label>
                         <input type="text" name="subject" class="form-control" value="{{ $subject ?? '' }}" placeholder="Subjek email" required>
                     </div>
+
+                    {{-- Template Selector --}}
+                    @if(isset($templates) && $templates->count() > 0)
+                    <div class="mb-4">
+                        <label class="form-label">Gunakan Template</label>
+                        <div class="d-flex gap-2">
+                            <select id="templateSelect" class="form-select" style="max-width: 400px;">
+                                <option value="">-- Tanpa Template --</option>
+                                @foreach($templates as $tpl)
+                                    <option value="{{ $tpl->id }}">{{ $tpl->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" id="loadTemplateBtn" class="btn btn-light-primary btn-sm">Terapkan</button>
+                        </div>
+                        <div class="form-text">Pilih template lalu klik Terapkan untuk mengisi konten email.</div>
+                    </div>
+                    @endif
+
                     <div class="mb-4">
                         <label class="form-label required">Isi Email</label>
-                        <textarea name="body" class="form-control" rows="12" placeholder="Tulis isi email..." required>{{ $replyBody ?? '' }}</textarea>
+                        <textarea name="body" id="composeBody" class="tinymce-editor">{{ $replyBody ?? '' }}</textarea>
                     </div>
                     <div class="mb-5">
                         <label class="form-label">Lampiran</label>
@@ -73,5 +90,48 @@
     </div>
 @endsection
 
+@section('styles')
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
+@endsection
+
 @section('scripts')
+<script>
+tinymce.init({
+    selector: '.tinymce-editor',
+    height: 350,
+    menubar: false,
+    plugins: 'advlist autolink lists link image charmap preview searchreplace visualblocks code fullscreen insertdatetime table help wordcount',
+    toolbar: 'undo redo | blocks | bold italic forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | code',
+    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 14px; }',
+    promotion: false,
+    branding: false,
+    setup: function(editor) {
+        editor.on('change keyup', function() {
+            editor.save();
+        });
+    }
+});
+
+@if(isset($templates) && $templates->count() > 0)
+document.getElementById('loadTemplateBtn')?.addEventListener('click', function() {
+    var tplId = document.getElementById('templateSelect').value;
+    if (!tplId) return;
+
+    fetch('{{ url("back/crm/email/templates") }}/' + tplId + '/get', {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success && data.template.body_html) {
+            var editor = tinymce.get('composeBody');
+            if (editor) {
+                if (editor.getContent().trim() && !confirm('Konten saat ini akan diganti dengan template. Lanjutkan?')) return;
+                editor.setContent(data.template.body_html);
+            }
+        }
+    })
+    .catch(err => alert('Gagal memuat template.'));
+});
+@endif
+</script>
 @endsection
