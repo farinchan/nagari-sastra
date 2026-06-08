@@ -40,7 +40,24 @@ class CrmController extends Controller
     public function emailAccountIndex()
     {
         $accounts = EmailAccount::orderBy('is_default', 'desc')->orderBy('name', 'asc')->get();
-        return view('back.pages.crm.email.accounts', compact('accounts'));
+        $data = [
+            'title' => 'Akun Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Akun Email',
+                    'link' => route('back.crm.email.accounts'),
+                ],
+            ],
+            'accounts' => $accounts,
+        ];
+        return view('back.pages.crm.email.accounts', $data);
     }
 
     public function emailAccountStore(Request $request)
@@ -425,6 +442,20 @@ class CrmController extends Controller
         }
 
         return view('back.pages.crm.email.inbox', [
+            'title' => 'Kotak Masuk',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Kotak Masuk',
+                    'link' => route('back.crm.email.inbox', ['account_id' => $selectedAccount->id]),
+                ],
+            ],
             'accounts' => $accounts,
             'selectedAccount' => $selectedAccount,
             'emails' => $emails,
@@ -482,6 +513,21 @@ class CrmController extends Controller
         }
 
         return view('back.pages.crm.email.show', [
+            'title' => 'Lihat Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                    'link' => route('back.crm.email.inbox', ['account_id' => $selectedAccount->id]),
+                ],
+                [
+                    'name' => 'Lihat Email',
+                    'link' => route('back.crm.email.show', ['account_id' => $selectedAccount->id, 'uid' => $uid, 'folder' => $folder]),
+                ],
+            ],
             'uid' => $uid,
             'from_name' => $email->from_name,
             'from_email' => $email->from_email,
@@ -506,6 +552,20 @@ class CrmController extends Controller
         $templates = EmailTemplate::active()->orderBy('name', 'asc')->get();
 
         return view('back.pages.crm.email.compose', [
+            'title' => 'Tulis Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Tulis Email',
+                    'link' => route('back.crm.email.compose'),
+                ],
+            ],
             'templates' => $templates,
             'accounts' => $accounts,
             'selectedAccountId' => $request->get('account_id'),
@@ -610,7 +670,24 @@ class CrmController extends Controller
     public function telegramBotIndex()
     {
         $bots = TelegramBot::orderBy('created_at', 'desc')->get();
-        return view('back.pages.crm.telegram.bots', compact('bots'));
+        $data = [
+            'title' => 'Bot Telegram',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Bot Telegram',
+                    'link' => route('back.crm.telegram.bots'),
+                ],
+            ],
+            'bots' => $bots,
+        ];
+        return view('back.pages.crm.telegram.bots', $data);
     }
 
     public function telegramBotStore(Request $request)
@@ -779,7 +856,28 @@ class CrmController extends Controller
                 ->find($request->chat_id);
         }
 
-        return view('back.pages.crm.telegram.chats', compact('bots', 'selectedBot', 'chats', 'activeChat'));
+        $data = [
+            'title' => 'Chat Telegram',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Chat Telegram',
+                    'link' => route('back.crm.telegram.chats'),
+                ],
+            ],
+            'bots' => $bots,
+            'selectedBot' => $selectedBot,
+            'chats' => $chats,
+            'activeChat' => $activeChat,
+        ];
+
+        return view('back.pages.crm.telegram.chats', $data);
     }
 
     public function telegramChatShow(Request $request, $id)
@@ -1222,10 +1320,32 @@ class CrmController extends Controller
         $totalCampaigns = EmailCampaign::count();
         $recentCampaigns = EmailCampaign::with(['emailAccount', 'group'])->orderBy('created_at', 'desc')->limit(5)->get();
 
-        return view('back.pages.crm.email.overview', compact(
-            'accounts', 'selectedAccount', 'stats', 'chartData',
-            'totalGroups', 'totalContacts', 'totalCampaigns', 'recentCampaigns'
-        ));
+        $data = [
+            'title' => 'Email Overview',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Email Overview',
+                    'link' => route('back.crm.email.overview'),
+                ],
+            ],
+            'accounts' => $accounts,
+            'selectedAccount' => $selectedAccount,
+            'stats' => $stats,
+            'chartData' => $chartData,
+            'totalGroups' => $totalGroups,
+            'totalContacts' => $totalContacts,
+            'totalCampaigns' => $totalCampaigns,
+            'recentCampaigns' => $recentCampaigns,
+        ];
+
+        return view('back.pages.crm.email.overview', $data);
     }
 
     // ==========================================
@@ -1235,7 +1355,24 @@ class CrmController extends Controller
     public function emailGroupIndex()
     {
         $groups = EmailGroup::withCount('contacts')->orderBy('name', 'asc')->get();
-        return view('back.pages.crm.email.groups', compact('groups'));
+        $data = [
+            'title' => 'Grup Kontak Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Grup Kontak Email',
+                    'link' => route('back.crm.email.groups'),
+                ],
+            ],
+            'groups' => $groups,
+        ];
+        return view('back.pages.crm.email.groups', $data);
     }
 
     public function emailGroupStore(Request $request)
@@ -1302,7 +1439,29 @@ class CrmController extends Controller
     {
         $group = EmailGroup::findOrFail($groupId);
         $contacts = EmailContact::where('email_group_id', $groupId)->orderBy('name', 'asc')->paginate(20);
-        return view('back.pages.crm.email.contacts', compact('group', 'contacts'));
+        $data = [
+            'title' => 'Kontak Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Grup Kontak Email',
+                    'link' => route('back.crm.email.groups'),
+                ],
+                [
+                    'name' => $group->name,
+                    'link' => route('back.crm.email.contacts', $group->id),
+                ],
+            ],
+            'group' => $group,
+            'contacts' => $contacts,
+        ];
+        return view('back.pages.crm.email.contacts', $data);
     }
 
     public function emailContactStore(Request $request)
@@ -1394,7 +1553,24 @@ class CrmController extends Controller
     public function emailTemplateIndex()
     {
         $templates = EmailTemplate::orderBy('created_at', 'desc')->get();
-        return view('back.pages.crm.email.templates', compact('templates'));
+        $data = [
+            'title' => 'Template Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Template Email',
+                    'link' => route('back.crm.email.templates'),
+                ],
+            ],
+            'templates' => $templates,
+        ];
+        return view('back.pages.crm.email.templates', $data);
     }
 
     public function emailTemplateStore(Request $request)
@@ -1423,7 +1599,27 @@ class CrmController extends Controller
     public function emailTemplateEdit($id)
     {
         $template = EmailTemplate::findOrFail($id);
-        return view('back.pages.crm.email.template-edit', compact('template'));
+        $data = [
+            'title' => 'Edit Template Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Template Email',
+                    'link' => route('back.crm.email.templates'),
+                ],
+                [
+                    'name' => 'Edit Template',
+                ],
+            ],
+            'template' => $template,
+        ];
+        return view('back.pages.crm.email.template-edit', $data);
     }
 
     public function emailTemplateUpdate(Request $request, $id)
@@ -1488,7 +1684,24 @@ class CrmController extends Controller
     public function emailCampaignIndex()
     {
         $campaigns = EmailCampaign::with(['emailAccount', 'group'])->orderBy('created_at', 'desc')->get();
-        return view('back.pages.crm.email.campaigns', compact('campaigns'));
+        $data = [
+            'title' => 'Campaign Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Campaign Email',
+                    'link' => route('back.crm.email.campaigns'),
+                ],
+            ],
+            'campaigns' => $campaigns,
+        ];
+        return view('back.pages.crm.email.campaigns', $data);
     }
 
     public function emailCampaignCreate()
@@ -1496,7 +1709,29 @@ class CrmController extends Controller
         $accounts = EmailAccount::active()->orderBy('name', 'asc')->get();
         $groups = EmailGroup::withCount('contacts')->orderBy('name', 'asc')->get();
         $templates = EmailTemplate::active()->orderBy('name', 'asc')->get();
-        return view('back.pages.crm.email.campaign-compose', compact('accounts', 'groups', 'templates'));
+        $data = [
+            'title' => 'Buat Campaign Email',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Campaign Email',
+                    'link' => route('back.crm.email.campaigns'),
+                ],
+                [
+                    'name' => 'Buat Campaign',
+                ],
+            ],
+            'accounts' => $accounts,
+            'groups' => $groups,
+            'templates' => $templates,
+        ];
+        return view('back.pages.crm.email.campaign-compose', $data);
     }
 
     public function emailCampaignStore(Request $request)
@@ -1581,7 +1816,25 @@ class CrmController extends Controller
             }
         }
 
-        return view('back.pages.crm.chatery.index', compact('sessions'));
+        $data = [
+            'title' => 'Manajemen Chatery',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Chatery',
+                    'link' => route('back.crm.chatery.index'),
+                ],
+            ],
+            'sessions' => $sessions,
+        ];
+
+        return view('back.pages.crm.chatery.index', $data);
     }
 
     public function chateryStore(Request $request)
@@ -1754,7 +2007,28 @@ class CrmController extends Controller
     public function chateryChats()
     {
         $sessions = ChaterySession::active()->orderBy('is_default', 'desc')->orderBy('name')->get();
-        return view('back.pages.crm.chatery.chats', compact('sessions'));
+        $data = [
+            'title' => 'Chat WhatsApp (Chatery)',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Chatery',
+                    'link' => route('back.crm.chatery.index'),
+                ],
+                [
+                    'name' => 'Chats',
+                    'link' => route('back.crm.chatery.chats'),
+                ],
+            ],
+            'sessions' => $sessions,
+        ];
+        return view('back.pages.crm.chatery.chats', $data);
     }
 
     /**
@@ -1824,7 +2098,29 @@ class CrmController extends Controller
     {
         $sessions = ChaterySession::active()->orderBy('is_default', 'desc')->orderBy('name')->get();
         $groups = ChateryContactGroup::withCount('contacts')->orderBy('name')->get();
-        return view('back.pages.crm.chatery.bulk', compact('sessions', 'groups'));
+        $data = [
+            'title' => 'Kirim Pesan Massal (Chatery)',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Chatery',
+                    'link' => route('back.crm.chatery.index'),
+                ],
+                [
+                    'name' => 'Kirim Massal',
+                    'link' => route('back.crm.chatery.bulk'),
+                ],
+            ],
+            'sessions' => $sessions,
+            'groups' => $groups,
+        ];
+        return view('back.pages.crm.chatery.bulk', $data);
     }
 
     /**
@@ -1913,7 +2209,28 @@ class CrmController extends Controller
     public function chateryGroups()
     {
         $groups = ChateryContactGroup::withCount('contacts')->orderBy('name')->get();
-        return view('back.pages.crm.chatery.groups', compact('groups'));
+        $data = [
+            'title' => 'Grup Kontak (Chatery)',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Chatery',
+                    'link' => route('back.crm.chatery.index'),
+                ],
+                [
+                    'name' => 'Grup Kontak',
+                    'link' => route('back.crm.chatery.groups'),
+                ],
+            ],
+            'groups' => $groups,
+        ];
+        return view('back.pages.crm.chatery.groups', $data);
     }
 
     public function chateryGroupStore(Request $request)
@@ -2028,7 +2345,24 @@ class CrmController extends Controller
     public function waAccountIndex()
     {
         $accounts = WhatsappAccount::orderBy('created_at', 'desc')->get();
-        return view('back.pages.crm.whatsapp.accounts', compact('accounts'));
+        $data = [
+            'title' => 'Akun WhatsApp',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Akun WhatsApp',
+                    'link' => route('back.crm.whatsapp.accounts'),
+                ],
+            ],
+            'accounts' => $accounts,
+        ];
+        return view('back.pages.crm.whatsapp.accounts', $data);
     }
 
     public function waAccountStore(Request $request)
@@ -2139,9 +2473,33 @@ class CrmController extends Controller
             }
         }
 
-        return view('back.pages.crm.whatsapp.chats', compact(
-            'accounts', 'selectedAccount', 'chats', 'activeChat', 'messages'
-        ));
+        $data = [
+            'title' => 'Chat WhatsApp',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'WhatsApp',
+                    'link' => route('back.crm.whatsapp.accounts'),
+                ],
+                [
+                    'name' => 'Chats',
+                    'link' => route('back.crm.whatsapp.chats'),
+                ],
+            ],
+            'accounts' => $accounts,
+            'selectedAccount' => $selectedAccount,
+            'chats' => $chats,
+            'activeChat' => $activeChat,
+            'messages' => $messages,
+        ];
+
+        return view('back.pages.crm.whatsapp.chats', $data);
     }
 
     public function waChatShow(Request $request, $id)
@@ -2512,7 +2870,29 @@ class CrmController extends Controller
             }
         }
 
-        return view('back.pages.crm.webchat.index', compact('conversations', 'widgets', 'selectedWidget', 'activeConversation', 'selectedStatus'));
+        $data = [
+            'title' => 'Webchat',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Webchat',
+                    'link' => route('back.crm.webchat.index'),
+                ],
+            ],
+            'conversations' => $conversations,
+            'widgets' => $widgets,
+            'selectedWidget' => $selectedWidget,
+            'activeConversation' => $activeConversation,
+            'selectedStatus' => $selectedStatus,
+        ];
+
+        return view('back.pages.crm.webchat.index', $data);
     }
 
     public function webchatShow($id)
@@ -2674,7 +3054,28 @@ class CrmController extends Controller
     public function webchatWidgetIndex()
     {
         $widgets = \App\Models\WebchatWidget::withCount('conversations')->orderBy('created_at', 'desc')->get();
-        return view('back.pages.crm.webchat.widgets', compact('widgets'));
+        $data = [
+            'title' => 'Widget Webchat',
+            'breadcrumbs' => [
+                [
+                    'name' => 'Dashboard',
+                    'link' => route('back.dashboard'),
+                ],
+                [
+                    'name' => 'CRM',
+                ],
+                [
+                    'name' => 'Webchat',
+                    'link' => route('back.crm.webchat.index'),
+                ],
+                [
+                    'name' => 'Widget',
+                    'link' => route('back.crm.webchat.widgets'),
+                ],
+            ],
+            'widgets' => $widgets,
+        ];
+        return view('back.pages.crm.webchat.widgets', $data);
     }
 
     public function webchatWidgetStore(Request $request)

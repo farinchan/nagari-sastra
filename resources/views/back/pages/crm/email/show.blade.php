@@ -1,18 +1,7 @@
 @extends('back.app')
 @section('content')
     <div id="kt_content_container" class="container-fluid">
-        {{-- Breadcrumb --}}
-        <div class="d-flex align-items-center mb-5">
-            <span class="text-muted fw-semibold fs-7">
-                <a href="{{ route('back.dashboard') }}" class="text-muted">Dashboard</a>
-                <i class="ki-duotone ki-right fs-7 mx-1"></i>
-                CRM
-                <i class="ki-duotone ki-right fs-7 mx-1"></i>
-                <a href="{{ route('back.crm.email.inbox', ['account_id' => $selectedAccount->id]) }}" class="text-muted">Inbox</a>
-                <i class="ki-duotone ki-right fs-7 mx-1"></i>
-                <span class="text-dark">{{ Str::limit($subject, 50) }}</span>
-            </span>
-        </div>
+     
 
         {{-- Action Buttons --}}
         <div class="d-flex justify-content-between align-items-center mb-5">
