@@ -44,11 +44,13 @@ class LoginController extends Controller
 
     public function login(Request $request)
     {
-        // Rate limit: max 5 attempts per minute per IP
-        $rateLimitKey = 'login:' . $request->ip();
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+        $loginInput = strip_tags(trim($request->input('login', '')));
+
+        // Rate limit: max 10 failed attempts per minute, per login+IP combo
+        $rateLimitKey = 'login:' . strtolower($loginInput) . '|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 10)) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
-            Alert::error('Terlalu Banyak Percobaan', "Akun dikunci sementara. Coba lagi dalam {$seconds} detik.");
+            Alert::error('Terlalu Banyak Percobaan', "Coba lagi dalam {$seconds} detik.");
             return redirect()->back()->withInput(['login' => $request->login]);
         }
 
@@ -67,7 +69,6 @@ class LoginController extends Controller
             return redirect()->back()->withErrors($validator)->withInput(['login' => $request->login]);
         }
 
-        $loginInput = strip_tags(trim($request->input('login')));
         $loginType = filter_var($loginInput, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         if (Auth::attempt([$loginType => $loginInput, 'password' => $request->input('password')], $request->boolean('remember'))) {
