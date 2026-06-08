@@ -253,7 +253,7 @@ var tgReplyForm = document.getElementById('tgReplyForm');
 var tgTextarea = tgReplyForm.querySelector('textarea[name="text"]');
 var tgPhotoInput = document.getElementById('tgPhotoInput');
 var tgSendBtn = tgReplyForm.querySelector('button[type="submit"]');
-var tgLastMsgId = {{ $activeChat->messages->last()?->id ?? 0 }};
+var tgLastMsgId = {{ $activeChat->messages->max('id') ?? 0 }};
 var tgChatDbId = {{ $activeChat->id }};
 var tgFetchUrl = '{{ route("back.crm.telegram.fetch-messages", $activeChat->id) }}';
 var tgSendUrl = '{{ route("back.crm.telegram.send-message") }}';
