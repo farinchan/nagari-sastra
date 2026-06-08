@@ -19,6 +19,10 @@
                     <div class="newsletter-txt text-center">
                         <form class="newsletter-form" id="newsletter-form">
                             @csrf
+                            <!-- Honeypot -->
+                            <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                                <input type="text" name="website_url" tabindex="-1" autocomplete="off" id="nl-hp">
+                            </div>
                             <div class="input-group">
                                 <input type="email" name="email" class="form-control" placeholder="Masukkan alamat email Anda"
                                     required id="s-email">
@@ -94,7 +98,8 @@
                     btn.disabled = false;
                 };
 
-                xhr.send(JSON.stringify({ email: emailInput.value }));
+                var hp = document.getElementById('nl-hp');
+                xhr.send(JSON.stringify({ email: emailInput.value, website_url: hp ? hp.value : '' }));
             });
         });
     </script>

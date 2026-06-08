@@ -89,13 +89,17 @@
                                         </a>
                                     </div>
                                     <div class="menu-item px-5">
-                                        <a href="{{ route("logout") }}" class="menu-link px-5">
+                                        <a href="#" class="menu-link px-5"
+                                           onclick="event.preventDefault(); document.getElementById('backend-logout-form').submit();">
                                             <i class="ki-duotone ki-entrance-right fs-2 me-3 minimize-default">
                                                 <span class="path1"></span>
                                                 <span class="path2"></span>
                                             </i>
                                             Keluar
                                         </a>
+                                        <form id="backend-logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                            @csrf
+                                        </form>
                                     </div>
                                 </div>
 

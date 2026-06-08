@@ -99,7 +99,7 @@
                                         <label for="password" class="control-label">Password <span class="text-danger">*</span></label>
                                         <input type="password" id="password" name="password"
                                             class="form-control @error('password') is-invalid @enderror"
-                                            placeholder="Minimal 6 karakter" required>
+                                            placeholder="Minimal 8 karakter" required>
                                         @error('password')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -185,6 +185,20 @@
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
+                            </div>
+
+                            <!-- Honeypot (hidden from humans) -->
+                            <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                                <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+                            </div>
+
+                            <!-- reCAPTCHA -->
+                            <div class="form-group mb-25">
+                                {!! NoCaptcha::renderJs() !!}
+                                {!! NoCaptcha::display() !!}
+                                @error('g-recaptcha-response')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <!-- SUBMIT -->

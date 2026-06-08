@@ -14,16 +14,19 @@ class BookController extends Controller
     public function index(Request $request)
     {
         $setting_web = SettingWebsite::first();
-        $search = $request->q;
+        $search = strip_tags(trim($request->q ?? ''));
+        $search = mb_substr($search, 0, 100); // Limit search length
 
         $books = Book::where('status', 'published')
-            ->where(function ($query) use ($search) {
-                $query->where('title', 'like', "%$search%")
-                    ->orWhere('publisher', 'like', "%$search%")
-                    ->orWhereHas('bookAuthors', function ($q) use ($search) {
-                        $q->where('name', 'like', "%$search%")
-                          ->orWhere('name_with_title', 'like', "%$search%");
-                    });
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                      ->orWhere('publisher', 'like', '%' . $search . '%')
+                      ->orWhereHas('bookAuthors', function ($sub) use ($search) {
+                          $sub->where('name', 'like', '%' . $search . '%')
+                              ->orWhere('name_with_title', 'like', '%' . $search . '%');
+                      });
+                });
             })
             ->with('category')
             ->latest()

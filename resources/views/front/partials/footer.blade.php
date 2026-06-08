@@ -89,6 +89,10 @@
                     <!-- Newsletter Form Input -->
                     <form class="newsletter-form" id="footer-newsletter-form">
                         @csrf
+                        <!-- Honeypot -->
+                        <div style="position: absolute; left: -9999px;" aria-hidden="true">
+                            <input type="text" name="website_url" tabindex="-1" autocomplete="off" id="footer-hp">
+                        </div>
                         <div class="input-group">
                             <input type="email" name="email" class="form-control" placeholder="Email Address" required
                                 id="footer-email">
@@ -134,7 +138,8 @@
                                     msgDiv.textContent = 'Terjadi kesalahan.';
                                     btn.disabled = false;
                                 };
-                                xhr.send(JSON.stringify({ email: emailInput.value }));
+                                var hp = document.getElementById('footer-hp');
+                                xhr.send(JSON.stringify({ email: emailInput.value, website_url: hp ? hp.value : '' }));
                             });
                         });
                     </script>
