@@ -33,6 +33,10 @@
                         <div class="fw-bold fs-4">{{ $book->isbn ?? '-' }}</div>
                     </div>
                     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                        <div class="fw-semibold fs-6 text-gray-500">QRCBN</div>
+                        <div class="fw-bold fs-4">{{ $book->qrcbn ?? '-' }}</div>
+                    </div>
+                    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                         <div class="fw-semibold fs-6 text-gray-500">Halaman</div>
                         <div class="fw-bold fs-4">{{ $book->pages ?? '-' }}</div>
                     </div>

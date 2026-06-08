@@ -58,6 +58,15 @@
                                 </div>
 
                                 <div class="col-lg-6 mb-5">
+                                    <label class="form-label">QRCBN</label>
+                                    <input type="text" name="qrcbn" class="form-control @error('qrcbn') is-invalid @enderror"
+                                        value="{{ old('qrcbn', $book->qrcbn) }}" />
+                                    @error('qrcbn')
+                                        <span class="invalid-feedback">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="col-lg-6 mb-5">
                                     <label class="form-label">Penerbit</label>
                                     <input type="text" name="publisher" class="form-control"
                                         value="{{ old('publisher', $book->publisher) }}" />
@@ -177,6 +186,34 @@
                                 @endif
                                 <input type="file" name="attachment" class="form-control form-control-sm" accept=".pdf" />
                                 <small class="text-muted">PDF (Max: 30MB)</small>
+                            </div>
+
+                            <div class="separator separator-dashed my-5"></div>
+
+                            <div class="mb-5">
+                                <label class="form-label fw-bold">File ISBN</label>
+                                @if($book->isbn_file)
+                                    <div class="mb-2">
+                                        <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank" class="btn btn-sm btn-light-success w-100">
+                                            <i class="ki-duotone ki-file fs-2"><span class="path1"></span><span class="path2"></span></i> Lihat File ISBN
+                                        </a>
+                                    </div>
+                                @endif
+                                <input type="file" name="isbn_file" class="form-control form-control-sm" accept=".pdf,image/*" />
+                                <small class="text-muted">PDF/Image (Max: 8MB)</small>
+                            </div>
+
+                            <div class="mb-5">
+                                <label class="form-label fw-bold">File QRCBN</label>
+                                @if($book->qrcbn_file)
+                                    <div class="mb-2">
+                                        <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank" class="btn btn-sm btn-light-warning w-100">
+                                            <i class="ki-duotone ki-file fs-2"><span class="path1"></span><span class="path2"></span></i> Lihat File QRCBN
+                                        </a>
+                                    </div>
+                                @endif
+                                <input type="file" name="qrcbn_file" class="form-control form-control-sm" accept=".pdf,image/*" />
+                                <small class="text-muted">PDF/Image (Max: 8MB)</small>
                             </div>
 
                             <button type="submit" class="btn btn-primary w-100">

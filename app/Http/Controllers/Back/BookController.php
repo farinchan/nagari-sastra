@@ -217,6 +217,7 @@ class BookController extends Controller
                 'status' => 'required',
                 'publisher' => 'nullable',
                 'isbn' => 'nullable|unique:books,isbn,' . $id,
+                'qrcbn' => 'nullable|unique:books,qrcbn,' . $id,
                 'edition' => 'nullable',
                 'publish_year' => 'nullable|integer|min:1900|max:' . date('Y'),
                 'pages' => 'nullable|integer',
@@ -255,6 +256,7 @@ class BookController extends Controller
         $book->slug = $slug;
         $book->publisher = $request->publisher;
         $book->isbn = $request->isbn;
+        $book->qrcbn = $request->qrcbn;
         $book->edition = $request->edition;
         $book->publish_year = $request->publish_year;
         $book->pages = $request->pages;
@@ -291,6 +293,22 @@ class BookController extends Controller
             $book->attachment = $attachment->storeAs('books/attachment', date('YmdHis') . '_' . Str::slug($request->title) . '.' . $attachment->getClientOriginalExtension(), 'public');
         }
 
+        if ($request->hasFile('isbn_file')) {
+            if ($book->isbn_file && Storage::disk('public')->exists($book->isbn_file)) {
+                Storage::disk('public')->delete($book->isbn_file);
+            }
+            $isbnFile = $request->file('isbn_file');
+            $book->isbn_file = $isbnFile->storeAs('books/isbn', date('YmdHis') . '_isbn_' . Str::slug($request->title) . '.' . $isbnFile->getClientOriginalExtension(), 'public');
+        }
+
+        if ($request->hasFile('qrcbn_file')) {
+            if ($book->qrcbn_file && Storage::disk('public')->exists($book->qrcbn_file)) {
+                Storage::disk('public')->delete($book->qrcbn_file);
+            }
+            $qrcbnFile = $request->file('qrcbn_file');
+            $book->qrcbn_file = $qrcbnFile->storeAs('books/qrcbn', date('YmdHis') . '_qrcbn_' . Str::slug($request->title) . '.' . $qrcbnFile->getClientOriginalExtension(), 'public');
+        }
+
         $book->save();
 
         Alert::success('Success', 'Buku berhasil diperbarui');
@@ -306,6 +324,8 @@ class BookController extends Controller
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:8192',
             'preview_file' => 'nullable|mimes:pdf|max:30720',
             'attachment' => 'nullable|mimes:pdf|max:30720',
+            'isbn_file' => 'nullable|mimes:pdf,jpeg,png,jpg|max:8192',
+            'qrcbn_file' => 'nullable|mimes:pdf,jpeg,png,jpg|max:8192',
         ], [
             'image' => 'File harus berupa gambar',
             'mimes' => 'Format file harus :values',
@@ -340,6 +360,22 @@ class BookController extends Controller
             $book->attachment = $attachment->storeAs('books/attachment', date('YmdHis') . '_' . Str::slug($book->title) . '.' . $attachment->getClientOriginalExtension(), 'public');
         }
 
+        if ($request->hasFile('isbn_file')) {
+            if ($book->isbn_file && Storage::disk('public')->exists($book->isbn_file)) {
+                Storage::disk('public')->delete($book->isbn_file);
+            }
+            $isbnFile = $request->file('isbn_file');
+            $book->isbn_file = $isbnFile->storeAs('books/isbn', date('YmdHis') . '_isbn_' . Str::slug($book->title) . '.' . $isbnFile->getClientOriginalExtension(), 'public');
+        }
+
+        if ($request->hasFile('qrcbn_file')) {
+            if ($book->qrcbn_file && Storage::disk('public')->exists($book->qrcbn_file)) {
+                Storage::disk('public')->delete($book->qrcbn_file);
+            }
+            $qrcbnFile = $request->file('qrcbn_file');
+            $book->qrcbn_file = $qrcbnFile->storeAs('books/qrcbn', date('YmdHis') . '_qrcbn_' . Str::slug($book->title) . '.' . $qrcbnFile->getClientOriginalExtension(), 'public');
+        }
+
         $book->save();
 
         Alert::success('Success', 'File berhasil diperbarui');
@@ -364,6 +400,12 @@ class BookController extends Controller
         }
         if ($book->attachment && Storage::disk('public')->exists($book->attachment)) {
             Storage::disk('public')->delete($book->attachment);
+        }
+        if ($book->isbn_file && Storage::disk('public')->exists($book->isbn_file)) {
+            Storage::disk('public')->delete($book->isbn_file);
+        }
+        if ($book->qrcbn_file && Storage::disk('public')->exists($book->qrcbn_file)) {
+            Storage::disk('public')->delete($book->qrcbn_file);
         }
 
         $book->delete();

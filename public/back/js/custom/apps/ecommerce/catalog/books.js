@@ -39,7 +39,7 @@ var KTAppEcommerceBooks = function () {
     }
 
     var handleDeleteRows = () => {
-        const deleteButtons = table.querySelectorAll('[data-kt-ecommerce-product-filter="delete_row"]');
+        const deleteButtons = table.querySelectorAll('.btn-delete');
 
         deleteButtons.forEach(d => {
             d.addEventListener('click', function (e) {
@@ -47,7 +47,8 @@ var KTAppEcommerceBooks = function () {
 
                 const parent = e.target.closest('tr');
                 const bookName = parent.querySelector('[data-kt-ecommerce-product-filter="product_name"]').innerText;
-                const deleteForm = d.closest('td').querySelector('.delete-form');
+                const bookId = d.getAttribute('data-id');
+                const deleteForm = document.getElementById('delete-form-' + bookId);
 
                 Swal.fire({
                     text: "Apakah Anda yakin ingin menghapus \"" + bookName + "\"?",

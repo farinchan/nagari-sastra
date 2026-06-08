@@ -45,7 +45,7 @@
                                 <div class="d-flex flex-stack flex-grow-1">
                                     <div class="fw-semibold">
                                         <div class="fs-6 text-gray-700">
-                                            Buku akan dibuat dengan status <strong>Draft</strong>. Anda bisa melengkapi informasi detail seperti ISBN, penerbit, penulis, dan lainnya di halaman detail buku setelah dibuat.
+                                            Buku akan dibuat dengan status <strong>Draft</strong>. Anda bisa melengkapi informasi detail seperti ISBN, QRCBN, penerbit, penulis, dan lainnya di halaman detail buku setelah dibuat.
                                         </div>
                                     </div>
                                 </div>

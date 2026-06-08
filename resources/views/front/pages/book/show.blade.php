@@ -26,7 +26,7 @@
         <meta name="citation_isbn" content="{{ $book->isbn }}">
     @endif
     @if ($citationAbstract)
-        <meta name="citation_abstract" content="{{ Str::limit($citationAbstract, 500, '') }}">
+        <meta name="citation_abstract" content="{{ $citationAbstract}}">
     @endif
     @if ($book->keywords && count($book->keywords) > 0)
         <meta name="citation_keywords"
@@ -61,7 +61,7 @@
                 }
                 return $keyword;
             })->filter()->implode('; ') }}">
-    <meta name="DC.description" content="{{ Str::limit($citationAbstract, 160, '') }}">
+    <meta name="DC.description" content="{{ $citationAbstract }}">
     <meta name="DC.publisher" content="{{ $book->publisher ?: 'Unknown' }}">
     @if ($book->publish_year)
         <meta name="DC.issued" content="{{ $book->publish_year }}">
@@ -86,7 +86,7 @@
                 '@type' => 'Organization',
                 'name' => $book->publisher ?: 'Unknown',
             ],
-            'description' => Str::limit($citationAbstract, 500, ''),
+            'description' => $citationAbstract,
             'image' => $book->getThumbnail(),
             'url' => route('book.show', $book->slug),
             'inLanguage' => $book->language ?: 'id',
@@ -182,6 +182,9 @@
                                 <div class="mb-20">
                                     @if($book->isbn)
                                         <span class="badge badge-light p-2 mr-1 mb-1">ISBN: {{ $book->isbn }}</span>
+                                    @endif
+                                    @if($book->qrcbn)
+                                        <span class="badge badge-light p-2 mr-1 mb-1">QRCBN: {{ $book->qrcbn }}</span>
                                     @endif
                                     @if($book->edition)
                                         <span class="badge badge-light p-2 mr-1 mb-1">Edisi: {{ $book->edition }}</span>
@@ -291,6 +294,10 @@
                                 <span style="float: right;">{{ $book->isbn ?: '-' }}</span></p>
                             </li>
                             <li>
+                                <p><span class="grey-color">QRCBN</span>
+                                <span style="float: right;">{{ $book->qrcbn ?: '-' }}</span></p>
+                            </li>
+                            <li>
                                 <p><span class="grey-color">Edisi</span>
                                 <span style="float: right;">{{ $book->edition ?: '-' }}</span></p>
                             </li>
@@ -311,11 +318,30 @@
 
                     <!-- PREVIEW BUTTON -->
                     @if ($book->getPreviewFile())
-                        <div class="mb-50">
+                        <div class="mb-30">
                             <a href="{{ route('book.preview', $book->slug) }}" target="_blank"
                                class="btn btn-theme btn-block">
                                 <span class="flaticon-document mr-2"></span> Preview Buku
                             </a>
+                        </div>
+                    @endif
+
+                    <!-- ISBN & QRCBN FILES -->
+                    @if ($book->isbn_file || $book->qrcbn_file)
+                        <div class="sidebar-div mb-50">
+                            <h6 class="h6-xl">Dokumen</h6>
+                            @if ($book->isbn_file)
+                                <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank"
+                                   class="btn btn-outline-secondary btn-block mb-10" style="text-align: left;">
+                                    <span class="flaticon-document mr-2"></span> Lihat Sertifikat ISBN
+                                </a>
+                            @endif
+                            @if ($book->qrcbn_file)
+                                <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank"
+                                   class="btn btn-outline-secondary btn-block mb-10" style="text-align: left;">
+                                    <span class="flaticon-document mr-2"></span> Lihat Sertifikat QRCBN
+                                </a>
+                            @endif
                         </div>
                     @endif
 

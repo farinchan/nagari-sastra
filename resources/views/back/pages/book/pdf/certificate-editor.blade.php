@@ -36,6 +36,7 @@
                     <span class="book-title">"{{ $book->title }}"</span>
                     <br><br>
                     @if($book->isbn) ISBN: {{ $book->isbn }} <br> @endif
+                    @if($book->qrcbn) QRCBN: {{ $book->qrcbn }} <br> @endif
                     Penerbit: {{ $book->publisher ?? '-' }} | Tahun: {{ $book->publish_year ?? '-' }}
                 </div>
                 <div class="date">{{ $date }}</div>

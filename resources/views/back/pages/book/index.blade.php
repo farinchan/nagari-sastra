@@ -65,7 +65,12 @@
                                         <div class="ms-5">
                                             <a href="{{ route('back.book.show', $book->id) }}" class="text-gray-800 text-hover-primary fs-5 fw-bold mb-1"
                                                 data-kt-ecommerce-product-filter="product_name">{{ $book->title }}</a>
-                                            <div class="text-muted fs-7 fw-bold">{{ $book->isbn ?? 'No ISBN' }}</div>
+                                            <div class="text-muted fs-7 fw-bold">
+                                                {{ $book->isbn ? 'ISBN: ' . $book->isbn : '' }}
+                                                {{ $book->isbn && $book->qrcbn ? ' | ' : '' }}
+                                                {{ $book->qrcbn ? 'QRCBN: ' . $book->qrcbn : '' }}
+                                                {{ !$book->isbn && !$book->qrcbn ? '-' : '' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -91,39 +96,46 @@
                                     @endif
                                 </td>
                                 <td class="text-end">
-                                    @if ($book->status !== 'published')
-                                        <a href="{{ route('back.book.show', $book->id) }}"
-                                            class="btn btn-sm btn-light-primary my-1">
-                                            <i class="ki-duotone ki-eye fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                                <span class="path3"></span>
-                                            </i> Detail
-                                        </a>
-                                        <a href="#" class="btn btn-sm btn-light-danger my-1"
-                                            data-kt-ecommerce-product-filter="delete_row">
-                                            <i class="ki-duotone ki-trash fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                                <span class="path3"></span>
-                                                <span class="path4"></span>
-                                                <span class="path5"></span>
-                                            </i> Hapus
-                                        </a>
-                                        <form action="{{ route('back.book.destroy', $book->id) }}" method="POST" class="delete-form d-none">
-                                            @method('DELETE')
-                                            @csrf
-                                        </form>
-                                    @else
-                                        <a href="{{ route('back.book.show', $book->id) }}"
-                                            class="btn btn-sm btn-light-primary my-1">
-                                            <i class="ki-duotone ki-eye fs-2">
-                                                <span class="path1"></span>
-                                                <span class="path2"></span>
-                                                <span class="path3"></span>
-                                            </i> Detail
-                                        </a>
-                                    @endif
+                                    <a href="#" class="btn btn-sm btn-light btn-flex btn-center btn-active-light-primary"
+                                        data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                        Aksi
+                                        <i class="ki-duotone ki-down fs-5 ms-1"></i>
+                                    </a>
+                                    <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-175px py-4"
+                                        data-kt-menu="true">
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.book.show', $book->id) }}" class="menu-link px-3">
+                                                <i class="ki-duotone ki-eye fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                                                Detail
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.book.authors', $book->id) }}" class="menu-link px-3">
+                                                <i class="ki-duotone ki-people fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                                                Penulis & Editor
+                                            </a>
+                                        </div>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.book.payment', $book->id) }}" class="menu-link px-3">
+                                                <i class="ki-duotone ki-wallet fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span></i>
+                                                Pembayaran
+                                            </a>
+                                        </div>
+                                        @if ($book->status !== 'published')
+                                            <div class="separator my-2"></div>
+                                            <div class="menu-item px-3">
+                                                <a href="#" class="menu-link px-3 text-danger btn-delete"
+                                                    data-id="{{ $book->id }}">
+                                                    <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
+                                                    Hapus
+                                                </a>
+                                                <form action="{{ route('back.book.destroy', $book->id) }}" method="POST" class="delete-form d-none" id="delete-form-{{ $book->id }}">
+                                                    @method('DELETE')
+                                                    @csrf
+                                                </form>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
