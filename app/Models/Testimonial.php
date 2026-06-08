@@ -37,6 +37,11 @@ class Testimonial extends Model
         return LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->dontSubmitEmptyLogs()
+            ->useLogName('konten')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Testimonial telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 }

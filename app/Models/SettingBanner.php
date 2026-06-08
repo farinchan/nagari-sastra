@@ -15,9 +15,14 @@ class SettingBanner extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logFillable()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('pengaturan')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Banner telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $fillable = ['title', 'subtitle', 'image', 'url', 'status'];

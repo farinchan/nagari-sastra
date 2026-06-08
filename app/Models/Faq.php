@@ -42,9 +42,14 @@ class Faq extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logUnguarded()
+            ->logAll()
             ->logOnlyDirty()
-            ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->dontSubmitEmptyLogs()
+            ->useLogName('konten')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'FAQ telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     /**

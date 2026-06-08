@@ -30,7 +30,12 @@ class PaymentInvoice extends Model
         return LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->dontSubmitEmptyLogs()
+            ->useLogName('keuangan')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Invoice Pembayaran telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     public function submissions()

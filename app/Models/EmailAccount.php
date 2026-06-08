@@ -10,13 +10,19 @@ class EmailAccount extends Model
 {
     use LogsActivity;
 
-     public function getActivitylogOptions(): LogOptions
+    public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logUnguarded()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('crm')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Akun Email telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
+
     protected $guarded = ['id', 'created_at', 'updated_at'];
 
     protected $casts = [

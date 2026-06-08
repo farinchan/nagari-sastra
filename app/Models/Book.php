@@ -17,9 +17,14 @@ class Book extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logUnguarded()
+            ->logAll()
             ->logOnlyDirty()
-            ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->dontSubmitEmptyLogs()
+            ->useLogName('buku')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Buku telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $guarded = ['id', 'created_at', 'updated_at', 'deleted_at'];

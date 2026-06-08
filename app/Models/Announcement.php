@@ -13,9 +13,14 @@ class Announcement extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logUnguarded()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('pengumuman')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Pengumuman telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $table = 'announcement';

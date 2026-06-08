@@ -16,9 +16,14 @@ class Event extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logFillable()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('event')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Event telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $table = 'event';

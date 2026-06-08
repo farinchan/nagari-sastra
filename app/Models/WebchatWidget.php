@@ -32,7 +32,12 @@ class WebchatWidget extends Model
         return LogOptions::defaults()
             ->logAll()
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+            ->dontSubmitEmptyLogs()
+            ->useLogName('crm')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Widget Webchat telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected static function booted()

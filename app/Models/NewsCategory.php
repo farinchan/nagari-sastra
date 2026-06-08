@@ -14,9 +14,14 @@ class NewsCategory extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-        ->logUnguarded()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('berita')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Kategori Berita telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $guarded = ['id', 'created_at', 'updated_at'];

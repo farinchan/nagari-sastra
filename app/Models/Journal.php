@@ -13,10 +13,15 @@ class Journal extends Model
 
     public function getActivitylogOptions(): LogOptions
     {
-    return LogOptions::defaults()
-        ->logUnguarded()
-        ->logOnlyDirty()
-        ->setDescriptionForEvent(fn (string $eventName) => "This model has been {$eventName}");
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('jurnal')
+            ->setDescriptionForEvent(function (string $eventName) {
+                $events = ['created' => 'ditambahkan', 'updated' => 'diperbarui', 'deleted' => 'dihapus'];
+                return 'Jurnal telah ' . ($events[$eventName] ?? $eventName);
+            });
     }
 
     protected $guarded = ['id', 'created_at', 'updated_at'];
