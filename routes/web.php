@@ -170,7 +170,6 @@ Route::prefix('book')->name('book.')->group(function () {
 // Product Store (Auth Required - specific paths first)
 Route::prefix('product')->name('product.')->middleware('auth')->group(function () {
     Route::post('/checkout', [ProductOrderController::class, 'checkout'])->name('checkout');
-    Route::get('/payment/{orderNumber}', [ProductOrderController::class, 'payment'])->name('payment');
     Route::get('/my-products', [ProductOrderController::class, 'myProducts'])->name('my-products');
     Route::get('/download/{slug}', [ProductOrderController::class, 'download'])->name('download');
     Route::post('/{slug}/review', [ProductController::class, 'review'])->name('review');

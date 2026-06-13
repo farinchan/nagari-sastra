@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Back;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductOrder;
+use App\Models\PaymentInvoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use RealRashid\SweetAlert\Facades\Alert;
@@ -12,10 +12,14 @@ class ProductOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ProductOrder::with(['user', 'items.product']);
+        $query = PaymentInvoice::where('source_type', 'product')->with('user');
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'paid') {
+                $query->where('is_paid', true);
+            } elseif ($request->status === 'unpaid') {
+                $query->where('is_paid', false);
+            }
         }
 
         $data = [
@@ -33,12 +37,14 @@ class ProductOrderController extends Controller
 
     public function show($id)
     {
-        $order = ProductOrder::with(['user', 'items.product'])->findOrFail($id);
+        $order = PaymentInvoice::where('source_type', 'product')
+            ->with('user')
+            ->findOrFail($id);
 
         $data = [
-            'title' => 'Detail Pesanan #' . $order->order_number,
+            'title' => 'Detail Pesanan #' . $order->invoice,
             'breadcrumbs' => [
-                ['name' => 'Pesanan Produk', 'link' => route('back.product-order.index')],
+                ['name' => 'Pesanan Produk', 'link' => route('back.product.order.index')],
                 ['name' => 'Detail Pesanan'],
             ],
             'order' => $order,
@@ -50,7 +56,7 @@ class ProductOrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:pending,paid,cancelled,refunded',
+            'status' => 'required|in:paid,unpaid',
         ], [
             'status.required' => 'Status harus dipilih',
             'status.in' => 'Status tidak valid',
@@ -60,11 +66,15 @@ class ProductOrderController extends Controller
             return redirect()->back()->withErrors($validator)->withInput()->with('error', $validator->errors()->all());
         }
 
-        $order = ProductOrder::findOrFail($id);
-        $order->status = $request->status;
+        $order = PaymentInvoice::where('source_type', 'product')->findOrFail($id);
 
-        if ($request->status === 'paid' && !$order->paid_at) {
-            $order->paid_at = now();
+        if ($request->status === 'paid') {
+            $order->is_paid = true;
+            $order->confirmed_at = $order->confirmed_at ?? now();
+            $order->midtrans_payment_method = $order->midtrans_payment_method ?? 'Manual Confirmation';
+        } else {
+            $order->is_paid = false;
+            $order->confirmed_at = null;
         }
 
         $order->save();
@@ -76,11 +86,11 @@ class ProductOrderController extends Controller
 
     public function destroy($id)
     {
-        $order = ProductOrder::findOrFail($id);
+        $order = PaymentInvoice::where('source_type', 'product')->findOrFail($id);
         $order->delete();
 
         Alert::success('Berhasil', 'Pesanan berhasil dihapus');
 
-        return redirect()->route('back.product-order.index');
+        return redirect()->route('back.product.order.index');
     }
 }

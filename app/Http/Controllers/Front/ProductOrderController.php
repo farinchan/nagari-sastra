@@ -3,19 +3,16 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Models\PaymentInvoice;
 use App\Models\Product;
-use App\Models\ProductOrder;
-use App\Models\ProductOrderItem;
 use App\Models\SettingWebsite;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Midtrans\Config as MidtransConfig;
-use Midtrans\Snap as MidtransSnap;
 use RealRashid\SweetAlert\Facades\Alert;
 
 class ProductOrderController extends Controller
@@ -44,269 +41,93 @@ class ProductOrderController extends Controller
         }
 
         // Check if user already purchased this product
-        $already_purchased = ProductOrder::where('user_id', Auth::id())
-            ->where('status', 'paid')
-            ->whereHas('items', function ($q) use ($product) {
-                $q->where('product_id', $product->id);
-            })
-            ->exists();
+        $already_purchased = $this->hasPurchased(Auth::id(), $product->id);
 
         if ($already_purchased) {
             Alert::error('Gagal', 'Anda sudah pernah membeli produk ini.');
             return redirect()->route('product.show', $product->slug);
         }
 
-        $effectivePrice = $product->discount_price ?? $product->price;
+        $effectivePrice = $product->discount_price > 0 ? $product->discount_price : $product->price;
 
         try {
-            $order = DB::transaction(function () use ($product, $effectivePrice) {
-                $order = ProductOrder::create([
-                    'user_id' => Auth::id(),
-                    'order_number' => ProductOrder::generateOrderNumber(),
-                    'total_amount' => $effectivePrice,
-                    'status' => 'pending',
-                ]);
+            // Generate invoice number (sama seperti journal & book)
+            $currentYear = Carbon::now()->year;
+            $currentMonth = Carbon::now()->month;
+            $lastInvoice = PaymentInvoice::whereYear('created_at', $currentYear)
+                ->orderBy('id', 'desc')
+                ->first();
+            $nextNumber = $lastInvoice && $lastInvoice->invoice_number
+                ? str_pad((int) $lastInvoice->invoice_number + 1, 4, '0', STR_PAD_LEFT)
+                : '0001';
 
-                ProductOrderItem::create([
-                    'product_order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'price' => $effectivePrice,
-                    'quantity' => 1,
-                ]);
+            $formattedInvoice = function_exists('format_nomor')
+                ? format_nomor($nextNumber, 'INV', 'NSG', $currentMonth, $currentYear)
+                : 'INV/' . $currentYear . '/' . str_pad($currentMonth, 2, '0', STR_PAD_LEFT) . '/NSG/' . $nextNumber;
 
-                return $order;
-            });
-
-            // Generate Midtrans Snap token
-            MidtransConfig::$serverKey = config('midtrans.serverKey');
-            MidtransConfig::$clientKey = config('midtrans.clientKey');
-            MidtransConfig::$isProduction = (bool) config('midtrans.isProduction');
-            MidtransConfig::$isSanitized = (bool) config('midtrans.isSanitized');
-            MidtransConfig::$is3ds = (bool) config('midtrans.is3ds');
-
-            $user = Auth::user();
-
-            $snapParams = [
-                'transaction_details' => [
-                    'order_id' => $order->order_number,
-                    'gross_amount' => (int) round($effectivePrice),
-                ],
-                'item_details' => [
-                    [
-                        'id' => 'PROD-' . $product->id,
-                        'price' => (int) round($effectivePrice),
-                        'quantity' => 1,
-                        'name' => Str($product->name)->limit(50),
-                    ]
-                ],
-                'customer_details' => [
-                    'first_name' => $user->name,
-                    'email' => $user->email,
+            $invoiceItems = [
+                [
+                    'id' => 'PROD-' . $product->id,
+                    'name' => $product->name,
+                    'detail' => $product->category->name ?? 'Produk Digital',
+                    'qty' => 1,
+                    'amount' => $effectivePrice,
                 ],
             ];
 
-            $snapToken = MidtransSnap::getSnapToken($snapParams);
-            $order->update(['snap_token' => $snapToken]);
+            // Create PaymentInvoice (sama seperti journal & book, tanpa snap_token)
+            $invoice = PaymentInvoice::create([
+                'user_id' => Auth::id(),
+                'invoice' => $formattedInvoice,
+                'invoice_number' => $nextNumber,
+                'items' => $invoiceItems,
+                'payment_amount' => $effectivePrice,
+                'payment_percent' => 100,
+                'is_paid' => false,
+                'is_custom' => false,
+                'source_type' => 'product',
+                'kepada' => Auth::user()->name,
+                'kepada_detail' => Auth::user()->email,
+                'keterangan' => 'Pembelian produk digital: ' . $product->name,
+                'payment_due_date' => Carbon::now()->addDays(1),
+            ]);
 
-            return redirect()->route('product.payment', $order->order_number);
+            // Redirect ke halaman payment yang sudah ada (PaymentController@show)
+            // Format URL: /payment/{invoice} (dengan slash diganti dash)
+            $invoiceSlug = str_replace('/', '-', $formattedInvoice);
+            return redirect()->route('payment.show', ['invoice_number' => $invoiceSlug]);
+
         } catch (\Throwable $th) {
             Log::error('Product checkout error: ' . $th->getMessage(), [
                 'product_id' => $product->id,
                 'user_id' => Auth::id(),
+                'trace' => $th->getTraceAsString(),
             ]);
             Alert::error('Gagal', 'Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.');
             return redirect()->back();
         }
     }
 
-    public function payment($orderNumber)
-    {
-        $setting_web = SettingWebsite::first();
-
-        $order = ProductOrder::where('order_number', $orderNumber)
-            ->where('user_id', Auth::id())
-            ->with('items.product')
-            ->firstOrFail();
-
-        // If already paid, redirect to my products
-        if ($order->status === 'paid') {
-            Alert::success('Berhasil', 'Pembayaran sudah berhasil. Produk tersedia di halaman produk saya.');
-            return redirect()->route('product.my-products');
-        }
-
-        $clientKey = config('midtrans.clientKey');
-
-        $data = [
-            'title' => 'Pembayaran - ' . $order->order_number . ' | ' . $setting_web->name,
-            'meta' => [
-                'title' => 'Pembayaran - ' . $order->order_number . ' | ' . $setting_web->name,
-                'description' => 'Halaman pembayaran pesanan ' . $order->order_number,
-                'keywords' => $setting_web->name . ', pembayaran, produk digital, checkout',
-                'favicon' => $setting_web->favicon,
-                'og_image' => $setting_web->logo ?? $setting_web->favicon,
-                'og_type' => 'website',
-                'robots' => 'noindex, nofollow',
-                'canonical' => route('product.payment', $order->order_number),
-            ],
-            'breadcrumbs' => [
-                [
-                    'name' => 'Beranda',
-                    'link' => route('home')
-                ],
-                [
-                    'name' => 'Produk Digital',
-                    'link' => route('product.index')
-                ],
-                [
-                    'name' => 'Pembayaran',
-                    'link' => route('product.payment', $order->order_number)
-                ]
-            ],
-            'order' => $order,
-            'clientKey' => $clientKey,
-        ];
-
-        return view('front.pages.product.payment', $data);
-    }
-
-    public function callback(Request $request)
-    {
-        // Configure Midtrans
-        MidtransConfig::$serverKey = config('midtrans.serverKey');
-        MidtransConfig::$isProduction = (bool) config('midtrans.isProduction');
-
-        $data = $request->json()->all();
-
-        Log::info('Product Midtrans webhook received', ['payload' => $data]);
-
-        $signatureReceived = $data['signature_key'] ?? null;
-        $orderId = $data['order_id'] ?? null;
-        $statusCode = $data['status_code'] ?? null;
-        $grossAmount = isset($data['gross_amount']) ? (string) $data['gross_amount'] : null;
-        $transactionStatus = $data['transaction_status'] ?? null;
-        $fraudStatus = $data['fraud_status'] ?? null;
-        $paymentMethod = $data['payment_type'] ?? null;
-
-        // Validate required fields
-        if (!$orderId || !$statusCode || $grossAmount === null) {
-            Log::warning('Product Midtrans webhook missing required fields', [
-                'order_id' => $orderId,
-                'status_code' => $statusCode,
-                'gross_amount' => $grossAmount,
-            ]);
-            return response()->json(['message' => 'Missing required fields'], 400);
-        }
-
-        // Verify signature
-        $serverKey = config('midtrans.serverKey') ?? '';
-        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
-        if (!$signatureReceived || !hash_equals($expectedSignature, $signatureReceived)) {
-            Log::warning('Product Midtrans webhook signature mismatch', [
-                'order_id' => $orderId,
-                'expected' => $expectedSignature,
-                'received' => $signatureReceived,
-            ]);
-            return response()->json(['message' => 'Invalid signature'], 403);
-        }
-
-        // Find order by order_number (order_id in Midtrans = order_number in our DB)
-        $order = ProductOrder::where('order_number', $orderId)->first();
-        if (!$order) {
-            Log::warning('Product Midtrans webhook: order not found', ['order_id' => $orderId]);
-            return response()->json(['message' => 'Order not found'], 404);
-        }
-
-        switch ($transactionStatus) {
-            case 'settlement':
-                $this->markAsPaid($order, $data, $paymentMethod);
-                Log::info('Product Midtrans webhook: order marked PAID (settlement)', [
-                    'order_number' => $order->order_number,
-                ]);
-                break;
-
-            case 'capture':
-                if ($fraudStatus === 'accept' || $fraudStatus === null) {
-                    $this->markAsPaid($order, $data, $paymentMethod);
-                    Log::info('Product Midtrans webhook: order marked PAID (capture, fraud accepted)', [
-                        'order_number' => $order->order_number,
-                    ]);
-                } else {
-                    $order->midtrans_response = $data;
-                    $order->save();
-                    Log::warning('Product Midtrans webhook: capture with fraud issue', [
-                        'order_number' => $order->order_number,
-                        'fraud_status' => $fraudStatus,
-                    ]);
-                }
-                break;
-
-            case 'pending':
-                $order->status = 'pending';
-                $order->payment_method = $paymentMethod;
-                $order->midtrans_response = $data;
-                $order->save();
-                Log::info('Product Midtrans webhook: payment pending', [
-                    'order_number' => $order->order_number,
-                ]);
-                break;
-
-            case 'expire':
-            case 'cancel':
-            case 'deny':
-                $order->status = 'cancelled';
-                $order->midtrans_response = $data;
-                $order->save();
-                Log::info('Product Midtrans webhook: payment ' . $transactionStatus, [
-                    'order_number' => $order->order_number,
-                ]);
-                break;
-
-            case 'refund':
-            case 'partial_refund':
-                $order->status = 'refunded';
-                $order->midtrans_response = $data;
-                $order->save();
-                Log::info('Product Midtrans webhook: payment refunded', [
-                    'order_number' => $order->order_number,
-                    'status' => $transactionStatus,
-                ]);
-                break;
-
-            default:
-                $order->midtrans_response = $data;
-                $order->save();
-                Log::info('Product Midtrans webhook: unhandled status', [
-                    'order_number' => $order->order_number,
-                    'status' => $transactionStatus,
-                ]);
-                break;
-        }
-
-        return response()->json(['message' => 'ok'], 200);
-    }
-
     public function myProducts(Request $request)
     {
         $setting_web = SettingWebsite::first();
 
-        // Load all paid orders for current user
-        $orders = ProductOrder::where('user_id', Auth::id())
-            ->where('status', 'paid')
-            ->with('items.product')
+        // Load all paid product invoices for current user
+        $invoices = PaymentInvoice::where('user_id', Auth::id())
+            ->where('source_type', 'product')
+            ->where('is_paid', true)
             ->latest()
             ->get();
 
-        // Extract unique products
-        $products = $orders->flatMap(function ($order) {
-            return $order->items->map(function ($item) use ($order) {
-                $product = $item->product;
-                if ($product) {
-                    $product->purchased_at = $order->paid_at;
-                }
-                return $product;
-            });
-        })->filter()->unique('id')->values();
+        // Extract product IDs from invoice items and load products
+        $productIds = $invoices->flatMap(function ($invoice) {
+            return collect($invoice->items ?? [])->map(function ($item) {
+                $id = $item['id'] ?? '';
+                return str_starts_with($id, 'PROD-') ? (int) substr($id, 5) : null;
+            })->filter();
+        })->unique()->values();
+
+        $products = Product::whereIn('id', $productIds)->with('category')->get();
 
         $data = [
             'title' => 'Produk Saya | ' . $setting_web->name,
@@ -321,21 +142,11 @@ class ProductOrderController extends Controller
                 'canonical' => route('product.my-products'),
             ],
             'breadcrumbs' => [
-                [
-                    'name' => 'Beranda',
-                    'link' => route('home')
-                ],
-                [
-                    'name' => 'Produk Digital',
-                    'link' => route('product.index')
-                ],
-                [
-                    'name' => 'Produk Saya',
-                    'link' => route('product.my-products')
-                ]
+                ['name' => 'Beranda', 'link' => route('home')],
+                ['name' => 'Produk Digital', 'link' => route('product.index')],
+                ['name' => 'Produk Saya', 'link' => route('product.my-products')],
             ],
             'products' => $products,
-            'orders' => $orders,
         ];
 
         return view('front.pages.product.my-products', $data);
@@ -345,13 +156,8 @@ class ProductOrderController extends Controller
     {
         $product = Product::where('slug', $slug)->firstOrFail();
 
-        // Check user has a paid order containing this product
-        $has_purchased = ProductOrder::where('user_id', Auth::id())
-            ->where('status', 'paid')
-            ->whereHas('items', function ($q) use ($product) {
-                $q->where('product_id', $product->id);
-            })
-            ->exists();
+        // Check user has a paid invoice containing this product
+        $has_purchased = $this->hasPurchased(Auth::id(), $product->id);
 
         if (!$has_purchased) {
             abort(403, 'Anda belum membeli produk ini.');
@@ -370,29 +176,18 @@ class ProductOrderController extends Controller
     }
 
     /**
-     * Mark order as paid with Midtrans transaction details.
+     * Check if a user has purchased a specific product via PaymentInvoice.
      */
-    private function markAsPaid(ProductOrder $order, array $data, ?string $paymentMethod): void
+    private function hasPurchased($userId, $productId): bool
     {
-        // Idempotency: jika sudah dibayar, hanya update response saja
-        if ($order->status === 'paid') {
-            $order->midtrans_response = $data;
-            $order->save();
-            return;
-        }
+        $productKey = 'PROD-' . $productId;
 
-        $order->status = 'paid';
-        $order->payment_method = $paymentMethod;
-        $order->paid_at = now();
-        $order->midtrans_response = $data;
-        $order->save();
-
-        // Increment download_count for each product in order
-        $order->load('items');
-        foreach ($order->items as $item) {
-            if ($item->product) {
-                $item->product->increment('download_count');
-            }
-        }
+        return PaymentInvoice::where('user_id', $userId)
+            ->where('source_type', 'product')
+            ->where('is_paid', true)
+            ->get()
+            ->contains(function ($invoice) use ($productKey) {
+                return collect($invoice->items ?? [])->contains('id', $productKey);
+            });
     }
 }

@@ -35,9 +35,6 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
     // Midtrans webhook for server-to-server callbacks
     Route::post('/payment/midtrans/callback', [App\Http\Controllers\Api\MidtransWebhookController::class, 'handle'])->name('payment.midtrans.callback');
 
-    // Midtrans webhook for product orders
-    Route::post('/payment/product/callback', [App\Http\Controllers\Front\ProductOrderController::class, 'callback'])->name('payment.product.callback');
-
 });
 
 

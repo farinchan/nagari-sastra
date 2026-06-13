@@ -19,10 +19,8 @@
                             data-placeholder="Status" data-kt-ecommerce-product-filter="status">
                             <option></option>
                             <option value="all">Semua</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="refunded">Refunded</option>
+                            <option value="belum lunas">Belum Lunas</option>
+                            <option value="lunas">Lunas</option>
                         </select>
                     </div>
                 </div>
@@ -38,8 +36,9 @@
                                         value="1" />
                                 </div>
                             </th>
-                            <th class="min-w-150px">No. Order</th>
+                            <th class="min-w-150px">Invoice</th>
                             <th class="min-w-200px">Pembeli</th>
+                            <th class="min-w-150px">Produk</th>
                             <th class="text-end min-w-100px">Total</th>
                             <th class="text-end min-w-100px">Status</th>
                             <th class="text-end min-w-100px">Tanggal</th>
@@ -57,43 +56,40 @@
                                 <td>
                                     <a href="{{ route('back.product.order.show', $order->id) }}" class="text-gray-800 text-hover-primary fw-bold"
                                         data-kt-ecommerce-product-filter="product_name">
-                                        {{ $order->order_number }}
+                                        {{ $order->invoice }}
                                     </a>
+                                    <br>
+                                    <span class="text-muted fs-8">{{ $order->invoice_number }}</span>
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="symbol symbol-35px me-3">
                                             <div class="symbol-label bg-light-primary text-primary fw-bold fs-6">
-                                                {{ strtoupper(substr($order->user->name ?? 'U', 0, 1)) }}
+                                                {{ strtoupper(substr($order->user->name ?? $order->kepada ?? 'U', 0, 1)) }}
                                             </div>
                                         </div>
                                         <div class="d-flex justify-content-start flex-column">
                                             <a href="#" class="text-gray-800 text-hover-primary fw-bold fs-6">
-                                                {{ $order->user->name ?? '-' }}</a>
-                                            <span class="text-muted fw-semibold fs-7">{{ $order->user->email ?? '-' }}</span>
+                                                {{ $order->user->name ?? $order->kepada ?? '-' }}</a>
+                                            <span class="text-muted fw-semibold fs-7">{{ $order->user->email ?? $order->kepada_detail ?? '-' }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-end pe-0">
-                                    <span class="fw-bold">Rp{{ number_format($order->total_amount, 0, ',', '.') }}</span>
+                                <td>
+                                    @foreach($order->items ?? [] as $item)
+                                        <span class="text-gray-800 fw-semibold">{{ $item['name'] ?? '-' }}</span>
+                                        @if(!$loop->last)<br>@endif
+                                    @endforeach
                                 </td>
                                 <td class="text-end pe-0">
-                                    @switch($order->status)
-                                        @case('pending')
-                                            <div class="badge badge-light-warning">Pending</div>
-                                            @break
-                                        @case('paid')
-                                            <div class="badge badge-light-success">Paid</div>
-                                            @break
-                                        @case('cancelled')
-                                            <div class="badge badge-light-danger">Cancelled</div>
-                                            @break
-                                        @case('refunded')
-                                            <div class="badge badge-light-info">Refunded</div>
-                                            @break
-                                        @default
-                                            <div class="badge badge-light">{{ ucfirst($order->status) }}</div>
-                                    @endswitch
+                                    <span class="fw-bold">Rp{{ number_format($order->payment_amount, 0, ',', '.') }}</span>
+                                </td>
+                                <td class="text-end pe-0">
+                                    @if($order->is_paid)
+                                        <div class="badge badge-light-success">Lunas</div>
+                                    @else
+                                        <div class="badge badge-light-warning">Belum Lunas</div>
+                                    @endif
                                 </td>
                                 <td class="text-end pe-0">
                                     <span class="fw-semibold text-muted">{{ $order->created_at->format('d M Y') }}</span>
@@ -114,10 +110,16 @@
                                                 Detail
                                             </a>
                                         </div>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.finance.invoice.show', $order->id) }}" class="menu-link px-3">
+                                                <i class="ki-duotone ki-document fs-5 me-2"><span class="path1"></span><span class="path2"></span></i>
+                                                Invoice
+                                            </a>
+                                        </div>
                                         <div class="separator my-2"></div>
                                         <div class="menu-item px-3">
                                             <a href="#" class="menu-link px-3 text-danger btn-delete-order"
-                                                data-id="{{ $order->id }}" data-name="{{ $order->order_number }}">
+                                                data-id="{{ $order->id }}" data-name="{{ $order->invoice }}">
                                                 <i class="ki-duotone ki-trash fs-5 me-2"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span></i>
                                                 Hapus
                                             </a>

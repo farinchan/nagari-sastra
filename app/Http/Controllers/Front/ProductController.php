@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory; 
-use App\Models\ProductOrder;
+use App\Models\PaymentInvoice;
 use App\Models\ProductReview;
 use App\Models\SettingWebsite;
 use Illuminate\Http\Request;
@@ -126,12 +126,7 @@ class ProductController extends Controller
         $has_purchased = false;
         $has_reviewed = false;
         if (Auth::check()) {
-            $has_purchased = ProductOrder::where('user_id', Auth::id())
-                ->where('status', 'paid')
-                ->whereHas('items', function ($q) use ($product) {
-                    $q->where('product_id', $product->id);
-                })
-                ->exists();
+            $has_purchased = $this->hasPurchasedProduct(Auth::id(), $product->id);
 
             $has_reviewed = ProductReview::where('product_id', $product->id)
                 ->where('user_id', Auth::id())
@@ -210,12 +205,7 @@ class ProductController extends Controller
         }
 
         // Check if user has purchased the product
-        $has_purchased = ProductOrder::where('user_id', Auth::id())
-            ->where('status', 'paid')
-            ->whereHas('items', function ($q) use ($product) {
-                $q->where('product_id', $product->id);
-            })
-            ->exists();
+        $has_purchased = $this->hasPurchasedProduct(Auth::id(), $product->id);
 
         if (!$has_purchased) {
             Alert::error('Gagal', 'Anda harus membeli produk ini terlebih dahulu sebelum memberikan review.');
@@ -232,5 +222,21 @@ class ProductController extends Controller
 
         Alert::success('Berhasil', 'Review berhasil dikirim dan menunggu moderasi.');
         return redirect()->back();
+    }
+
+    /**
+     * Check if a user has purchased a specific product via PaymentInvoice.
+     */
+    private function hasPurchasedProduct($userId, $productId): bool
+    {
+        $productKey = 'PROD-' . $productId;
+
+        return PaymentInvoice::where('user_id', $userId)
+            ->where('source_type', 'product')
+            ->where('is_paid', true)
+            ->get()
+            ->contains(function ($invoice) use ($productKey) {
+                return collect($invoice->items ?? [])->contains('id', $productKey);
+            });
     }
 }

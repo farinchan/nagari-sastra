@@ -1,7 +1,7 @@
 @extends('front.app')
 @section('seo')
     <meta name="description" content="{{ $product->short_description ?? Str::limit(strip_tags($product->description), 160) }}">
-    <meta name="keywords" content="{{ is_array($product->tags) ? implode(', ', $product->tags) : '' }}">
+    <meta name="keywords" content="{{ collect($product->tags ?? [])->map(fn($t) => is_array($t) ? ($t['value'] ?? '') : $t)->filter()->implode(', ') }}">
     <meta property="og:title" content="{{ $product->name }}">
     <meta property="og:description" content="{{ $product->short_description ?? '' }}">
     <meta property="og:image" content="{{ $product->getThumbnail() }}">
@@ -147,11 +147,18 @@
                         @endif
 
                         <!-- TAGS -->
-                        @if($product->tags && count($product->tags) > 0)
+                        @php
+                            $parsedTags = collect($product->tags ?? [])->map(function($tag) {
+                                if (is_array($tag) && isset($tag['value'])) return $tag['value'];
+                                if (is_string($tag)) return $tag;
+                                return null;
+                            })->filter()->values();
+                        @endphp
+                        @if($parsedTags->count() > 0)
                             <div class="mb-40">
                                 <h5 class="h5-md mb-20">Tags</h5>
                                 <div>
-                                    @foreach($product->tags as $tag)
+                                    @foreach($parsedTags as $tag)
                                         <span class="badge badge-light mr-1 mb-2 p-2">{{ $tag }}</span>
                                     @endforeach
                                 </div>

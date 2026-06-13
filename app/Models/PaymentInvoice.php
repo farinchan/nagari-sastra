@@ -43,4 +43,14 @@ class PaymentInvoice extends Model
         return $this->hasMany(Submission::class, 'payment_invoice_id');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function scopeProduct($query)
+    {
+        return $query->where('source_type', 'product');
+    }
+
 }
