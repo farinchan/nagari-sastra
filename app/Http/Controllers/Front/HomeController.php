@@ -47,6 +47,9 @@ class HomeController extends Controller
 
             // Testimonials
             'list_testimonial' => \App\Models\Testimonial::active()->ordered()->take(6)->get(),
+
+            // Latest Products
+            'list_product' => \App\Models\Product::where('is_active', true)->with('category')->latest()->take(8)->get(),
         ];
 
         return view('front.pages.home.index', $data);

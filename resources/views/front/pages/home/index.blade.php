@@ -570,6 +570,7 @@
     </section>
 
 
+
     <!-- FEATURES-10
                                        ============================================= -->
     <section id="features-10" class="wide-40 features-section division">
@@ -625,6 +626,90 @@
 
         </div> <!-- End container -->
     </section> <!-- END FEATURES-10 -->
+
+
+    <!-- PRODUCTS SECTION
+    ============================================= -->
+    @if($list_product->count() > 0)
+    <section id="products-latest" class="bg-lightgrey wide-60 division">
+        <div class="container">
+
+            <!-- SECTION TITLE -->
+            <div class="row mb-40">
+                <div class="col-md-8">
+                    <div class="section-title text-left">
+                        <div class="section-id grey-color">Produk Digital</div>
+                        <h3 class="h3-sm">Produk Lainnya Dari Kami</h3>
+                        <p class="p-lg grey-color">Temukan berbagai produk digital berkualitas untuk mendukung kebutuhan Anda</p>
+                    </div>
+                </div>
+                <div class="col-md-4 text-right d-none d-md-flex align-items-end justify-content-end pb-3">
+                    <a href="{{ route('product.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Produk</a>
+                </div>
+            </div>
+
+            <!-- PRODUCTS GRID -->
+            <div class="row">
+                @foreach($list_product as $product)
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="blog-1-post radius-06 mb-30 wow fadeInUp" data-wow-delay="{{ $loop->index * 0.1 }}s">
+
+                            <!-- IMAGE -->
+                            <div class="blog-post-img" style="position: relative; overflow: hidden;">
+                                <a href="{{ route('product.show', $product->slug) }}">
+                                    <img class="img-fluid" src="{{ $product->getThumbnail() }}" alt="{{ $product->name }}"
+                                         style="width: 100%; height: 220px; object-fit: cover;">
+                                </a>
+                                <!-- CATEGORY -->
+                                <div class="post-tag txt-upcase" style="position: absolute; top: 10px; left: 10px; background: #fff; padding: 3px 12px; border-radius: 4px; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                    {{ $product->category->name ?? 'Produk' }}
+                                </div>
+                                <!-- DISCOUNT BADGE -->
+                                @if($product->discount_price > 0)
+                                    <span style="position: absolute; top: 10px; right: 10px; background: #e74c3c; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px;">
+                                        {{ round((($product->price - $product->discount_price) / $product->price) * 100) }}% OFF
+                                    </span>
+                                @endif
+                                <!-- PRICE -->
+                                @if($product->price == 0)
+                                    <span class="book-price-label bg-success">Gratis</span>
+                                @elseif($product->discount_price > 0)
+                                    <span class="book-price-label bg-theme">Rp {{ number_format($product->discount_price, 0, ',', '.') }}</span>
+                                @else
+                                    <span class="book-price-label bg-theme">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                @endif
+                            </div>
+
+                            <!-- TEXT -->
+                            <div class="blog-post-txt">
+                                <h6 class="h6-xs mb-10" style="line-height: 1.4;">
+                                    <a href="{{ route('product.show', $product->slug) }}">{{ Str::limit($product->name, 45) }}</a>
+                                </h6>
+                                @if($product->discount_price > 0)
+                                    <p class="p-sm grey-color mb-10" style="font-size: 13px;">
+                                        <del class="text-muted">Rp {{ number_format($product->price, 0, ',', '.') }}</del>
+                                    </p>
+                                @endif
+                                <a href="{{ route('product.show', $product->slug) }}" class="btn btn-tra-grey theme-hover btn-sm btn-block">
+                                    Detail Produk
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- MOBILE LINK -->
+            <div class="row d-md-none mt-3">
+                <div class="col text-center">
+                    <a href="{{ route('product.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Produk</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    @endif
+    <!-- END PRODUCTS SECTION -->
 
 
     <!-- CONTENT-6
