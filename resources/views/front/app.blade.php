@@ -74,6 +74,8 @@
     <!-- PROSE / RICH CONTENT CSS -->
     <link href="{{ asset('front/css/prose.css') }}" rel="stylesheet">
 
+    @stack('styles')
+
 </head>
 
 
@@ -160,6 +162,7 @@
     @include('sweetalert::alert')
 
     @yield('scripts')
+    @stack('scripts')
 
     {{-- Google Analytics / Google Tag Manager --}}
     {{-- Uncomment and configure with your tracking ID:

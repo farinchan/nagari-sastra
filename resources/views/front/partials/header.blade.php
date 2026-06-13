@@ -183,6 +183,7 @@
                         </li> <!-- END MEGAMENU -->
 
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('event.index') }}">Event</a></li>
+                        <li class="nl-simple" aria-haspopup="true"><a href="{{ route('product.index') }}">Produk</a></li>
 
                         <!-- SIMPLE NAVIGATION LINK -->
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('payment.index') }}">Pembayaran</a></li>
@@ -206,6 +207,9 @@
                             <ul class="sub-menu">
                                 <li aria-haspopup="true">
                                     <a href="{{ route('account.profile') }}">Profil Saya</a>
+                                </li>
+                                <li aria-haspopup="true">
+                                    <a href="{{ route('product.my-products') }}">Produk Saya</a>
                                 </li>
                                 @if(Auth::user()->getRoleNames()->isNotEmpty())
                                 <li aria-haspopup="true">

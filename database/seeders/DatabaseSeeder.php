@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
         Role::create(['name' => 'editor']);
         Role::create(['name' => 'humas']);
         Role::create(['name' => 'marketing']);
+        Role::create(['name' => 'product-manager']);
 
         OutgoingMailCategory::create([
             'name' => 'Letter of Acceptance (LoA)',

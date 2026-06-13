@@ -19,6 +19,8 @@ use App\Http\Controllers\Front\TeamController;
 use App\Http\Controllers\Front\OaiPmhController;
 use App\Http\Controllers\Front\NewsletterController;
 use App\Http\Controllers\Front\PageController;
+use App\Http\Controllers\Front\ProductController;
+use App\Http\Controllers\Front\ProductOrderController;
 
 use App\Http\Controllers\Back\DashboardController as BackDashboardController;
 use App\Http\Controllers\Back\AnnouncementController as BackAnnouncementController;
@@ -38,6 +40,8 @@ use App\Http\Controllers\Back\CrmController as BackCrmController;
 use App\Http\Controllers\Back\TestimonialController as BackTestimonialController;
 use App\Http\Controllers\Back\FaqController as BackFaqController;
 use App\Http\Controllers\Back\LogController as BackLogController;
+use App\Http\Controllers\Back\ProductController as BackProductController;
+use App\Http\Controllers\Back\ProductOrderController as BackProductOrderController;
 
 
 
@@ -161,6 +165,21 @@ Route::prefix('book')->name('book.')->group(function () {
     Route::get('/{slug}/preview', [BookController::class, 'preview'])->name('preview');
     Route::get('/{slug}', [BookController::class, 'show'])->name('show');
     Route::get('/category/{slug}', [BookController::class, 'category'])->name('category');
+});
+
+// Product Store (Auth Required - specific paths first)
+Route::prefix('product')->name('product.')->middleware('auth')->group(function () {
+    Route::post('/checkout', [ProductOrderController::class, 'checkout'])->name('checkout');
+    Route::get('/payment/{orderNumber}', [ProductOrderController::class, 'payment'])->name('payment');
+    Route::get('/my-products', [ProductOrderController::class, 'myProducts'])->name('my-products');
+    Route::get('/download/{slug}', [ProductOrderController::class, 'download'])->name('download');
+    Route::post('/{slug}/review', [ProductController::class, 'review'])->name('review');
+});
+
+// Product Store (Public - wildcard slug last)
+Route::prefix('product')->name('product.')->group(function () {
+    Route::get('/', [ProductController::class, 'index'])->name('index');
+    Route::get('/{slug}', [ProductController::class, 'show'])->name('show');
 });
 
 Route::prefix('profil')->name('profil.')->group(function () {
@@ -570,6 +589,40 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
     Route::prefix('logs')->name('logs.')->group(function () {
         Route::get('/activity', [BackLogController::class, 'activityLog'])->name('activity');
         Route::get('/activity/data', [BackLogController::class, 'activityLogData'])->name('activity.data');
+    });
+
+    // Product Store Management
+    Route::prefix('product')->name('product.')->group(function () {
+        // Categories
+        Route::get('/category', [BackProductController::class, 'categoryIndex'])->name('category');
+        Route::post('/category', [BackProductController::class, 'categoryStore'])->name('category.store');
+        Route::put('/category/edit/{id}', [BackProductController::class, 'categoryUpdate'])->name('category.update');
+        Route::delete('/category/delete/{id}', [BackProductController::class, 'categoryDestroy'])->name('category.destroy');
+
+        // Products CRUD
+        Route::get('/', [BackProductController::class, 'index'])->name('index');
+        Route::get('/create', [BackProductController::class, 'create'])->name('create');
+        Route::post('/create', [BackProductController::class, 'store'])->name('store');
+        Route::get('/{id}/detail', [BackProductController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [BackProductController::class, 'edit'])->name('edit');
+        Route::put('/{id}/edit', [BackProductController::class, 'update'])->name('update');
+        Route::delete('/{id}/delete', [BackProductController::class, 'destroy'])->name('destroy');
+
+        // Screenshots
+        Route::post('/{id}/screenshot', [BackProductController::class, 'screenshotStore'])->name('screenshot.store');
+        Route::delete('/{id}/screenshot/{screenshotId}', [BackProductController::class, 'screenshotDestroy'])->name('screenshot.destroy');
+
+        // Reviews
+        Route::put('/review/{id}/approve', [BackProductController::class, 'reviewApprove'])->name('review.approve');
+        Route::delete('/review/{id}/delete', [BackProductController::class, 'reviewDestroy'])->name('review.destroy');
+
+        // Orders
+        Route::prefix('order')->name('order.')->group(function () {
+            Route::get('/', [BackProductOrderController::class, 'index'])->name('index');
+            Route::get('/{id}', [BackProductOrderController::class, 'show'])->name('show');
+            Route::put('/{id}/status', [BackProductOrderController::class, 'updateStatus'])->name('status');
+            Route::delete('/{id}/delete', [BackProductOrderController::class, 'destroy'])->name('destroy');
+        });
     });
 });
 

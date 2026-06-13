@@ -237,6 +237,61 @@
             @endforeach
         @endrole
 
+        @role('super-admin|product-manager')
+            <div class="menu-item pt-5">
+                <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Produk Digital</span>
+                </div>
+            </div>
+            <div data-kt-menu-trigger="click"
+                class="menu-item menu-accordion @if (request()->routeIs('back.product.*')) here show @endif">
+                <span class="menu-link">
+                    <span class="menu-icon">
+                        <i class="ki-duotone ki-shop fs-2">
+                            <span class="path1"></span>
+                            <span class="path2"></span>
+                            <span class="path3"></span>
+                            <span class="path4"></span>
+                            <span class="path5"></span>
+                        </i>
+                    </span>
+                    <span class="menu-title">Produk</span>
+                    <span class="menu-arrow"></span>
+                </span>
+                <div class="menu-sub menu-sub-accordion">
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.product.category*')) active @endif"
+                            href="{{ route('back.product.category') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Kategori</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.product.index') ||
+                                request()->routeIs('back.product.create') ||
+                                request()->routeIs('back.product.edit') ||
+                                request()->routeIs('back.product.show')) active @endif"
+                            href="{{ route('back.product.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Daftar Produk</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
+                        <a class="menu-link @if (request()->routeIs('back.product.order.*')) active @endif"
+                            href="{{ route('back.product.order.index') }}">
+                            <span class="menu-bullet">
+                                <span class="bullet bullet-dot"></span>
+                            </span>
+                            <span class="menu-title">Pesanan</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endrole
+
         @role('keuangan|super-admin')
             <div class="menu-item pt-5">
                 <div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Keuangan</span>
