@@ -130,34 +130,7 @@
 
             {{-- Right Sidebar --}}
             <div class="col-lg-4">
-                {{-- Update Status --}}
-                @if(!$order->is_paid)
-                <div class="card mb-5 mb-lg-10">
-                    <div class="card-header">
-                        <div class="card-title"><h3>Update Status</h3></div>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('back.product.order.status', $order->id) }}" method="POST">
-                            @method('PUT')
-                            @csrf
-                            <div class="mb-5">
-                                <label class="form-label required">Status</label>
-                                <select name="status" class="form-select @error('status') is-invalid @enderror"
-                                    data-control="select2" data-hide-search="true" required>
-                                    <option value="unpaid" {{ !$order->is_paid ? 'selected' : '' }}>Belum Lunas</option>
-                                    <option value="paid" {{ $order->is_paid ? 'selected' : '' }}>Lunas</option>
-                                </select>
-                                @error('status')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="ki-duotone ki-check fs-2"></i> Update Status
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                @endif
+
 
                 {{-- Order Summary --}}
                 <div class="card mb-5 mb-lg-10">

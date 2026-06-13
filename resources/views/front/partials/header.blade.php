@@ -3,6 +3,7 @@
     $news_list = \App\Models\News::latest()->where('status', 'published')->limit(3)->get();
     $news_popular = \App\Models\News::inRandomOrder()->where('status', 'published')->first();
     $journals = \App\Models\Journal::all();
+    $product_categories = \App\Models\ProductCategory::orderBy('name')->get();
 @endphp
 <header id="header" class="header tra-menu navbar-light">
     <div class="header-wrapper">
@@ -183,7 +184,14 @@
                         </li> <!-- END MEGAMENU -->
 
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('event.index') }}">Event</a></li>
-                        <li class="nl-simple" aria-haspopup="true"><a href="{{ route('product.index') }}">Produk</a></li>
+                        <li aria-haspopup="true"><a href="{{ route('product.index') }}">Produk <span class="wsarrow"></span></a>
+                            <ul class="sub-menu">
+                                <li aria-haspopup="true"><a href="{{ route('product.index') }}">Semua Produk</a></li>
+                                @foreach ($product_categories as $cat)
+                                    <li aria-haspopup="true"><a href="{{ route('product.index', ['category' => $cat->slug]) }}">{{ $cat->name }}</a></li>
+                                @endforeach
+                            </ul>
+                        </li>
 
                         <!-- SIMPLE NAVIGATION LINK -->
                         <li class="nl-simple" aria-haspopup="true"><a href="{{ route('payment.index') }}">Pembayaran</a></li>
