@@ -772,6 +772,134 @@ class BookController extends Controller
     }
 
     // ==========================================
+    // LETTER OF ACCEPTANCE (LoA)
+    // ==========================================
+
+    public function loaGenerate($id)
+    {
+        $book = Book::with(['category', 'bookAuthors', 'bookEditors'])->find($id);
+        if (! $book) {
+            Alert::error('Error', 'Buku tidak ditemukan');
+
+            return redirect()->back()->with('error', 'Buku tidak ditemukan');
+        }
+
+        // Cek kategori LOA di persuratan
+        $loaCategory = OutgoingMailCategory::whereIn('kode', ['LOA-BK', 'LOA-BUKU', 'LOA', 'LoA'])->first();
+        if (! $loaCategory) {
+            $loaCategory = OutgoingMailCategory::firstOrCreate(
+                ['kode' => 'LOA-BK'],
+                ['name' => 'Letter of Acceptance (LoA) Buku', 'description' => 'Surat penerimaan naskah penerbitan buku']
+            );
+        }
+
+        // Cek penulis buku
+        $authors = $book->bookAuthors;
+        if ($authors->isEmpty()) {
+            Alert::error('Error', 'Tidak ada penulis pada buku ini. Silakan tambahkan data penulis terlebih dahulu.');
+
+            return redirect()->back();
+        }
+
+        $author = $authors->first();
+        $displayName = $authors->count() > 1
+            ? ($author->name_with_title ?: $author->name) . ', et al.'
+            : ($author->name_with_title ?: $author->name);
+
+        $authorsString = $authors->pluck('name_with_title')->filter()->implode(', ')
+            ?: $authors->pluck('name')->filter()->implode(', ');
+
+        $path = 'arsip/loa-buku/' . Carbon::now()->year . '/LoA-Buku-' . $book->id . '.pdf';
+
+        // Cek apakah surat keluar sudah pernah dibuat untuk buku ini
+        $outgoingMail = OutgoingMail::where('file_surat', $path)
+            ->where('outgoing_mail_category_id', $loaCategory->id)
+            ->first();
+
+        if ($outgoingMail) {
+            // Pakai nomor surat yang sudah ada
+            $nomorSurat = $outgoingMail->nomor_surat;
+        } else {
+            // Generate nomor surat baru
+            $now = Carbon::now();
+            $year = $now->year;
+            $month = $now->month;
+
+            $romans = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'];
+            $romanMonth = $romans[$month] ?? '';
+
+            $count = OutgoingMail::whereYear('tanggal_surat', $year)->count();
+            $sequence = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+            $nomorSurat = "{$sequence}/{$loaCategory->kode}/NSG/{$romanMonth}/{$year}";
+
+            // Simpan ke tabel surat keluar (persuratan)
+            $outgoingMail = new OutgoingMail();
+            $outgoingMail->nomor_surat = $nomorSurat;
+            $outgoingMail->outgoing_mail_category_id = $loaCategory->id;
+            $outgoingMail->tujuan = $displayName . ($author->affiliation ? ' - ' . $author->affiliation : '');
+            $outgoingMail->tanggal_surat = $now->toDateString();
+            $outgoingMail->perihal = 'Letter of Acceptance (LoA) Buku - ' . $book->title;
+            $outgoingMail->klasifikasi = 'biasa';
+            $outgoingMail->keterangan = 'LoA untuk penerbitan buku "' . $book->title . '" (Kategori: ' . ($book->category->name ?? '-') . ', ISBN: ' . ($book->isbn ?? '-') . ')';
+            $outgoingMail->user_id = Auth::id() ?? 1;
+        }
+
+        $setting_web = SettingWebsite::first();
+
+        // Thumbnail buku base64
+        $bookThumbnail = null;
+        if ($book->thumbnail && Storage::disk('public')->exists($book->thumbnail)) {
+            $mime = Storage::disk('public')->mimeType($book->thumbnail);
+            $bookThumbnail = 'data:' . $mime . ';base64,' . base64_encode(Storage::disk('public')->get($book->thumbnail));
+        }
+
+        $editorNames = $book->bookEditors->map(function ($editor) {
+            return $editor->display_name_with_title ?: $editor->display_name;
+        })->filter()->implode(', ');
+
+        $directorSignature = null;
+        if (file_exists(public_path('ext_images/ttd.png'))) {
+            $directorSignature = 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('ext_images/ttd.png')));
+        }
+
+        $data = [
+            'number' => $nomorSurat,
+            'year' => Carbon::parse($outgoingMail->tanggal_surat)->format('Y'),
+            'date' => Carbon::parse($outgoingMail->tanggal_surat)->translatedFormat('d F Y'),
+            'name' => $displayName,
+            'affiliation' => $author->affiliation ?? '',
+            'authors_string' => $authorsString,
+            'title' => $book->title,
+            'category' => $book->category->name ?? 'Buku Ilmiah / Referensi',
+            'isbn' => $book->isbn ?: '-',
+            'qrcbn' => $book->qrcbn ?: '-',
+            'publisher' => $book->publisher ?: ($setting_web->name ?? 'Nagari Sastra'),
+            'publish_year' => $book->publish_year ?: Carbon::parse($outgoingMail->tanggal_surat)->format('Y'),
+            'pages' => $book->pages ? $book->pages . ' Halaman' : '-',
+            'book_url' => route('book.show', $book->slug),
+            'book_thumbnail' => $bookThumbnail,
+            'editors' => $editorNames,
+            'director_name' => 'Fajri Rinaldi Chan, S.Pd., M.Kom',
+            'director_signature' => $directorSignature,
+            'setting_web' => $setting_web,
+        ];
+
+        $pdf = Pdf::loadView('back.pages.book.pdf.loa', $data)->setPaper('A4', 'portrait');
+
+        // Hapus file lama jika ada
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+        Storage::disk('public')->put($path, $pdf->output());
+
+        // Simpan path file ke surat keluar
+        $outgoingMail->file_surat = $path;
+        $outgoingMail->save();
+
+        return $pdf->stream('LoA-Buku-' . Str::slug($book->title) . '.pdf');
+    }
+
+    // ==========================================
     // INVOICE
     // ==========================================
 

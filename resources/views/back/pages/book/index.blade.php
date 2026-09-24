@@ -121,6 +121,12 @@
                                                 Pembayaran
                                             </a>
                                         </div>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('back.book.loa.generate', $book->id) }}" target="_blank" class="menu-link px-3 text-primary">
+                                                <i class="ki-duotone ki-document fs-5 me-2 text-primary"><span class="path1"></span><span class="path2"></span></i>
+                                                Generate LoA
+                                            </a>
+                                        </div>
                                         @if ($book->status !== 'published')
                                             <div class="separator my-2"></div>
                                             <div class="menu-item px-3">

@@ -26,6 +26,16 @@
                             {{ $book->category->name ?? '-' }} &bull; {{ $book->publisher ?? '-' }}
                         </div>
                     </div>
+                    <div class="d-flex my-2">
+                        <a href="{{ route('back.book.loa.generate', $book->id) }}" target="_blank" class="btn btn-sm btn-light-primary me-2">
+                            <i class="ki-duotone ki-document fs-3 me-1"><span class="path1"></span><span class="path2"></span></i>
+                            Generate LoA
+                        </a>
+                        <a href="{{ route('book.show', $book->slug) }}" target="_blank" class="btn btn-sm btn-light-info">
+                            <i class="ki-duotone ki-eye fs-3 me-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+                            Lihat di Web
+                        </a>
+                    </div>
                 </div>
                 <div class="d-flex flex-wrap">
                     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">

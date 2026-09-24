@@ -368,6 +368,9 @@ Route::prefix('back')->name('back.')->middleware('auth')->group(function () {
         // Invoice
         Route::post('/{id}/invoice', [BackBookController::class, 'invoiceStore'])->name('invoice.store');
         Route::get('/invoice/{invoiceId}/download', [BackBookController::class, 'invoiceGenerate'])->name('invoice.download');
+
+        // LoA
+        Route::get('/{id}/loa', [BackBookController::class, 'loaGenerate'])->name('loa.generate');
     });
 
     Route::prefix('event')->name('event.')->group(function () {
