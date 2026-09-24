@@ -57,20 +57,12 @@
         <img src="{{ public_path('ext_images/template.png') }}" style="width: 100%; height: 100%; object-fit: cover;"
             alt="">
     </div>
-    <h2 style="margin-top: 125px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
-    <p style="top: 175px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
+    <h2 style="margin-top: 110px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
+    <p style="top: 158px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
         NO: {{ $number }}
     </p>
 
     <div class="content">
-        <p>
-            To:<br>
-            <b>{{ $name }}</b><br>
-            @if(!empty($affiliation))
-                {{ $affiliation }}
-            @endif
-        </p>
-
         <p style="margin-bottom: 0">Dear Author(s),</p>
 
         <p style="margin-top: 4px;">
@@ -151,7 +143,7 @@
                     <p style="margin: 0;">Padang, {{ $date }}</p>
                     <p style="margin: 0;">Direktur,</p>
                     @if(!empty($director_signature))
-                        <img style="height: 150px; display: block; margin: 4px 0 -20px 0;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
+                        <img style="height: 160px; display: block; margin: 4px 0 -20px -70px;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
                     @else
                         <div style="height: 80px;"></div>
                     @endif
