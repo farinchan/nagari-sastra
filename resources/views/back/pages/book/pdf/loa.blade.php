@@ -10,7 +10,7 @@
         body {
             font-family: 'Roboto', Arial, sans-serif;
             line-height: 1.45;
-            padding:110px 30px 30px 30px;
+            padding:110px 30px 50px 30px;
         }
 
         h2 {
