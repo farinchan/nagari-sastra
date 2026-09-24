@@ -332,13 +332,13 @@
                             <h6 class="h6-xl">Dokumen</h6>
                             @if ($book->isbn_file)
                                 <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank"
-                                   class="btn btn-outline-secondary btn-block mb-10" style="text-align: left;">
+                                   class="btn btn-theme btn-block" style="text-align: left;">
                                     <span class="flaticon-document mr-2"></span> Lihat Sertifikat ISBN
                                 </a>
                             @endif
                             @if ($book->qrcbn_file)
                                 <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank"
-                                   class="btn btn-outline-secondary btn-block mb-10" style="text-align: left;">
+                                   class="btn btn-theme btn-block mb-10" style="text-align: left;">
                                     <span class="flaticon-document mr-2"></span> Lihat Sertifikat QRCBN
                                 </a>
                             @endif
