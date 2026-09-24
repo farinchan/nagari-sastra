@@ -35,37 +35,34 @@
 
         .detail-label {
             width: 180px;
-            color: #333;
         }
 
-        .signature {
-            margin-top: 30px;
-            margin-left: auto;
-            width: 290px;
-            text-align: left;
+        p {
+            margin: 0 0 10px 0;
         }
 
-        .signature p {
-            margin: 0;
-            text-align: left;
+        a {
+            color: #1a3c6e;
+            text-decoration: none;
         }
     </style>
 </head>
 
-<body style="line-height: 1.35;">
-    <div style="position: absolute; top: -33; left: -34; width: 113%; height: 109%; z-index: -1;">
-        <img src="{{ public_path('ext_images/template.png') }}" style="width: 100%; height: 100%; object-fit: cover;"
-            alt="">
+<body style="line-height: 1.3;">
+    {{-- Background template berulang di halaman 1, 2, dst dengan position fixed --}}
+    <div style="position: fixed; top: -45px; left: -46px; width: 113%; height: 109%; z-index: -1;">
+        <img src="{{ public_path('ext_images/template.png') }}" style="width: 100%; height: 100%; object-fit: cover;" alt="">
     </div>
-    <h2 style="margin-top: 110px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
-    <p style="top: 158px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
+
+    <h2 style="margin-top: 115px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
+    <p style="top: 175px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
         NO: {{ $number }}
     </p>
 
     <div class="content">
-        <p style="margin-bottom: 0">Dear Author(s),</p>
+        <p style="margin-bottom: 0;">Dear Author(s),</p>
 
-        <p style="margin-top: 4px;">
+        <p style="margin-top: 2px;">
             Thank you for submitting your book manuscript to our editorial board. We are pleased to inform you that following the editorial review and evaluation process, your book manuscript has been officially <strong>ACCEPTED</strong> for publication.
         </p>
 
@@ -125,25 +122,25 @@
         <p>
             The book catalog and publication page can be accessed at the following link:
             <br>
-            <a href="{{ $book_url }}" style="color: #1a3c6e;">{{ $book_url }}</a>
+            <a href="{{ $book_url }}">{{ $book_url }}</a>
         </p>
 
         <p>
             Thank you for entrusting your academic and literary work to <strong>{{ $publisher }}</strong>.
         </p>
 
-        <table style="width: 100%; margin-top: 25px;">
+        <table style="width: 100%; margin-top: 30px;">
             <tr>
                 <td style="vertical-align: bottom; width: 45%;">
                     @if($book_thumbnail)
-                        <img style="width: 110px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);" src="{{ $book_thumbnail }}" alt="Cover Buku">
+                        <img style="width: 110px;" src="{{ $book_thumbnail }}" alt="Cover Buku">
                     @endif
                 </td>
                 <td style="vertical-align: top; text-align: left; width: 55%;">
                     <p style="margin: 0;">Padang, {{ $date }}</p>
                     <p style="margin: 0;">Direktur,</p>
                     @if(!empty($director_signature))
-                        <img style="height: 160px; display: block; margin: 4px 0 -20px -70px;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
+                        <img style="height: 150px; display: block; margin: 4px 0 -20px -50px;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
                     @else
                         <div style="height: 80px;"></div>
                     @endif
