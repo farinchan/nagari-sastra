@@ -10,7 +10,7 @@
         body {
             font-family: 'Roboto', Arial, sans-serif;
             line-height: 1.45;
-            padding: 30px;
+            padding:110px 30px 30px 30px;
         }
 
         h2 {
@@ -54,8 +54,8 @@
         <img src="{{ public_path('ext_images/template.png') }}" style="width: 100%; height: 100%; object-fit: cover;" alt="">
     </div>
 
-    <h2 style="margin-top: 115px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
-    <p style="top: 175px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
+    <h2 style="margin-top: 25px; font-weight: bold; text-decoration: underline;">LETTER OF ACCEPTANCE</h2>
+    <p style="top: 168px; left: 50%; transform: translateX(-50%); position: absolute; font-size: 14px; text-align: center; width: 100%;">
         NO: {{ $number }}
     </p>
 
