@@ -18,7 +18,7 @@
         }
 
         .content {
-            margin-top: 28px;
+            margin-top: 58px;
             font-size: 15px;
         }
 
