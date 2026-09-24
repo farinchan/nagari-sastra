@@ -140,7 +140,7 @@
                     <p style="margin: 0;">Padang, {{ $date }}</p>
                     <p style="margin: 0;">Direktur,</p>
                     @if(!empty($director_signature))
-                        <img style="height: 150px; display: block; margin: 4px 0 -20px -50px;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
+                        <img style="height: 170px; display: block; margin: 4px 0 -20px -90px;" src="{{ $director_signature }}" alt="Tanda Tangan Direktur">
                     @else
                         <div style="height: 80px;"></div>
                     @endif
