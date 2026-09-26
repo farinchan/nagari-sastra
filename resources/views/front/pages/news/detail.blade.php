@@ -6,9 +6,9 @@
         '@context' => 'https://schema.org',
         '@type' => 'NewsArticle',
         'headline' => $news->title,
-        'image' => [
-            $news->getThumbnail() ? (Str::startsWith($news->getThumbnail(), ['http://', 'https://']) ? $news->getThumbnail() : url($news->getThumbnail())) : '',
-        ],
+        'image' => array_values(array_filter([
+            $news->getThumbnail() ? (Str::startsWith($news->getThumbnail(), ['http://', 'https://']) ? $news->getThumbnail() : url($news->getThumbnail())) : null,
+        ])),
         'datePublished' => $news->created_at->toIso8601String(),
         'dateModified' => $news->updated_at->toIso8601String(),
         'author' => [
@@ -140,7 +140,7 @@
                                         <div class="prev-post mb-30 pr-45">
                                             <h6 class="h6-sm">Previous Post</h6>
                                             <a
-                                                href="{{ route('news.detail', $prev_news->id) }}">{{ $prev_news->title }}</a>
+                                                href="{{ route('news.detail', $prev_news->slug) }}">{{ $prev_news->title }}</a>
                                         </div>
                                     </div>
                                 @endif
@@ -159,7 +159,7 @@
                                         <div class="next-post mb-30 pl-45">
                                             <h6 class="h6-sm">Next Post</h6>
                                             <a
-                                                href="{{ route('news.detail', $next_news->id) }}">{{ $next_news->title }}</a>
+                                                href="{{ route('news.detail', $next_news->slug) }}">{{ $next_news->title }}</a>
                                         </div>
                                     </div>
                                 @endif
@@ -181,7 +181,7 @@
                                     <!-- Comment-1 Avatar -->
                                     <img class="mr-25"
                                         src="https://api.dicebear.com/9.x/bottts/png?seed={{ $comment->name }}"
-                                        alt="comment-avatar">
+                                        alt="Avatar {{ $comment->name }}">
 
                                     <div class="media-body">
 

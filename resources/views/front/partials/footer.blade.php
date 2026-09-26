@@ -40,7 +40,7 @@
                             <p><a href="{{ route('journal.index') }}">Jurnal</a></p>
                         </li>
                         <li>
-                            <p><a href="{{ route('book.index') }}">Buku</a></p>
+                            <p><a href="{{ route('book.index') }}">Repositori Buku</a></p>
                         </li>
                         <li>
                             <p><a href="{{ route('product.index') }}">Produk Digital</a></p>

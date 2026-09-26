@@ -34,11 +34,11 @@ class BookController extends Controller
         $books->appends(['q' => $search]);
 
         $data = [
-            'title' => 'Katalog Buku & Penerbitan | ' . $setting_web->name,
+            'title' => 'Repositori Buku & Monograf | ' . $setting_web->name,
             'meta' => [
-                'title' => 'Katalog Buku & Penerbitan | ' . $setting_web->name,
-                'description' => Str::limit('Katalog buku ilmiah, monograf, buku ajar ber-ISBN yang diterbitkan oleh ' . $setting_web->name, 155),
-                'keywords' => 'katalog buku, penerbit buku ber-isbn, buku ilmiah, monograf, buku ajar, referensi akademik, cetak buku, beli buku, ' . $setting_web->name . ', padang, sumatera barat',
+                'title' => 'Repositori Buku & Monograf | ' . $setting_web->name,
+                'description' => Str::limit('Repositori publikasi buku ilmiah, monograf, dan buku referensi akademik ber-ISBN yang diterbitkan oleh ' . $setting_web->name . '. Akses naskah dan metadata sitasi lengkap.', 155),
+                'keywords' => 'repositori buku, buku ilmiah, monograf, buku ajar, referensi akademik, open access book, isbn, publikasi ilmiah, ' . $setting_web->name . ', padang, sumatera barat',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -51,7 +51,7 @@ class BookController extends Controller
                     'link' => route('home')
                 ],
                 [
-                    'name' => 'Buku',
+                    'name' => 'Repositori Buku',
                     'link' => route('book.index')
                 ]
             ],
@@ -83,11 +83,11 @@ class BookController extends Controller
         }
 
         $data = [
-            'title' => $book->title . ' | ' . $setting_web->name,
+            'title' => $book->title . ' | Repositori Buku ' . $setting_web->name,
             'meta' => [
-                'title' => $book->title . ' | ' . $setting_web->name,
+                'title' => $book->title . ' | Repositori Buku ' . $setting_web->name,
                 'description' => Str::limit(strip_tags($book->description), 155),
-                'keywords' => 'buku ' . $book->title . ', ' . $authorsStr . ', penerbit ' . ($book->publisher ?? $setting_web->name) . ', ISBN ' . ($book->isbn ?? '-') . ', ' . ($book->category->name ?? 'buku ilmiah') . ', beli buku, ' . $setting_web->name,
+                'keywords' => 'buku ' . $book->title . ', ' . $authorsStr . ', penerbit ' . ($book->publisher ?? $setting_web->name) . ', ISBN ' . ($book->isbn ?? '-') . ', ' . ($book->category->name ?? 'buku ilmiah') . ', repositori buku, publikasi ilmiah, ' . $setting_web->name,
                 'favicon' => $book->getThumbnail() ?? $setting_web->favicon,
                 'author' => $authorsStr ?: $setting_web->name,
                 'og_image' => $book->getThumbnail(),
@@ -101,7 +101,7 @@ class BookController extends Controller
                     'link' => route('home')
                 ],
                 [
-                    'name' => 'Buku',
+                    'name' => 'Repositori Buku',
                     'link' => route('book.index')
                 ],
                 [
@@ -182,11 +182,11 @@ class BookController extends Controller
             ->paginate(6);
 
         $data = [
-            'title' => 'Buku Kategori ' . $category->name . ' | ' . $setting_web->name,
+            'title' => 'Repositori Buku: ' . $category->name . ' | ' . $setting_web->name,
             'meta' => [
-                'title' => 'Buku Kategori ' . $category->name . ' | ' . $setting_web->name,
-                'description' => Str::limit('Koleksi buku kategori ' . $category->name . ' yang diterbitkan oleh ' . $setting_web->name, 155),
-                'keywords' => 'buku ' . $category->name . ', kategori ' . $category->name . ', penerbitan buku ' . $category->name . ', katalog buku, ' . $setting_web->name . ', padang',
+                'title' => 'Repositori Buku: ' . $category->name . ' | ' . $setting_web->name,
+                'description' => Str::limit('Koleksi repositori buku ilmiah kategori ' . $category->name . ' yang diterbitkan oleh ' . $setting_web->name, 155),
+                'keywords' => 'repositori buku ' . $category->name . ', kategori ' . $category->name . ', publikasi ilmiah ' . $category->name . ', buku akademik, ' . $setting_web->name . ', padang',
                 'favicon' => $setting_web->favicon,
                 'og_image' => $setting_web->logo ?? $setting_web->favicon,
                 'og_type' => 'website',
@@ -199,7 +199,7 @@ class BookController extends Controller
                     'link' => route('home')
                 ],
                 [
-                    'name' => 'Buku',
+                    'name' => 'Repositori Buku',
                     'link' => route('book.index')
                 ],
                 [

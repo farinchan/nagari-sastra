@@ -36,7 +36,7 @@
                         <!-- DROPDOWN MENU: PUBLIKASI -->
                         <li aria-haspopup="true"><a href="#">Publikasi <span class="wsarrow"></span></a>
                             <ul class="sub-menu">
-                                <li aria-haspopup="true"><a href="{{ route('book.index') }}">Buku</a></li>
+                                <li aria-haspopup="true"><a href="{{ route('book.index') }}">Repositori Buku</a></li>
                                 <li aria-haspopup="true"><a href="{{ route('journal.index') }}">Jurnal <span class="wsarrow-sub"></span></a>
                                     <ul class="sub-menu">
                                         @foreach ($journals as $journal)
@@ -131,24 +131,28 @@
                                             <!-- Title -->
                                             <h3 class="title">Berita Populer:</h3>
 
-                                            <!-- Image -->
-                                            <div class="fluid-width-video-wrapper mb-15"><img
-                                                    src="{{ $news_popular->getThumbnail() }}" alt="{{ $news_popular->title ?? 'Berita Populer' }}"
-                                                    loading="lazy" decoding="async"
-                                                    style="width: 100%; height: 200px; object-fit: cover;" />
-                                            </div>
+                                            @if($news_popular)
+                                                <!-- Image -->
+                                                <div class="fluid-width-video-wrapper mb-15">
+                                                    <img src="{{ $news_popular->getThumbnail() }}" alt="{{ $news_popular->title ?? 'Berita Populer' }}"
+                                                         loading="lazy" decoding="async"
+                                                         style="width: 100%; height: 200px; object-fit: cover;" />
+                                                </div>
 
-                                            <!-- Text -->
-                                            <h6 class="h6-md">
-                                                <a href="{{ route('news.detail', $news_popular->slug) }}">
-                                                    {{ $news_popular->title }}
-                                                </a>
-                                            </h6>
+                                                <!-- Text -->
+                                                <h6 class="h6-md">
+                                                    <a href="{{ route('news.detail', $news_popular->slug) }}">
+                                                        {{ $news_popular->title }}
+                                                    </a>
+                                                </h6>
 
-                                            <!-- Text -->
-                                            <p class="wsmwnutxt">
-                                                {{ Str::limit(strip_tags($news_popular->content), 150, '...') }}
-                                            </p>
+                                                <!-- Text -->
+                                                <p class="wsmwnutxt">
+                                                    {{ Str::limit(strip_tags($news_popular->content), 150, '...') }}
+                                                </p>
+                                            @else
+                                                <p class="text-muted" style="font-size: 13px;">Belum ada berita populer tersedia.</p>
+                                            @endif
 
                                         </div> <!-- END MEGAMENU FEATURED NEWS -->
 
@@ -162,7 +166,7 @@
                                             <!-- Latest News -->
                                             <ul class="latest-news">
 
-                                                @foreach ($news_list as $news)
+                                                @forelse ($news_list as $news)
                                                     <!-- Post #1 -->
                                                     <li class="clearfix d-flex align-items-center">
 
@@ -178,7 +182,9 @@
                                                         </div>
 
                                                     </li>
-                                                @endforeach
+                                                @empty
+                                                    <li class="text-muted" style="font-size: 13px;">Belum ada berita terbaru.</li>
+                                                @endforelse
                                             </ul>
                                         </div> <!-- END MEGAMENU LATEST NEWS -->
 

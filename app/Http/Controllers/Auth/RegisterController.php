@@ -27,7 +27,9 @@ class RegisterController extends Controller
                 'title' => 'Daftar | ' . $setting_web->name,
                 'description' => strip_tags($setting_web->about),
                 'keywords' => $setting_web->name . ', Register, Daftar',
-                'favicon' => $setting_web->favicon
+                'favicon' => $setting_web->favicon,
+                'robots' => 'noindex, nofollow',
+                'canonical' => route('register'),
             ],
             'breadcrumbs' =>  [
                 [

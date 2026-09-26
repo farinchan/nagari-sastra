@@ -293,14 +293,15 @@ class OaiPmhController extends Controller
           <dc:title>' . e($book->title) . '</dc:title>';
 
         // dc:creator (authors)
-        if ($authors && $authors->count() > 0) {
-            foreach ($authors as $author) {
-                $name = $author->name;
-                if ($name) {
-                    $xml .= '
-          <dc:creator>' . e($name) . '</dc:creator>';
-                }
+        $citationAuthors = $book->citation_authors;
+        if (!empty($citationAuthors)) {
+            foreach ($citationAuthors as $authorName) {
+                $xml .= '
+          <dc:creator>' . e($authorName) . '</dc:creator>';
             }
+        } elseif ($book->author) {
+            $xml .= '
+          <dc:creator>' . e($book->author) . '</dc:creator>';
         }
 
         // dc:subject (keywords + category)
@@ -347,6 +348,11 @@ class OaiPmhController extends Controller
         $xml .= '
           <dc:identifier>' . e(route('book.show', $book->slug)) . '</dc:identifier>';
 
+        if ($book->getCitationPdfUrl()) {
+            $xml .= '
+          <dc:relation>' . e($book->getCitationPdfUrl()) . '</dc:relation>';
+        }
+
         // dc:language
         $xml .= '
           <dc:language>' . e($book->language ?: 'id') . '</dc:language>';
@@ -390,12 +396,25 @@ class OaiPmhController extends Controller
             <subfield code="a">' . e($book->language ?: 'ind') . '</subfield>
           </datafield>';
 
-        // 100 - Main author
-        if ($authors && $authors->count() > 0) {
-            $mainAuthor = $authors->first();
+        // 100 - Main author & 700 - Co-authors
+        $citationAuthors = $book->citation_authors;
+        if (!empty($citationAuthors)) {
+            $mainAuthor = $citationAuthors[0];
             $xml .= '
           <datafield tag="100" ind1="1" ind2=" ">
-            <subfield code="a">' . e($mainAuthor->name) . '</subfield>
+            <subfield code="a">' . e($mainAuthor) . '</subfield>
+          </datafield>';
+
+            for ($i = 1; $i < count($citationAuthors); $i++) {
+                $xml .= '
+          <datafield tag="700" ind1="1" ind2=" ">
+            <subfield code="a">' . e($citationAuthors[$i]) . '</subfield>
+          </datafield>';
+            }
+        } elseif ($book->author) {
+            $xml .= '
+          <datafield tag="100" ind1="1" ind2=" ">
+            <subfield code="a">' . e($book->author) . '</subfield>
           </datafield>';
         }
 
@@ -465,7 +484,16 @@ class OaiPmhController extends Controller
         $xml .= '
           <datafield tag="856" ind1="4" ind2="0">
             <subfield code="u">' . e(route('book.show', $book->slug)) . '</subfield>
+            <subfield code="y">Book Detail</subfield>
           </datafield>';
+
+        if ($book->getCitationPdfUrl()) {
+            $xml .= '
+          <datafield tag="856" ind1="4" ind2="0">
+            <subfield code="u">' . e($book->getCitationPdfUrl()) . '</subfield>
+            <subfield code="y">Preview / Fulltext PDF</subfield>
+          </datafield>';
+        }
 
         $xml .= '
         </record>';

@@ -499,14 +499,14 @@
             <div class="row mb-40">
                 <div class="col-md-8">
                     <div class="section-title text-left">
-                        <div class="section-id grey-color">Koleksi Buku</div>
-                        <h3 class="h3-sm">Buku Terbaru</h3>
-                        <p class="p-lg grey-color">Jelajahi berbagai buku berkualitas dari para penulis</p>
+                        <div class="section-id grey-color">Repositori Publikasi</div>
+                        <h3 class="h3-sm">Repositori Buku & Monograf</h3>
+                        <p class="p-lg grey-color">Publikasi buku ilmiah, buku ajar, dan monograf akademik ber-ISBN dengan akses terbuka</p>
                     </div>
                 </div>
                 @if(!$list_book->isEmpty())
                 <div class="col-md-4 text-right d-none d-md-flex align-items-end justify-content-end pb-3">
-                    <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Buku</a>
+                    <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Repositori Buku</a>
                 </div>
                 @endif
             </div>
@@ -539,21 +539,23 @@
                                     <div class="post-tag txt-upcase" style="position: absolute; top: 10px; left: 10px; background: #fff; padding: 3px 12px; border-radius: 4px; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
                                         {{ $book->category->name ?? 'Buku' }}
                                     </div>
-                                    <!-- PRICE -->
-                                    @if($book->price == 0)
-                                        <span class="book-price-label bg-success">Gratis</span>
-                                    @else
-                                        <span class="book-price-label bg-theme">Rp {{ number_format($book->price, 0, ',', '.') }}</span>
-                                    @endif
+                                    <!-- ACCESS BADGE -->
+                                    <span class="book-price-label bg-success" style="font-size: 11px; padding: 4px 10px;">
+                                        Akses Terbuka
+                                    </span>
                                 </div>
 
                                 <!-- TEXT -->
                                 <div class="blog-post-txt">
-                                    <h6 class="h6-xs mb-15" style="line-height: 1.4; margin-bottom: 8px;">
-                                        <a href="{{ route('book.show', $book->slug) }}">{{ Str::limit($book->title, 50) }}</a>
+                                    <h6 class="h6-xs mb-1" style="line-height: 1.4;">
+                                        <a href="{{ route('book.show', $book->slug) }}">{{ Str::limit($book->title, 45) }}</a>
                                     </h6>
+                                    <p class="p-sm grey-color mb-15 small">
+                                        <span class="flaticon-user mr-1"></span>
+                                        {{ Str::limit($book->author ?: '-', 26) }}
+                                    </p>
                                     <a href="{{ route('book.show', $book->slug) }}" class="btn btn-tra-grey theme-hover btn-sm btn-block">
-                                        Detail Buku
+                                        Akses Naskah
                                     </a>
                                 </div>
 
@@ -565,7 +567,7 @@
                 <!-- MOBILE LINK -->
                 <div class="row d-md-none mt-3">
                     <div class="col text-center">
-                        <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Semua Buku</a>
+                        <a href="{{ route('book.index') }}" class="btn btn-tra-grey theme-hover btn-sm">Lihat Repositori Buku</a>
                     </div>
                 </div>
             @endif

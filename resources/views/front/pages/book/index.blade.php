@@ -14,34 +14,55 @@
                         <div class="row">
                             @forelse ($books as $book)
                                 <div class="col-md-6 col-lg-4 mb-4">
-                                    <div class="book-card h-100 rounded shadow-sm overflow-hidden p-3 d-flex flex-column"
-                                        style="transition: transform 0.3s ease, box-shadow 0.3s ease;"
-                                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.15)';"
-                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.12)';">
-                                        <div class="book-card-img overflow-hidden rounded mb-3" style="height: 260px;">
+                                    <div class="book-card h-100 rounded shadow-sm overflow-hidden p-3 d-flex flex-column bg-white"
+                                        style="transition: transform 0.3s ease, box-shadow 0.3s ease; border: 1px solid #eef2f6;"
+                                        onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 8px 16px rgba(0,0,0,0.1)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)';">
+                                        
+                                        <div class="book-card-img overflow-hidden rounded mb-3 position-relative" style="height: 260px;">
                                             <a href="{{ route('book.show', $book->slug) }}">
                                                 <img class="img-fluid w-100 h-100" src="{{ $book->getThumbnail() }}"
                                                     alt="{{ $book->title }}" style="object-fit: cover;">
                                             </a>
+                                            @if ($book->category)
+                                                <span class="badge badge-light position-absolute" style="top: 8px; left: 8px; font-size: 11px; padding: 4px 8px; background: rgba(255,255,255,0.92); box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                                    {{ $book->category->name }}
+                                                </span>
+                                            @endif
                                         </div>
 
-                                        <h6 class="mb-2" style="line-height: 1.4;">
-                                            <a href="{{ route('book.show', $book->slug) }}" class="text-dark text-decoration-none">
+                                        <h6 class="mb-2" style="line-height: 1.4; font-size: 15px;">
+                                            <a href="{{ route('book.show', $book->slug) }}" class="text-dark text-decoration-none font-weight-bold">
                                                 {{ Str::limit($book->title, 55) }}
                                             </a>
                                         </h6>
 
-                                        <div class="mt-auto">
-                                            <p class="mb-0 theme-color fw-bold">
-                                                Rp {{ number_format($book->price, 0, ',', '.') }}
-                                            </p>
+                                        <p class="p-sm grey-color mb-1" style="font-size: 12px;">
+                                            <span class="flaticon-user mr-1"></span>
+                                            {{ Str::limit($book->author ?: '-', 35) }}
+                                        </p>
+
+                                        <p class="text-muted mb-3" style="font-size: 11px;">
+                                            <span class="mr-2">Tahun: {{ $book->publish_year ?: $book->created_at->format('Y') }}</span>
+                                            @if($book->isbn)
+                                                <span>&bull; ISBN: {{ Str::limit($book->isbn, 17) }}</span>
+                                            @endif
+                                        </p>
+
+                                        <div class="mt-auto pt-2 border-top d-flex justify-content-between align-items-center">
+                                            <span class="badge badge-success px-2 py-1" style="font-size: 11px; font-weight: 500;">
+                                                Akses Terbuka
+                                            </span>
+                                            <a href="{{ route('book.show', $book->slug) }}" class="btn btn-sm btn-tra-grey theme-hover py-1 px-2" style="font-size: 12px;">
+                                                Lihat Naskah &rarr;
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
                             @empty
                                 <div class="col-12">
                                     <div class="alert alert-info" role="alert">
-                                        Tidak ada buku yang ditemukan.
+                                        Tidak ada buku yang ditemukan dalam repositori.
                                     </div>
                                 </div>
                             @endforelse

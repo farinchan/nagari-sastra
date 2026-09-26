@@ -31,7 +31,7 @@
 
                                     <!-- Image -->
                                     <img class="img-fluid" src="{{ $journal->getJournalThumbnail() }}"
-                                        alt="gallery-image" />
+                                        alt="{{ $journal->title }}" loading="lazy" decoding="async" />
                                     <div class="item-overlay"></div>
 
                                     <!-- Project Meta -->

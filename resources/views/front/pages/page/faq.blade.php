@@ -1,5 +1,29 @@
 @extends('front.app')
 
+@section('seo')
+@if(!empty($list_faq) && $list_faq->count() > 0)
+@php
+    $faqSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => $list_faq->map(function ($item) {
+            return [
+                '@type' => 'Question',
+                'name' => $item->question,
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => strip_tags($item->answer),
+                ],
+            ];
+        })->values()->toArray(),
+    ];
+@endphp
+<script type="application/ld+json">
+{!! json_encode($faqSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+</script>
+@endif
+@endsection
+
 @section('content')
 
     <style>

@@ -45,6 +45,31 @@ class Book extends Model
         return $this->belongsTo(BookCategory::class, 'book_category_id');
     }
 
+    /**
+     * Clean author name by stripping academic degrees and honorifics.
+     * Google Scholar strictly requires clean author names (e.g. "John Doe" or "Doe, John")
+     * without titles like Prof, Dr, S.Pd, M.Kom, Ph.D, etc.
+     */
+    public static function cleanAuthorName(?string $name): string
+    {
+        if (empty($name)) {
+            return '';
+        }
+
+        $name = trim($name);
+
+        // Remove academic prefixes (e.g., Prof., Dr., Dra., Drs., Ir., H., Hj., Apt., Ns.)
+        $name = preg_replace('/^(?:(?:prof|dr|dra|drs|ir|h|hj|apt|ns)\.?\s+)+/i', '', $name);
+
+        // Remove academic suffixes after comma (e.g., ", M.Kom", ", S.Pd., M.Pd.", ", Ph.D.")
+        $name = preg_replace('/,\s*(?:[A-Z][a-z0-9]?\.[A-Za-z0-9\.]*|Ph\.?D\.?|M\.?Sc\.?|B\.?Sc\.?|M\.?A\.?|B\.?A\.?|M\.?Eng\.?|M\.?Si\.?|S\.?Si\.?|M\.?M\.?|S\.?E\.?|S\.?Ked\.?|dr\.?|Sp\.?[A-Za-z0-9\.]*).*$/i', '', $name);
+
+        // Remove multiple consecutive spaces
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        return trim($name);
+    }
+
     public function getAuthorAttribute(): ?string
     {
         $authors = $this->bookAuthors;
@@ -54,17 +79,68 @@ class Book extends Model
                 ->implode(', ') ?: $authors->pluck('name')->filter()->implode(', ');
         }
 
-        return null;
+        return $this->attributes['author'] ?? null;
     }
 
+    /**
+     * Clean author names suitable for Google Scholar citation_author tags
+     */
     public function getCitationAuthorsAttribute(): array
     {
         $authors = $this->bookAuthors;
         if ($authors && $authors->count() > 0) {
-            return $authors->pluck('name')->filter()->values()->all();
+            $cleaned = $authors->map(function ($author) {
+                $name = $author->name ?: $author->name_with_title;
+                return self::cleanAuthorName($name);
+            })->filter()->values()->all();
+
+            if (!empty($cleaned)) {
+                return $cleaned;
+            }
+        }
+
+        // Fallback to legacy or direct author attribute if present
+        $rawAuthor = $this->attributes['author'] ?? null;
+        if ($rawAuthor) {
+            $parts = preg_split('/\s*(?:;|dan|&)\s*/i', $rawAuthor);
+            $cleaned = [];
+            foreach ($parts as $part) {
+                $clean = self::cleanAuthorName($part);
+                if (!empty($clean)) {
+                    $cleaned[] = $clean;
+                }
+            }
+            return $cleaned;
         }
 
         return [];
+    }
+
+    /**
+     * Structured author metadata including affiliation for Google Scholar
+     */
+    public function getCitationAuthorsDataAttribute(): array
+    {
+        $authors = $this->bookAuthors;
+        if ($authors && $authors->count() > 0) {
+            $data = [];
+            foreach ($authors as $author) {
+                $cleanName = self::cleanAuthorName($author->name ?: $author->name_with_title);
+                if (!empty($cleanName)) {
+                    $data[] = [
+                        'name' => $cleanName,
+                        'affiliation' => $author->affiliation ? trim($author->affiliation) : null,
+                        'email' => $author->email ? trim($author->email) : null,
+                    ];
+                }
+            }
+            if (!empty($data)) {
+                return $data;
+            }
+        }
+
+        // Fallback to citation_authors without affiliation
+        return array_map(fn($name) => ['name' => $name, 'affiliation' => null, 'email' => null], $this->citation_authors);
     }
 
     public function getThumbnail()
@@ -97,7 +173,27 @@ class Book extends Model
         if (Str::startsWith(trim($this->attachment), ['http://', 'https://'])) {
             return $this->attachment;
         }
-        return Storage::url($this->attachment);
+        return url(Storage::url($this->attachment));
+    }
+
+    /**
+     * Resolve the direct absolute PDF URL for Google Scholar indexing.
+     * Google Scholar crawlers require a direct URL to the PDF file.
+     */
+    public function getCitationPdfUrl(): ?string
+    {
+        if ($this->preview_file) {
+            return $this->getPreviewFile();
+        }
+
+        if ($this->attachment) {
+            $ext = strtolower(pathinfo($this->attachment, PATHINFO_EXTENSION));
+            if ($ext === 'pdf' || Str::contains(strtolower($this->attachment), '.pdf')) {
+                return $this->getAttachment();
+            }
+        }
+
+        return null;
     }
 
     public function editors()

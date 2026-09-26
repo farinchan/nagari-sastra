@@ -1,5 +1,36 @@
 @extends('front.app')
 
+@section('seo')
+@php
+    $announcementSchema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Article',
+        'headline' => $announcement->title,
+        'description' => Str::limit(strip_tags($announcement->content), 160),
+        'datePublished' => $announcement->created_at->toIso8601String(),
+        'dateModified' => $announcement->updated_at->toIso8601String(),
+        'publisher' => [
+            '@type' => 'Organization',
+            'name' => $setting_web->name ?? config('app.name'),
+        ],
+    ];
+    if (!empty($announcement->user)) {
+        $announcementSchema['author'] = [
+            '@type' => 'Person',
+            'name' => $announcement->user->name,
+        ];
+    }
+    if (!empty($announcement->image)) {
+        $announcementSchema['image'] = array_values(array_filter([
+            Str::startsWith($announcement->image, ['http://', 'https://']) ? $announcement->image : url($announcement->image)
+        ]));
+    }
+@endphp
+<script type="application/ld+json">
+{!! json_encode($announcementSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+</script>
+@endsection
+
 @section('content')
 
     <style>

@@ -19,7 +19,7 @@ const PRECACHE_ASSETS = [
     '/front/css/menu.css',
     '/front/css/blue-theme.css',
     '/front/css/responsive.css',
-    '/front/js/jquery-3.3.1.min.js',
+    '/front/js/jquery-3.5.1.min.js',
     '/front/js/bootstrap.min.js'
 ];
 

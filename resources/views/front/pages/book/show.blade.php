@@ -3,22 +3,37 @@
     {{-- Google Scholar / Highwire Press Citation Meta Tags --}}
     @php
         $citationAbstract = trim(strip_tags($book->description ?? ''));
-        $citationPdfUrl = $book->getPreviewFile();
+        $citationPdfUrl = $book->getCitationPdfUrl();
         $citationFulltextUrl = route('book.show', $book->slug);
+        $citationAuthorsData = $book->citation_authors_data ?? [];
         $citationAuthors = $book->citation_authors ?? [];
     @endphp
 
     <meta name="citation_title" content="{{ $book->title }}">
-    @foreach ($citationAuthors as $citationAuthor)
-        <meta name="citation_author" content="{{ $citationAuthor }}">
-    @endforeach
+    @if (!empty($citationAuthorsData))
+        @foreach ($citationAuthorsData as $authorData)
+            <meta name="citation_author" content="{{ $authorData['name'] }}">
+            @if (!empty($authorData['affiliation']))
+                <meta name="citation_author_institution" content="{{ $authorData['affiliation'] }}">
+            @endif
+            @if (!empty($authorData['email']))
+                <meta name="citation_author_email" content="{{ $authorData['email'] }}">
+            @endif
+        @endforeach
+    @else
+        @foreach ($citationAuthors as $citationAuthor)
+            <meta name="citation_author" content="{{ $citationAuthor }}">
+        @endforeach
+    @endif
     <meta name="citation_book_title" content="{{ $book->title }}">
     @if ($book->publisher)
         <meta name="citation_publisher" content="{{ $book->publisher }}">
     @endif
     @if ($book->publish_year)
         <meta name="citation_publication_date" content="{{ $book->publish_year }}">
+        <meta name="citation_date" content="{{ $book->publish_year }}">
     @endif
+    <meta name="citation_online_date" content="{{ $book->created_at->format('Y/m/d') }}">
     @if ($book->edition)
         <meta name="citation_edition" content="{{ $book->edition }}">
     @endif
@@ -26,7 +41,7 @@
         <meta name="citation_isbn" content="{{ $book->isbn }}">
     @endif
     @if ($citationAbstract)
-        <meta name="citation_abstract" content="{{ $citationAbstract}}">
+        <meta name="citation_abstract" content="{{ $citationAbstract }}">
     @endif
     @if ($book->keywords && count($book->keywords) > 0)
         <meta name="citation_keywords"
@@ -50,7 +65,13 @@
 
     {{-- Dublin Core Metadata --}}
     <meta name="DC.title" content="{{ $book->title }}">
-    <meta name="DC.creator" content="{{ $book->author ?: 'Unknown' }}">
+    @if (!empty($citationAuthors))
+        @foreach ($citationAuthors as $cAuthor)
+            <meta name="DC.creator" content="{{ $cAuthor }}">
+        @endforeach
+    @else
+        <meta name="DC.creator" content="{{ $book->author ?: 'Unknown' }}">
+    @endif
     <meta name="DC.subject"
         content="{{ collect($book->keywords)->map(function ($keyword) {
                 if (is_array($keyword)) {
@@ -72,16 +93,18 @@
     @endif
     <meta name="DC.rights" content="Copyright © {{ $book->publish_year ?: date('Y') }}">
 
-    {{-- Schema.org JSON-LD (Book) --}}
+    {{-- Schema.org JSON-LD (Scholarly Book / Open Access Repository) --}}
     @php
         $schemaOrg = [
             '@context' => 'https://schema.org',
             '@type' => 'Book',
             'name' => $book->title,
-            'author' => collect($citationAuthors)->map(fn($name) => [
+            'headline' => $book->title,
+            'author' => collect($citationAuthorsData)->map(fn($a) => [
                 '@type' => 'Person',
-                'name' => $name,
-            ])->values()->toArray() ?: [['@type' => 'Person', 'name' => $book->author ?: 'Unknown']],
+                'name' => $a['name'],
+                'affiliation' => !empty($a['affiliation']) ? ['@type' => 'Organization', 'name' => $a['affiliation']] : null,
+            ])->filter()->values()->toArray() ?: [['@type' => 'Person', 'name' => $book->author ?: 'Unknown']],
             'publisher' => [
                 '@type' => 'Organization',
                 'name' => $book->publisher ?: 'Unknown',
@@ -90,6 +113,7 @@
             'image' => $book->getThumbnail(),
             'url' => route('book.show', $book->slug),
             'inLanguage' => $book->language ?: 'id',
+            'isAccessibleForFree' => true,
             'keywords' => collect($book->keywords)
                 ->map(function ($keyword) {
                     if (is_array($keyword)) {
@@ -102,13 +126,15 @@
                 })
                 ->filter()
                 ->implode(', '),
-            'offers' => [
-                '@type' => 'Offer',
-                'price' => $book->price,
-                'priceCurrency' => 'IDR',
-                'availability' => $book->stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            ],
         ];
+
+        if ($citationPdfUrl) {
+            $schemaOrg['encoding'] = [
+                '@type' => 'MediaObject',
+                'contentUrl' => $citationPdfUrl,
+                'encodingFormat' => 'application/pdf',
+            ];
+        }
 
         if ($book->publish_year) {
             $schemaOrg['datePublished'] = (string) $book->publish_year;
@@ -194,33 +220,22 @@
                                     @endif
                                 </div>
 
-                                <!-- PRICE BOX -->
-                                <div class="bg-lightgrey p-3 radius-04 mb-20">
-                                    <div class="d-flex justify-content-between align-items-center">
+                                <!-- REPOSITORY ACCESS BANNER -->
+                                <div class="bg-lightgrey p-3 radius-04 mb-25 border">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
                                         <div>
-                                            <small class="grey-color d-block mb-1">Harga</small>
-                                            <h3 class="h3-lg mb-0 theme-color">
-                                                @if($book->price == 0)
-                                                    Gratis
-                                                @else
-                                                    Rp {{ number_format($book->price, 0, ',', '.') }}
-                                                @endif
-                                            </h3>
+                                            <small class="grey-color d-block text-uppercase" style="font-size: 11px; font-weight: 600; letter-spacing: 0.5px;">Akses Repositori</small>
+                                            <span class=" px-3 py-2 mt-1" style="font-size: 13px;">
+                                                <span class="flaticon-document mr-1"></span> Akses Terbuka (Open Access)
+                                            </span>
                                         </div>
-                                        <div class="text-right">
-                                            <small class="grey-color d-block mb-1">Stok</small>
-                                            @if ($book->stock > 0)
-                                                <span class="badge badge-success px-3 py-2">{{ $book->stock }} tersedia</span>
-                                            @else
-                                                <span class="badge badge-danger px-3 py-2">Stok habis</span>
-                                            @endif
-                                        </div>
+
                                     </div>
                                 </div>
 
                                 <!-- PUBLISHER & LANGUAGE -->
                                 <div class="row">
-                                    <div class="col-6">
+                                    <div class="col-6 ">
                                         <small class="grey-color d-block">Penerbit</small>
                                         <p class="p-sm txt-500 mb-0">{{ $book->publisher ?: '-' }}</p>
                                     </div>
@@ -270,15 +285,52 @@
 
 
 
+                        <!-- HOW TO CITE (SITASI) -->
+                        @php
+                            $apaAuthors = !empty($citationAuthors) ? implode(', ', $citationAuthors) : ($book->author ?: 'Penulis');
+                            $apaYear = $book->publish_year ?: $book->created_at->format('Y');
+                            $apaCitation = $apaAuthors . ' (' . $apaYear . '). ' . $book->title . '. ' . ($book->publisher ?: 'Penerbit') . ($book->isbn ? '. ISBN: ' . $book->isbn : '') . '.';
+                            $bibtexCitation = "@book{book_" . $book->id . ",\n" .
+                                "  title={" . addslashes($book->title) . "},\n" .
+                                "  author={" . addslashes(implode(' and ', $citationAuthors ?: [$book->author ?: 'Unknown'])) . "},\n" .
+                                "  year={" . $apaYear . "},\n" .
+                                "  publisher={" . addslashes($book->publisher ?: 'Penerbit') . "},\n" .
+                                ($book->isbn ? "  isbn={" . $book->isbn . "},\n" : "") .
+                                "  url={" . route('book.show', $book->slug) . "}\n" .
+                                "}";
+                        @endphp
+                        <div class="mb-40 p-4 bg-lightgrey radius-06 border">
+                            <div class="d-flex justify-content-between align-items-center mb-15 flex-wrap">
+                                <h5 class="h5-sm mb-1 mb-sm-0">
+                                    <span class="flaticon-bookmark mr-1 text-primary"></span> Cara Mengutip (How to Cite)
+                                </h5>
+                                <button type="button" class="btn btn-sm btn-tra-grey theme-hover" id="btn-copy-citation" onclick="copyCitationText('{{ addslashes($apaCitation) }}')">
+                                    <span class="flaticon-copy mr-1"></span> Salin Sitasi APA
+                                </button>
+                            </div>
+                            <div class="p-3 bg-white radius-04 border mb-2 font-italic" style="font-size: 13px; line-height: 1.6; color: #334155;">
+                                {{ $apaCitation }}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap">
+                                <small class="text-muted">Format Standar: APA 7th Edition &bull; Terindeks OAI-PMH</small>
+                                <a href="#bibtexCollapse" data-toggle="collapse" class="small text-primary font-weight-bold">
+                                    Lihat Format BibTeX &darr;
+                                </a>
+                            </div>
+                            <div class="collapse mt-3" id="bibtexCollapse">
+                                <pre class="bg-white p-3 border radius-04 mb-0 text-left" style="font-size: 11px; max-height: 160px; overflow-y: auto;"><code>{{ $bibtexCitation }}</code></pre>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
                 <!-- SIDEBAR -->
                 <aside id="sidebar" class="col-lg-4">
 
-                    <!-- BOOK INFO -->
+                    <!-- REPOSITORY METADATA -->
                     <div class="sidebar-div mb-50">
-                        <h6 class="h6-xl">Informasi Buku</h6>
+                        <h6 class="h6-xl">Metadata Repositori</h6>
 
                         <ul class="blog-category-list clearfix">
                             <li>
@@ -317,30 +369,71 @@
                     </div>
 
                     <!-- PREVIEW BUTTON -->
-                    @if ($book->getPreviewFile())
+                    @if ($citationPdfUrl)
                         <div class="mb-30">
-                            <a href="{{ route('book.preview', $book->slug) }}" target="_blank"
+                            <a href="{{ $citationPdfUrl }}" target="_blank" rel="noopener"
                                class="btn btn-theme btn-block">
-                                <span class="flaticon-document mr-2"></span> Preview Buku
+                                Baca / Unduh Preview (PDF)
                             </a>
+
                         </div>
                     @endif
 
-                    <!-- ISBN & QRCBN FILES -->
+                    <!-- ISBN & QRCBN IMAGES -->
                     @if ($book->isbn_file || $book->qrcbn_file)
                         <div class="sidebar-div mb-50">
-                            <h6 class="h6-xl">Dokumen</h6>
+                            <h6 class="h6-xl mb-20">Sertifikat & Barcode</h6>
+
                             @if ($book->isbn_file)
-                                <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank"
-                                   class="btn btn-theme btn-block" style="text-align: left;">
-                                    <span class="flaticon-document mr-2"></span> Lihat Sertifikat ISBN
-                                </a>
+                                @php
+                                    $isIsbnPdf = \Illuminate\Support\Str::endsWith(strtolower($book->isbn_file), '.pdf');
+                                @endphp
+                                <div class="mb-25">
+                                    <small class="grey-color d-block mb-2 font-weight-bold" style="font-size: 12px;">
+                                        Barcode / Sertifikat ISBN
+                                    </small>
+                                    @if ($isIsbnPdf)
+                                        <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank"
+                                           class="btn btn-outline-secondary btn-sm btn-block">
+                                            <span class="flaticon-document mr-2"></span> Buka Sertifikat ISBN (PDF)
+                                        </a>
+                                    @else
+                                        <div class="border rounded p-2 bg-white text-center shadow-sm">
+                                            <a href="{{ asset('storage/' . $book->isbn_file) }}" target="_blank" title="Klik untuk melihat ukuran penuh">
+                                                <img src="{{ asset('storage/' . $book->isbn_file) }}"
+                                                     alt="Barcode / Sertifikat ISBN {{ $book->isbn }}"
+                                                     class="img-fluid rounded"
+                                                     style="max-height: 220px; width: 100%; object-fit: contain;">
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
+
                             @if ($book->qrcbn_file)
-                                <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank"
-                                   class="btn btn-theme btn-block mb-10" style="text-align: left;">
-                                    <span class="flaticon-document mr-2"></span> Lihat Sertifikat QRCBN
-                                </a>
+                                @php
+                                    $isQrcbnPdf = \Illuminate\Support\Str::endsWith(strtolower($book->qrcbn_file), '.pdf');
+                                @endphp
+                                <div class="mb-25">
+                                    <small class="grey-color d-block mb-2 font-weight-bold" style="font-size: 12px;">
+                                        Barcode / Sertifikat QRCBN
+                                    </small>
+                                    @if ($isQrcbnPdf)
+                                        <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank"
+                                           class="btn btn-outline-secondary btn-sm btn-block">
+                                            <span class="flaticon-document mr-2"></span> Buka Sertifikat QRCBN (PDF)
+                                        </a>
+                                    @else
+                                        <div class="border rounded p-2 bg-white text-center shadow-sm">
+                                            <a href="{{ asset('storage/' . $book->qrcbn_file) }}" target="_blank" title="Klik untuk melihat ukuran penuh">
+                                                <img src="{{ asset('storage/' . $book->qrcbn_file) }}"
+                                                     alt="Barcode / Sertifikat QRCBN {{ $book->qrcbn }}"
+                                                     class="img-fluid rounded"
+                                                     style="max-height: 220px; width: 100%; object-fit: contain;">
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
                             @endif
                         </div>
                     @endif
@@ -364,7 +457,7 @@
                                                 {{ Str::limit($related->title, 40) }}
                                             </a>
                                         </h6>
-                                        <p class="p-sm grey-color mb-0">Rp {{ number_format($related->price, 0, ',', '.') }}</p>
+                                        <p class="p-sm grey-color mb-0"><span class="badge badge-light border">{{ $related->publish_year ?: $related->created_at->format('Y') }}</span> <span class="text-success small font-weight-bold ml-1">Open Access</span></p>
                                     </div>
                                 </div>
                             @endforeach
@@ -377,4 +470,37 @@
         </div>
     </section>
 
+    <script>
+        function copyCitationText(text) {
+            var btn = document.getElementById('btn-copy-citation');
+            if (!navigator.clipboard) {
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showCopiedFeedback(btn);
+                } catch (err) {}
+                document.body.removeChild(textArea);
+                return;
+            }
+            navigator.clipboard.writeText(text).then(function() {
+                showCopiedFeedback(btn);
+            });
+        }
+
+        function showCopiedFeedback(btn) {
+            if (!btn) return;
+            var original = btn.innerHTML;
+            btn.innerHTML = '<span class="flaticon-check mr-1"></span> Tersalin!';
+            btn.classList.remove('btn-tra-grey');
+            btn.classList.add('btn-success', 'text-white');
+            setTimeout(function() {
+                btn.innerHTML = original;
+                btn.classList.remove('btn-success', 'text-white');
+                btn.classList.add('btn-tra-grey');
+            }, 2500);
+        }
+    </script>
 @endsection

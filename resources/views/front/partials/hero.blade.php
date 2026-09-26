@@ -10,13 +10,11 @@
                         <div class="hero-13-txt text-center white-color">
 
                             <!-- Title -->
-                            <h1 class="h3-lg" style="color: #fff;">NAGARI SASTRA GROUP</h1>
+                            <h1 class="h3-lg" style="color: #fff;">{{ $setting_web->name ?? 'NAGARI SASTRA GROUP' }}</h1>
 
                             <!-- Text -->
                             <p class="p-xl">
-                                Mendukung kemajuan ilmu pengetahuan dan inovasi di Indonesia melalui publikasi ilmiah,
-                                penelitian terapan, serta pelatihan dan edukasi di berbagai bidang ilmu pengetahuan dan
-                                teknologi.
+                                {{ !empty($setting_web?->about) ? Str::limit(strip_tags($setting_web->about), 220) : 'Mendukung kemajuan ilmu pengetahuan dan inovasi di Indonesia melalui publikasi ilmiah, penelitian terapan, serta pelatihan dan edukasi di berbagai bidang ilmu pengetahuan dan teknologi.' }}
                             </p>
 
                             <!-- Buttons Group -->
